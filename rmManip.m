@@ -13,6 +13,10 @@ for ii =1:length(wStruct)
         waitbar(ii/length(wStruct),h)
     end
     
+    if manipId ~= 0 % if the id is not 0 then it goes on to the next index
+        continue
+    end
+    
     x = wStruct(ii).x;
     y = wStruct(ii).y;
     w = double([x y]);
@@ -20,14 +24,17 @@ for ii =1:length(wStruct)
     idx = find(manipTimes == wtimes(ii));
     if isempty(idx)
         continue
+    elseif length(idx)>1
+        manipIds = [manipStruct(idx).id];
+        keep = manipIds==0;
+        idx = idx(keep);
     end
     
+    manipId = manipStruct(idx).id;
     manipX = manipStruct(idx).x;
     manipY = manipStruct(idx).y;
-    manipId = manipStruct(idx).id;
-    if manipId ~= 0 % if the id is not 0 then it goes on to the next index
-        continue
-    end
+   
+    
     
     mMinus  =double([manipX-2 manipY-2]);
     mPlus = double([manipX+2 manipY+2]);
