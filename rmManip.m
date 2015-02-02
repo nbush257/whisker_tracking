@@ -13,9 +13,7 @@ for ii =1:length(wStruct)
         waitbar(ii/length(wStruct),h)
     end
     
-    if manipId ~= 0 % if the id is not 0 then it goes on to the next index
-        continue
-    end
+   
     
     x = wStruct(ii).x;
     y = wStruct(ii).y;
