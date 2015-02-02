@@ -1,6 +1,6 @@
 % remove and interpolate manipulator points
 function wStruct_no_manip = rmManip(wStruct,manipStruct)
-manipWidth = 5;% sets the ergion around the manipulator edge to remove.
+thresh = 4;% sets the ergion around the manipulator edge to remove.
 
 wStruct_no_manip = wStruct;
 wtimes = [wStruct.time];
@@ -12,9 +12,7 @@ for ii =1:length(wStruct)
     if any(ii == hundreds)
         waitbar(ii/length(wStruct),h)
     end
-    if ii == 5573
-        pause
-    end
+    
     x = wStruct(ii).x;
     y = wStruct(ii).y;
     w = double([x y]);
@@ -35,22 +33,13 @@ for ii =1:length(wStruct)
     mPlus = double([manipX+2 manipY+2]);
     
     for jj = 1:length(x)
-        xTestA = x(jj) < mPlus(:,1) & x(jj) > mMinus(:,1);
-        xTestB = x(jj) > mPlus(:,1) & x(jj) < mMinus(:,1);
-        
-        xTest = xTestA | xTestB;
-        
-        yTestA = y(jj) < mPlus(:,2) & y(jj) > mMinus(:,2);
-        yTestB = y(jj) > mPlus(:,2) & y(jj) < mMinus(:,2);
-        
-        yTest = yTestA | yTestB;
-        
-        btw(jj) = any(xTest) & any(yTest);
+        d(jj) = min(sqrt((manipX - x(jj)).^2 + (manipY - y(jj)).^2));
     end
-    x(btw) = nan;
-    y(btw) = nan;
-    wStruct_no_manip(ii).x = x;
-    wStruct_no_manip(ii).y = y;
+    
+     x(d<thresh) = nan;
+     y(d<thresh) = nan;
+     wStruct_no_manip(ii).x = x;
+     wStruct_no_manip(ii).y = y;
     
 
 end
