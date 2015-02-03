@@ -21,7 +21,7 @@ for ii = 1:length(wstruct)
     this_ent = length(wstruct_norepeats)+1;
     if sum(wtimes==wstruct(ii).time)>1 && ~ismember(wstruct(ii).time,fixed_repeats)
         for kk = ii:length(wstruct)
-            if wstruct(ii).time == wstruct(kk).time
+            if wstruct(ii).time == wstruct(kk).time & ii~=kk
                 x(length(x)+1:length(x)+length(wstruct(kk).x)) = wstruct(kk).x;
                 y(length(y)+1:length(y)+length(wstruct(kk).y)) = wstruct(kk).y;
                 fixed_repeats(ii) = wstruct(ii).time;

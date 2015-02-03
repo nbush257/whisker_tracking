@@ -1,6 +1,6 @@
 % remove and interpolate manipulator points
 function wStruct_no_manip = rmManip(wStruct,manipStruct)
-thresh = 4;% sets the ergion around the manipulator edge to remove.
+thresh = 10;% sets the ergion around the manipulator edge to remove.
 
 wStruct_no_manip = wStruct;
 wtimes = [wStruct.time];
@@ -24,25 +24,23 @@ for ii =1:length(wStruct)
         continue
     elseif length(idx)>1
         manipIds = [manipStruct(idx).id];
-        keep = manipIds==0;
+        keep = manipIds==1;
         idx = idx(keep);
     end
     
     manipId = manipStruct(idx).id;
     manipX = manipStruct(idx).x;
     manipY = manipStruct(idx).y;
-   
-    
-    
-    mMinus  =double([manipX-2 manipY-2]);
-    mPlus = double([manipX+2 manipY+2]);
-    
+  
     for jj = 1:length(x)
         d(jj) = min(sqrt((manipX - x(jj)).^2 + (manipY - y(jj)).^2));
     end
     
      x(d<thresh) = nan;
      y(d<thresh) = nan;
+    
+     %add something to linearly interpolate!
+     
      wStruct_no_manip(ii).x = x;
      wStruct_no_manip(ii).y = y;
     

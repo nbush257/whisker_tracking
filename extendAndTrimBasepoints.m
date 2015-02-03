@@ -14,7 +14,7 @@ function [ whiskerData ] = extendAndTrimBasepoints( whiskerData, useX, basepoint
             whiskerData = extendBasepoints(whiskerData,useX,basepointSmaller);
             return
         end
-        
+        figure;
         imshow(imread(imageName))
         text(50,100,sprintf('Zoom in on the whisker base\n\nThen press ENTER'),'BackgroundColor',[.9,.9,.9]);
         sprintf('\nZoom in on the whisker base\n\nThen press ENTER')
