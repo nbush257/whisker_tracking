@@ -21,8 +21,8 @@ ca;clc;
 %%% Store these points in  WhiskerOut{};
 
 
-f = rgb2gray(f);
-FirstFrame = f;%imread('141023_rat1442_gamma_1_fr_05150.tif');
+%f = rgb2gray(f);
+%FirstFrame = f;%imread('141023_rat1442_gamma_1_fr_05150.tif');
 
 %%%%%  Get initial whisker position (track entire thing) in frame 1
 if exist('FirstTrackedWhiskerPoints.mat','file') == 2
@@ -30,7 +30,7 @@ if exist('FirstTrackedWhiskerPoints.mat','file') == 2
 elseif exist('FirstTrackedWhiskerPoints.mat','file') == 0
     disp('track the whisker');
     fig1;set(gcf,'color','w');
-    imagesc(FirstFrame); axis([ 140  430  275  355]);colormap('gray'); hold on;
+    imagesc(FirstFrame); zoom on;colormap('gray'); hold on;
     x = NaN;
     counter  = 0;
     while ~isempty(x)
@@ -93,10 +93,10 @@ xvals = min(s.PixelList(:,1)):max(s.PixelList(:,1));
 yvals = min(s.PixelList(:,2)):max(s.PixelList(:,2));
 xoffset = min(xvals); yoffset = min(yvals);
 FirstFrame_Manip = FirstFrame(yvals,xvals);
-foobar = edge(FirstFrame_Manip,'sobel');
+foobar = edge(FirstFrame_Manip,'sobel',.01);
 [h,t,r]=hough(foobar);
 p = houghpeaks(h,2);
-lines = houghlines(foobar,t,r,p);
+lines = houghlines(foobar,t,r,p,'MinLength',2);
 counter = 0;
 xvals = [lines(1).point1(1),lines(2).point1(1),lines(1).point2(1),lines(2).point2(1)];
 yvals = [lines(1).point1(2),lines(2).point1(2),lines(2).point2(2),lines(1).point2(2)];
