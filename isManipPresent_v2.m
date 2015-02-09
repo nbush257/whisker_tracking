@@ -13,7 +13,8 @@ function allChange = isManipPresent_v2(vidFileName,varargin);
         % pretty easy
     
     % eThresh: the threshold to apply when using the edge detection. This
-        % might depend on the quality of your data. Default is set to .3
+        % might depend on the quality of your data. Default allows the
+        % function to pick the default;
     
     % mask: ROI where we want to check for the manipulator. Useful to pre determine the ROIs if you
         % want to batch process a lot of videos.
@@ -28,7 +29,7 @@ function allChange = isManipPresent_v2(vidFileName,varargin);
 
 %% 
 
-eThresh = .3;
+eThresh = [];
 
 v = seqIo(vidFileName,'r');
 info = v.getinfo();
@@ -45,9 +46,12 @@ if length(varargin)==1
     bw = roipoly(firstFrame); %asks you to set the ROI if needed
     eThresh = varargin{1};
     ca;
-else
+elseif length(varargin)>1
     eThresh = varargin{1};
     bw = varargin{2};
+else
+    bw = roipoly(firstFrame);
+    close all;
 end
 
 allChange = []; %initialize the output variable. 
@@ -94,7 +98,7 @@ for kk = 1:numIters
     
     % Initialize the clip specific output variable.
     change = zeros(1,length(numFramesInIter));
-    fprintf('\t gettingedges');
+    fprintf('\t gettingedges \n');
     % Iterate over every frame. This uses parallel computing. If you need
     % to avoid this, remove the parfor and alternate the comments
     parfor i = 1:numFramesInIter
@@ -109,6 +113,7 @@ for kk = 1:numIters
         
          e = edge(gpuArray(frames(:,:,i)),eThresh); % comment this if not parallel
          e = gather(e); % Comment this if not parallel.
+         %e = edge(frames(:,:,i),'canny',eThresh);
         
         e_masked = e.*bw;
         change(i) = sum(sum(e_masked)); % Get sum of edges in the ROI.

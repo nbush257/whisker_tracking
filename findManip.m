@@ -59,7 +59,7 @@ end;
 
 %%%% Find an  ROI around the manipulator and find all pixels within it.
 
-N = 5;  % amount to grow ROI around the manually tracked manipulator
+N = 10;  % amount to grow ROI around the manually tracked manipulator
 [p] = polyfit(xm,ym,1);
 xmsmooth = round(min(xm):1:max(xm));
 ymsmooth = round(polyval(p,xmsmooth));
