@@ -48,8 +48,8 @@ newBPx = c.Centroid(1);
 newBPy = c.Centroid(2);
 
 newBPFull = round([newBPx + xmin,newBPy+ymin]);
-bpOut.x(firstFrame) = newBPFull(1);
-bpOut.y(firstFrame) = newBPFull(2);
+bpOut(firstFrame).x = newBPFull(1);
+bpOut(firstFrame).y = newBPFull(2);
 
 
 for ii = firstFrame+1:lastFrame
@@ -94,8 +94,8 @@ for ii = firstFrame+1:lastFrame
     
     newBPFull = round([newBPx + xmin,newBPy+ymin]);
 
-    bpOut.x(ii)= newBPFull(1);
-    bpOut.y(ii) =  newBPFull(2); 
+    bpOut(ii).x= newBPFull(1);
+    bpOut(ii).y =  newBPFull(2); 
 %     %%% plot sanity checks %%%
 %     imshow(I)
 %     ho
