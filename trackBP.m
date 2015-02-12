@@ -14,9 +14,15 @@ pause
 bp = round(ginput(1));
 bpx = bp(1);
 bpy = bp(2);
-se = strel('square',10);% i fthis is odd, the for loop needs to be changed in order to accomodate non integer values of the center
+se = strel('square',12);% i fthis is odd, the for loop needs to be changed in order to accomodate non integer values of the center
 mask = zeros(size(I));
 mask(bpy,bpx) = 1;
+
+ignore = roipoly(I);
+ig = regionprops(ignore,'pixellist');
+
+
+
 
 bw = imdilate(mask,se);
 s = regionprops(bw,'extrema');
@@ -47,15 +53,22 @@ c = regionprops(region,'Centroid');
 newBPx = c.Centroid(1);
 newBPy = c.Centroid(2);
 
-newBPFull = round([newBPx + xmin,newBPy+ymin]);
+
+
+newBPFull = [newBPx + xmin,newBPy+ymin];
 bpOut(firstFrame).x = newBPFull(1);
 bpOut(firstFrame).y = newBPFull(2);
 
+newBPFull = round(newBPFull);
 
+
+%%
 for ii = firstFrame+1:lastFrame
+    
     v.seek(ii-1);
     I =v.getframe();
     I =histeq(I);
+    
     
     bp = newBPFull;
     mask = zeros(size(I));
@@ -92,10 +105,14 @@ for ii = firstFrame+1:lastFrame
     newBPx = c.Centroid(1);
     newBPy = c.Centroid(2);
     
-    newBPFull = round([newBPx + xmin,newBPy+ymin]);
-
-    bpOut(ii).x= newBPFull(1);
-    bpOut(ii).y =  newBPFull(2); 
+    newBPFull = [newBPx + xmin,newBPy+ymin];
+    if ignore(round(newBPFull(2)),round(newBPFull(1)))
+        newBPFull(1) = bpOut(ii-1).x;
+        newBPFull(2) = bpOut(ii-1).y;
+    end
+    bpOut(ii).x = newBPFull(1);
+    bpOut(ii).y =  newBPFull(2);
+    newBPFull = round(newBPFull);
 %     %%% plot sanity checks %%%
 %     imshow(I)
 %     ho
