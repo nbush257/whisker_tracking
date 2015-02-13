@@ -2,124 +2,27 @@
 % functionality that removes certain partsof the frame from becoming
 % possible for the basepoint ( other trimmed whiskers that shouldn't
 % move...)
-function bpOut = trackBP(vidFileName,firstFrame,lastFrame)
-%% only zeeping cmopatability for whisker emerging leftward( right side of rat)
+function bp = trackBP(vidFileName,wStruct,startFrame,endFrame)
+
 v = seqIo(vidFileName,'r');
-v.seek(firstFrame-1);
+v.seek(startFrame-1);
 I = v.getframe();
-I = histeq(I);
 imshow(I);
-zoom on;
-pause
-bp = round(ginput(1));
-bpx = bp(1);
-bpy = bp(2);
-se = strel('square',12);% i fthis is odd, the for loop needs to be changed in order to accomodate non integer values of the center
-mask = zeros(size(I));
-mask(bpy,bpx) = 1;
-
-ignore = roipoly(I);
-ig = regionprops(ignore,'pixellist');
-
-
-
-
-bw = imdilate(mask,se);
-s = regionprops(bw,'extrema');
-xmin = round(min(s.Extrema(:,1)));
-xmax = round(max(s.Extrema(:,1)));
-ymin = round(min(s.Extrema(:,2)));
-ymax = round(max(s.Extrema(:,2)));
-Isub = I(ymin:ymax,xmin:xmax);
-Isub = histeq(Isub,15);
-Isub2 = zeros(size(Isub));
-Isub2(Isub<35)=1;
-cc =  bwconncomp(Isub2);
-value=  [];
-for ii = 1:length(cc.PixelIdxList)
-    region = zeros(size(Isub2));
-    region(cc.PixelIdxList{ii}) = 1;
-    bounds = size(Isub2);
-    center = bounds/2+.5;
-    d = bwdist(region);
-    value(ii) = d(center(1),center(2));
-end
-[~,keepRegion] = min(value);
-region = zeros(size(Isub2));
-region(cc.PixelIdxList{keepRegion}) = 1;
-
-
-c = regionprops(region,'Centroid');
-newBPx = c.Centroid(1);
-newBPy = c.Centroid(2);
-
-
-
-newBPFull = [newBPx + xmin,newBPy+ymin];
-bpOut(firstFrame).x = newBPFull(1);
-bpOut(firstFrame).y = newBPFull(2);
-
-newBPFull = round(newBPFull);
-
-
-%%
-for ii = firstFrame+1:lastFrame
-    
-    v.seek(ii-1);
-    I =v.getframe();
-    I =histeq(I);
-    
-    
-    bp = newBPFull;
-    mask = zeros(size(I));
-    mask(bp(2),bp(1)) = 1;
-    
-    
-    bw = imdilate(mask,se);
-    s = regionprops(bw,'extrema');
-    xmin = round(min(s.Extrema(:,1)));
-    xmax = round(max(s.Extrema(:,1)));
-    ymin = round(min(s.Extrema(:,2)));
-    ymax = round(max(s.Extrema(:,2)));
-    
-    Isub = I(ymin:ymax,xmin:xmax);
-    Isub = histeq(Isub,15);
-    Isub2 = zeros(size(Isub));
-    Isub2(Isub<25)=1;
-    cc =  bwconncomp(Isub2);
-    value=  [];
-    for jj = 1:length(cc.PixelIdxList)
-        region = zeros(size(Isub2));
-        region(cc.PixelIdxList{jj}) = 1;
-        bounds = size(Isub2);
-        center = bounds/2+.5;
-        d = bwdist(region);
-        value(jj) = d(center(1),center(2));
+zoom on; title('zoom to the basepoint');pause;
+title('click on the basepoint')
+bp(1,:) = ginput(1)
+for ii = 2:length(wStruct);
+   
+    d = sqrt((wStruct(ii).x-bp(ii-1,1)).^2 + (wStruct(ii).y-bp(ii-1,2)).^2);
+    [minD,bpIdx] = (min(d));
+    if minD>5
+        bp(ii,1) = bp(1,1);
+        bp(ii,2) = bp(1,2);
     end
-    [~,keepRegion] = min(value);
-    region = zeros(size(Isub2));
-    region(cc.PixelIdxList{keepRegion}) = 1;
     
     
-    c = regionprops(region,'Centroid');
-    newBPx = c.Centroid(1);
-    newBPy = c.Centroid(2);
-    
-    newBPFull = [newBPx + xmin,newBPy+ymin];
-    if ignore(round(newBPFull(2)),round(newBPFull(1)))
-        newBPFull(1) = bpOut(ii-1).x;
-        newBPFull(2) = bpOut(ii-1).y;
-    end
-    bpOut(ii).x = newBPFull(1);
-    bpOut(ii).y =  newBPFull(2);
-    newBPFull = round(newBPFull);
-%     %%% plot sanity checks %%%
-%     imshow(I)
-%     ho
-%     scatter(newBPFull(1),newBPFull(2),'r*')
-%     pause(.01)
-%     cla
+    bp(ii,1) = wStruct(ii).x(bpIdx);
+    bp(ii,2) = wStruct(ii).y(bpIdx);
 end
 
-
-
+    
