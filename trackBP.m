@@ -2,7 +2,7 @@
 % functionality that removes certain partsof the frame from becoming
 % possible for the basepoint ( other trimmed whiskers that shouldn't
 % move...)
-function wStruct = trackBP(vidFileName,wStruct,startFrame,endFrame)
+function [wStruct,xBaseMedian,yBaseMedian] = trackBP(vidFileName,wStruct,startFrame,endFrame)
 
 v = seqIo(vidFileName,'r');
 v.seek(startFrame-1);
@@ -40,7 +40,8 @@ end
 for ii =1:length(wStruct)
     wStruct(ii).x = wStruct(ii).x(bpIdx(ii):end);
     wStruct(ii).y = wStruct(ii).y(bpIdx(ii):end);
-    wStruct(ii).bpx = bp(ii,1);
-    wStruct(ii).bpy = bp(ii,2);
+    wStruct(ii).xBase = bp(ii,1);
+    wStruct(ii).yBase = bp(ii,2);
 end
-
+xBaseMedian = nanmedian([wStruct.xBase]);
+yBaseMedian = nanmedian([wStruct.yBase]);

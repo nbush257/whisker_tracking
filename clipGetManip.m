@@ -1,5 +1,5 @@
 function [ManipOut,ManipOutAllPixels]= clipGetManip(seqObj,initialROI,startFrame,endFrame);
-
+%% want to add functionality that only looks for lines in an angle close to the previous angle of the manipulator.
 %frame numbers are referenced to entire video, the first frame indexes at
 %1;
 N = 10; %size to dilate the ROI
@@ -17,10 +17,10 @@ for ii = startFrame+1:endFrame
     xoffset = min(xvals); yoffset = min(yvals);
     FrameN_Manip = FrameN(yvals,xvals);
     
-    foobar = edge(gpuArray(FrameN_Manip),'sobel');
-    foobar = gather(foobar);
+%     foobar = edge(gpuArray(FrameN_Manip),'sobel');
+%     foobar = gather(foobar);
     
-    %foobar = edge(FrameN_Manip,'canny');
+    foobar = edge(FrameN_Manip,'canny');
     foobar = foobar.*ManipROI(yvals,xvals);
     [h,t,r]=hough(foobar);
     
