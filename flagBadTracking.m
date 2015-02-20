@@ -6,7 +6,7 @@ function problemFrames = flagBadTracking(dotWhiskersfname,thresh)
 problemFrames = [];
 
 if nargin~=2
-    thresh = 1;
+    thresh = 2;
 end
 
 
@@ -26,15 +26,15 @@ s = std(l(1:100));
 d = diff(l);
 sd = std(d);
 % % 
-% % tooBig = times(l>(m+thresh*s));
-% % tooSmall = times(l<(m-thresh*s));
+tooBig = times(l>(m+thresh*s));
+tooSmall = times(l<(m-thresh*s));
 % 
 % tooBig = times(d>(thresh*sd));
 % tooSmall = times(d<-thresh*sd);
 
 % 
-% problemFrames = sort([tooBig tooSmall]);
-problemFrames = times(abs(d)>thresh*sd);
+problemFrames = sort([tooBig tooSmall]);
+% problemFrames = times(abs()>thresh*sd);
 
 
 end %EOF
