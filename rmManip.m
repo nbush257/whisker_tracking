@@ -1,14 +1,15 @@
 function wStructOut = rmManip(wStruct,manip,startFrame,endFrame);
 
 manip = manip(startFrame:endFrame);
-thresh = 5;
-for ii = 1:length(wStruct)
+thresh = 10;
+parfor ii = 1:length(wStruct)
     
 %     if mod(round(ii/length(wStruct)*100),10)==0
 %         fprintf('. \n')
 %     end
     x = wStruct(ii).x;
     y = wStruct(ii).y;
+    time = wStruct(ii).time;
     idx=[];
     for jj = 1:length(x)
         if isempty(manip{ii})
@@ -18,10 +19,13 @@ for ii = 1:length(wStruct)
         if any(d<=thresh)
             idx = [idx jj];
         end
+%         plot(d);
+%         pause(.01)
+%         cla
     end
     %this comment will just remove the points near the manipulator
-%      x(idx) = [];
-%      y(idx) = [];
+%      x(idx) = NaN;
+%      y(idx) = NaN;
 
     % this section interpolates between the two end points of the removed
     % section
@@ -32,9 +36,10 @@ for ii = 1:length(wStruct)
     
         
     
-    % add an interpolation function here. 
-    wStructOut(ii).x = x;
-    wStructOut(ii).y = y;
+
+    wStructOut(ii).x = double(x);
+    wStructOut(ii).y = double(y);
+    wStructOut(ii).time = double(time);
 end
 
     

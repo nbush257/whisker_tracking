@@ -1,7 +1,7 @@
 function manipOut = findManip(vidFileName,manipPresence)
 %%%% WARNING! LIABLE TO TRACK THE WHISKER %%%%%%%
 
-
+ca
 
 
 %% try just manually getting the manipulator presence.
@@ -22,15 +22,16 @@ for ii = 1:length(enterManip)
     manipOut{enterManip(ii)} = initialManip{ii}{1};
     manipOutAllPix{enterManip(ii)} = initialManipAllPix{ii}{1};
 end
+close all
 
 for ii = 1:length(enterManip)
-    ii
-    [clipsManipOut,clipsManipOutAllPix] = clipGetManip(v,initialROI{ii},enterManip(ii),leaveManip(ii));
+    uicontrol('Style','text','String',['working on clip ' num2str(ii) ' of ' num2str(length(enterManip))])
+    [clipsManipOut{ii},clipsManipOutAllPix{ii}] = clipGetManip(v,initialROI{ii},enterManip(ii),leaveManip(ii));
     for jj = enterManip(ii):leaveManip(ii)
-        manipOut{jj} = clipsManipOut{jj};
-        manipOutAllPix{jj} = clipsManipOutAllPix{jj};
+        manipOut{jj} = clipsManipOut{ii}{jj};
+        manipOutAllPix{jj} = clipsManipOutAllPix{ii}{jj};
     end
     manipOut{enterManip(ii)} = initialManip{ii}{1};
 end
-save([vidFileName(1:end-) '_manipulator.mat'],'manipOut','manipOutAllPix');
+save([vidFileName(1:end-4) '_manipulator.mat'],'manipOut');
 

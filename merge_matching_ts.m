@@ -7,9 +7,7 @@ function final_wstruct = merge_matching_ts(wstruct,useX,basepointSmaller)
 %                          than the tip
 %   collapse matching timestamps and add their x-y points together
 
-for ii = 1:length(wstruct)
-    wtimes(ii)=wstruct(ii).time;
-end
+wtimes = [wstruct.time];
 
 wstruct_norepeats = struct([]);
 thrundreds=300:300:length(wstruct);
@@ -56,7 +54,7 @@ end
 clear wtimes
 fprintf('\n\t Ordering chronologically')
 for ii = 1:length(wstruct_norepeats)
-    wtimes(ii)=wstruct(ii).time;
+    wtimes(ii) = wstruct(ii).time;
 end
 
 [corr_order,indicies] = sort(wtimes);

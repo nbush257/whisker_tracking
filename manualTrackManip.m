@@ -24,9 +24,14 @@ end;
 
 N = 10;  % amount to grow ROI around the manually tracked manipulator
 [p] = polyfit(xm,ym,1);
-xmsmooth = round(min(xm):1:max(xm));
+xmsmooth = min(xm):.2:max(xm);
 ymsmooth = round(polyval(p,xmsmooth));
+xmsmooth = round(xmsmooth);
 
+% makes sure xmsmooth and ymsmooth do not exceed frame size
+idx = xmsmooth>size(frame,2) | ymsmooth>size(frame,1);
+xmsmooth(idx) = [];
+ymsmooth(idx) = [];
 
 foo = zeros(size(frame));
 %%% There must be a better way to do these next three lines
@@ -35,11 +40,16 @@ for k = 1:length(xmsmooth)
     foo(ymsmooth(k),xmsmooth(k)) = 1;
 end;
 
+
 se = strel('disk',N);
 bw = logical(foo);
 bw = imdilate(bw,se);
 
-ManipROI = bw;
+if size(bw)~=size(frame)
+    warning('ROI does not fit frame size')
+end
+
+ManipROI{1} = bw;
 s = regionprops(bw,'pixellist');
 xvals = min(s.PixelList(:,1)):max(s.PixelList(:,1));
 yvals = min(s.PixelList(:,2)):max(s.PixelList(:,2));
@@ -48,9 +58,8 @@ FirstFrame_Manip = frame(yvals,xvals);
 xm = s.PixelList(:,1); ym = s.PixelList(:,2);
 
 
+
 ManipOutAllPixels{1} = [xm';ym'];
-p = polyfit(xm,ym,1);
-xmm = round(min(xm)):round(max(xm));
-ymm = polyval(p,xmm);
-ManipOut{1} = [xmm;ymm];
+
+ManipOut{1} = [xmsmooth;ymsmooth];
 

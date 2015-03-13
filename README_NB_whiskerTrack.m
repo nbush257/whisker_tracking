@@ -1,38 +1,76 @@
 % whisker ttracking readme NB
-frontWhiskersName = 'rat2015_04_vg_D1_t02_Front_3080_7500.whiskers';
-topWhiskersName = 'rat2015_04_vg_D1_t02_Top_3080_7500.whiskers';
-frontVidName = 'rat2015_04_vg_D1_t02_Front.seq';
-topVidName = 'rat2015_04_vg_D1_t02_Top.seq';
+frontWhiskersName = 'L:\raw\2015_06\rat2105_06_0226_FEB26_vg_B2\rat2105_06_0226_FEB26_vg_B2_t01_Front_11008_20644.whiskers';
+topWhiskersName = 'L:\raw\2015_06\rat2105_06_0226_FEB26_vg_B2\rat2105_06_0226_FEB26_vg_B2_t01_Top_11008_20644.whiskers';
+frontVidName = 'L:\raw\2015_06\rat2105_06_0226_FEB26_vg_B2\rat2105_06_0226_FEB26_vg_B2_t01_Front.seq';
+topVidName = 'L:\raw\2015_06\rat2105_06_0226_FEB26_vg_B2\rat2105_06_0226_FEB26_vg_B2_t01_top.seq';
 
-startFrame = 3080;
-endFrame =7500;
+% is the manipulator loaded?
+if exists('frontManip','var')
+    frontManLoaded = 1;
+else
+    frontManLoaded = 0;
+    
+if exists('topManip','var')
+    topManLoaded = 1
+else
+    topMmanLoaded = 0;
+end
 
-%% Load in the manipPresence.mat file
+startFrame = 11008;
+endFrame =20644;
 
-%% 
+
+useX_top = 1;
+useX_front = 1;
+basepointSmaller_top = 0;
+basepointSmaller_front = 0;
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%% Do Not Edit Below This Line %%%%%%%%%%%%
+%%%%%%%%%%%%%% NB 3/12/2015 %%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+%%
 front  = LoadWhiskers(frontWhiskersName);
 top  = LoadWhiskers(topWhiskersName);
 
-front = merge_matching_ts(front,1,0); %(wstruct, useX,basepointSmaller)
-top = merge_matching_ts(top,1,0);
+for i = 1:4
+    front = merge_matching_ts(front,useX_front,basepointSmaller_front); %(wstruct, useX,basepointSmaller) %you might have to repeat this if you track more than 2 whiskers.
+    top = merge_matching_ts(top,useX_top,basepointSmaller_top);
+end
 
 front = trackBP(frontVidName,front,startFrame,endFrame);
 top = trackBP(topVidName,top,startFrame,endFrame);
-%% 
+close all
+%%
 % if the manip has not already been tracked and saved into a mat file
-frontManip = findManip(frontVidName,manipPresence);
-topManip = findManip(topVidName,manipPresence);
+if ~frontManLoaded
+    frontManip = findManip(frontVidName,manipPresence);
+end
+if ~topManLoaded
+    topManip = findManip(topVidName,manipPresence);
+end
+% If the manip HAS been tracked and saved, load the file in here.
 
-% If the manip HAS been tracked and saved, load the file in here. 
-
-%% Remove any tracked manipulator. Still need to implement a interpolation, still need to remove other stationary edges from the image if they are present. 
+%% Remove any tracked manipulator. Still need to implement a interpolation, still need to remove other stationary edges from the image if they are present.
 % also might want to extend the manipulator to cover the entire frame along
-% the line of the manipulator. 
+% the line of the manipulator.
 % Also may want to restrict the manipulator to being within a certain angle
 % of the previous manipulator.
 
-front_manip_removed = rmManip(front,frontManipOut,startFrame,endFrame);
-top_manip_removed = rmManip(top,topManipOut,startFrame,endFrame);
+front_manip_removed = rmManip(front,frontManip,startFrame,endFrame);
+top_manip_removed = rmManip(top,topManip,startFrame,endFrame);
 
-[top_proc,~,~,~] = preprocessWhiskerData_NoSlopeSmooth(top_manip_removed,[],1,0);
-[front_proc,~,~,~] = preprocessWhiskerData_NoSlopeSmooth(front_manip_removed,[],1,0);
+%%3D merge
+for ii = 1:1000:length(front_manip_removed)
+    parfor i = ii:ii+999
+    [tracked_3D(i).x,tracked_3D(i).y,tracked_3D(i).z]= Merge3D_JAEv1(front_manip_removed(i).x,front_manip_removed(i).y,top_manip_removed(i).x,top_manip_removed(i).y,i,calib);
+	tracked_3D(i).frame = front_manip_removed(i).time;
+    end
+    flnm=['3D_rat2105_06_0226_FEB26_vg_B2_t01_CLIP_11008_20644_F',sprintf('%06d',ii),'F',sprintf('%06d',ii+999)];
+	save(flnm,'tracked_3D')
+	clear tracked_3D
+end
+
+% 
+% [top_proc,~,~,~] = preprocessWhiskerData_NoSlopeSmooth(top_manip_removed,[],1,0);
+% [front_proc,~,~,~] = preprocessWhiskerData_NoSlopeSmooth(front_manip_removed,[],1,0);

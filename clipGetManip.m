@@ -2,11 +2,27 @@ function [ManipOut,ManipOutAllPixels]= clipGetManip(seqObj,initialROI,startFrame
 %% want to add functionality that only looks for lines in an angle close to the previous angle of the manipulator.
 %frame numbers are referenced to entire video, the first frame indexes at
 %1;
-N = 10; %size to dilate the ROI
+plotting = 0;
+lastwarn('overwrite');
+N = 25; %size to dilate the ROI
+if iscell(initialROI)
+    initialROI =initialROI{1};
+end
 ManipROI = initialROI;
-
-
+prevTheta = [];
+message = getWaitMessage;
+w = waitbar(0,message);
+global retrack
+tic;
 for ii = startFrame+1:endFrame
+    timer = toc;
+    if timer>20;
+        tic
+        message = getWaitMessage;
+    end
+    
+    
+    waitbar((ii-startFrame)/(endFrame-startFrame),w,message);
     seqObj.seek(ii-1);
     FrameN = seqObj.getframe();
     
@@ -15,38 +31,86 @@ for ii = startFrame+1:endFrame
     xvals = min(s.PixelList(:,1)):max(s.PixelList(:,1)); % if this throws an error you can try increasing your ROI dilation.
     yvals = min(s.PixelList(:,2)):max(s.PixelList(:,2));
     xoffset = min(xvals); yoffset = min(yvals);
+    
     FrameN_Manip = FrameN(yvals,xvals);
-    
-%     foobar = edge(gpuArray(FrameN_Manip),'sobel');
-%     foobar = gather(foobar);
-    
-    foobar = edge(FrameN_Manip,'canny');
-    foobar = foobar.*ManipROI(yvals,xvals);
-    [h,t,r]=hough(foobar);
-    
-    
+    manipEdge = edge(FrameN_Manip,'canny');
+    [h,t,r]=hough(manipEdge);
     p = houghpeaks(h,2);
-    lines = houghlines(foobar,t,r,p);
-    counter = 0;
+    lines = houghlines(manipEdge,t,r,p);
     
     if length(lines)>1
-        l = [];
-        for jj =1:length(lines)
-            l(jj) = sqrt((lines(jj).point1(1) - lines(jj).point2(1))^2 + (lines(jj).point1(2) - lines(jj).point2(2))^2);
+        % if we find two parallel lines, take the average.
+        if abs(lines(1).theta-lines(2).theta)<=2
+            p1(1) = mean([lines(1).point1(1) lines(2).point1(1)]);
+            p1(2) = mean([lines(1).point1(2) lines(2).point1(2)]);
+            p2(1) = mean([lines(1).point2(1) lines(2).point2(1)]);
+            p2(2) = mean([lines(1).point2(2) lines(2).point2(2)]);
+            dumtheta =mean([lines.theta]);
+            lines =struct;
+            lines.point1 = p1;
+            lines.point2 = p2;
+            lines.theta = dumtheta; clear dumtheta;
+        else %take the longest line
+            l = [];
+            for jj =1:length(lines)
+                l(jj) = sqrt((lines(jj).point1(1) - lines(jj).point2(1))^2 + (lines(jj).point1(2) - lines(jj).point2(2))^2);
+            end
+            [~,idx] = max(l);
+            lines = lines(idx);
         end
-        [~,idx] = max(l);
-        lines = lines(idx);
     end
-    if ~isempty(lines) % not 100% sure what happens when there is no line
+    
+    
+    if ~isempty(lines)
+        
         xm = [lines.point1(:,1) lines.point2(:,1)];
         ym = [lines.point1(:,2) lines.point2(:,2)];
         xm = xm + xoffset - 1;
         ym = ym +yoffset - 1;
         p = polyfit(xm,ym,1);
         
-        xmsmooth = (min(xm):.1:max(xm));
-        ymsmooth = round(polyval(p,xmsmooth));
-        xmsmooth = round(xmsmooth);
+        [warner,~] = lastwarn;
+        if strcmp(warner,'Polynomial is badly conditioned. Add points with distinct X values, reduce the degree of the polynomial, or try centering and scaling as described in HELP POLYFIT.')
+            p = polyfit(ym,xm,1);
+            
+            ymsmooth = (min(ym):.2:max(ym));
+            xmsmooth = round(polyval(p,ymsmooth));
+            ymsmooth = round(ymsmooth);
+            
+            
+        else
+            xmsmooth = (min(xm):.2:max(xm));
+            ymsmooth = round(polyval(p,xmsmooth));
+            xmsmooth = round(xmsmooth);
+        end
+        
+        
+        thetaThresh = 5;
+        if abs(lines.theta-prevTheta)>thetaThresh & ii~=startFrame+1 %
+            warning(['manipulator angle jumped at frame ' num2str(ii)])
+            figure
+            imshow(FrameN)
+            ho
+            scatter(xmsmooth,ymsmooth)
+            title('Should we manually track?')
+            retrack = 0;
+            rt = uicontrol('Style','Pushbutton','String','Retrack','Position',[0 0 200 20],'Callback','global retrack; retrack = 1');
+            pause
+            close all
+            if retrack
+                %retrack function
+                [xmsmooth,ymsmooth] = retrackManip(FrameN);
+            end
+            
+        else
+            prevTheta = lines.theta;
+        end
+        
+        
+        
+        
+        
+        
         mask = zeros(size(FrameN));
         %%% There must be a better way to do these next three lines
         for k = 1:length(xmsmooth)
@@ -57,24 +121,74 @@ for ii = startFrame+1:endFrame
         
         se = strel('disk',N);
         bw = imdilate(bw,se);
-               
-        s = regionprops(mask,'pixellist');
+        if size(bw)~=size(FrameN)
+            warning(['size of ROI is different from the frame at frame ' num2str(ii)]);
+        end
+        
+        s = regionprops(bw,'pixellist');
         ManipROI = bw;
         
-        xm = s.PixelList(:,1); ym = s.PixelList(:,2);
-        ManipOutAllPixels{ii} = [xm';ym'];
+        
+        xPixels = s.PixelList(:,1); yPixels = s.PixelList(:,2);
+        ManipOutAllPixels{ii} = [xPixels';yPixels'];
         p = polyfit(xm,ym,1);
-        xmm = round(min(xm)):.5:round(max(xm));
-        ymm = polyval(p,xmm);
-        ManipOut{ii} = [xmm;ymm];
+        if p(1) ==0
+            pause
+        end
+        
+        
+        ManipOut{ii} = [xmsmooth;ymsmooth];
+        
+        if plotting
+            subplot(221)
+            imshow(ManipROI);ho;plot(xm,ym);
+            subplot(222)
+            imshow(FrameN);ho;plot(xm,ym);
+            subplot(223)
+            imshow(FrameN_Manip);
+            subplot(224)
+            imshow(manipEdge)
+            pause(.01);
+            
+            clf;
+        end
         
     else
-        ManipOut{ii} = [];
-        ManipOutAllPixels{ii} = [];
+        warning(['no line found at frame ' num2str(ii)])
     end
+    
 end
+delete(w)
+end%EOF
 
+function [xmsmooth,ymsmooth] = retrackManip(frame)
+disp('track the manipulator');
+fig;set(gcf,'color','w');
+imagesc(frame); colormap('gray'); hold on;title('zoom in on manipulator');zoom on; pause;
+title('track the manipulator')
+x = NaN;
+counter  = 0;
+while ~isempty(x)
+    counter = counter + 1;
+    [x,y] = ginput(1);
+    if ~isempty(x)
+        xm(counter)= x;  ym(counter) = y;
+        plot(xm(counter),ym(counter),'g*');
+    end;
+end;
+close all
 
+% amount to grow ROI around the manually tracked manipulator
+[p] = polyfit(xm,ym,1);
+xmsmooth = min(xm):.2:max(xm);
+ymsmooth = round(polyval(p,xmsmooth));
+xmsmooth = round(xmsmooth);
+
+% makes sure xmsmooth and ymsmooth do not exceed frame size
+idx = xmsmooth>size(frame,2) | ymsmooth>size(frame,1);
+xmsmooth(idx) = [];
+ymsmooth(idx) = [];
+end %EOLF
 
 
 
