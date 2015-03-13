@@ -59,7 +59,10 @@ xm = s.PixelList(:,1); ym = s.PixelList(:,2);
 
 
 
-ManipOutAllPixels{1} = [xm';ym'];
+ManipOutAllPixels.x = xm';
+ManipOutAllPixels.y = ym';
 
-ManipOut{1} = [xmsmooth;ymsmooth];
+ManipOut.x = xmsmooth;
+ManipOut.y = ymsmooth;
+
 

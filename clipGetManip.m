@@ -160,14 +160,19 @@ for ii = startFrame+1:endFrame
         
         
         xPixels = s.PixelList(:,1); yPixels = s.PixelList(:,2);
-        ManipOutAllPixels{ii} = [xPixels';yPixels'];
+        ManipOutAllPixels(ii).x = xPixels';
+        ManipOutAllPixels(ii).y = yPixels';
+        ManipOutAllPixels(ii).time = ii;
+        
         p = polyfit(xm,ym,1);
         if p(1) ==0
             pause
         end
         
         
-        ManipOut{ii} = [xmsmooth;ymsmooth];
+        ManipOut(ii).x = xmsmooth;
+        ManipOut(ii).y = ymsmooth;
+        ManipOut(ii).time = ii;
         
         if plotting
             subplot(221)
