@@ -13,6 +13,7 @@ ManipROI = initialROI;
 prevTheta = [];
 message = getWaitMessage;
 w = waitbar(0,message);
+observe = figure;
 global retrack
 tic;
 for ii = startFrame+1:endFrame
@@ -20,10 +21,18 @@ for ii = startFrame+1:endFrame
     if timer>20;
         tic
         message = getWaitMessage;
+        figure(observe)
+        imshow(FrameN);ho
+        plot(ManipOut(ii-1).x,ManipOut(ii-1).y);
     end
+    
+        
     
     
     waitbar((ii-startFrame)/(endFrame-startFrame),w,message);
+    
+    
+    
     seqObj.seek(ii-1);
     FrameN = seqObj.getframe();
     
@@ -43,9 +52,7 @@ for ii = startFrame+1:endFrame
     end
     
     if length(lines)>1
-        
-        
-        
+
         if abs(lines(1).theta-lines(2).theta)<=2
             %% if we find two parallel lines, take the average.
             %first check that it is close to the old theta
