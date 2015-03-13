@@ -2,6 +2,7 @@ function [ManipOut,ManipOutAllPixels]= clipGetManip(seqObj,initialROI,startFrame
 %% want to add functionality that only looks for lines in an angle close to the previous angle of the manipulator.
 %frame numbers are referenced to entire video, the first frame indexes at
 %1;
+thetaThresh = 5;
 plotting = 0;
 lastwarn('overwrite');
 N = 25; %size to dilate the ROI
@@ -37,27 +38,58 @@ for ii = startFrame+1:endFrame
     [h,t,r]=hough(manipEdge);
     p = houghpeaks(h,2);
     lines = houghlines(manipEdge,t,r,p);
+    if ii == startFrame + 1
+        prevTheta = mean([lines.theta]);
+    end
     
     if length(lines)>1
-        % if we find two parallel lines, take the average.
+        
+        
+        
         if abs(lines(1).theta-lines(2).theta)<=2
-            p1(1) = mean([lines(1).point1(1) lines(2).point1(1)]);
-            p1(2) = mean([lines(1).point1(2) lines(2).point1(2)]);
-            p2(1) = mean([lines(1).point2(1) lines(2).point2(1)]);
-            p2(2) = mean([lines(1).point2(2) lines(2).point2(2)]);
-            dumtheta =mean([lines.theta]);
-            lines =struct;
-            lines.point1 = p1;
-            lines.point2 = p2;
-            lines.theta = dumtheta; clear dumtheta;
-        else %take the longest line
-            l = [];
-            for jj =1:length(lines)
-                l(jj) = sqrt((lines(jj).point1(1) - lines(jj).point2(1))^2 + (lines(jj).point1(2) - lines(jj).point2(2))^2);
+            %% if we find two parallel lines, take the average.
+            %first check that it is close to the old theta
+            
+            if abs(mean([lines.theta]-prevTheta))>thetaThresh
+                figure
+                imshow(FrameN)
+                ho
+                scatter(xmsmooth,ymsmooth)
+                title('Should we manually track?')
+                retrack = 0;
+                rt = uicontrol('Style','Pushbutton','String','Retrack','Position',[0 0 200 20],'Callback','global retrack; retrack = 1');
+                pause
+                close all
+                if retrack
+                    %retrack function
+                    [xmsmooth,ymsmooth] = retrackManip(FrameN);
+                end
+            else
+                p1(1) = mean([lines(1).point1(1) lines(2).point1(1)]);
+                p1(2) = mean([lines(1).point1(2) lines(2).point1(2)]);
+                p2(1) = mean([lines(1).point2(1) lines(2).point2(1)]);
+                p2(2) = mean([lines(1).point2(2) lines(2).point2(2)]);
+                dumtheta =mean([lines.theta]);
+                lines =struct;
+                lines.point1 = p1;
+                lines.point2 = p2;
+                lines.theta = dumtheta; clear dumtheta;
             end
-            [~,idx] = max(l);
+            
+        else %% if the lines are not parallel, take the line closest to the old theta
+            [~,idx] = min(abs([lines.theta]-prevTheta));
             lines = lines(idx);
         end
+        
+        %% take the longest line
+        %         else
+        %             l = [];
+        %             for jj =1:length(lines)
+        %                 l(jj) = sqrt((lines(jj).point1(1) - lines(jj).point2(1))^2 + (lines(jj).point1(2) - lines(jj).point2(2))^2);
+        %             end
+        %             [~,idx] = max(l);
+        %             lines = lines(idx);
+        %         end
     end
     
     
@@ -76,8 +108,6 @@ for ii = startFrame+1:endFrame
             ymsmooth = (min(ym):.2:max(ym));
             xmsmooth = round(polyval(p,ymsmooth));
             ymsmooth = round(ymsmooth);
-            
-            
         else
             xmsmooth = (min(xm):.2:max(xm));
             ymsmooth = round(polyval(p,xmsmooth));
@@ -85,7 +115,7 @@ for ii = startFrame+1:endFrame
         end
         
         
-        thetaThresh = 5;
+        
         if abs(lines.theta-prevTheta)>thetaThresh & ii~=startFrame+1 %
             warning(['manipulator angle jumped at frame ' num2str(ii)])
             figure
