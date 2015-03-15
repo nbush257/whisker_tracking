@@ -11,7 +11,7 @@ else
     frontManLoaded = 0;
     
 if exists('topManip','var')
-    topManLoaded = 1
+    topManLoaded = 1;
 else
     topMmanLoaded = 0;
 end

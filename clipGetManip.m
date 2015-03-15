@@ -22,8 +22,9 @@ for ii = startFrame+1:endFrame
         tic
         message = getWaitMessage;
         figure(observe)
+        clf
         imshow(FrameN);ho
-        plot(ManipOut(ii-1).x,ManipOut(ii-1).y);
+        scatter(ManipOut(ii-1).x,ManipOut(ii-1).y);
     end
     
         
@@ -201,6 +202,7 @@ for ii = startFrame+1:endFrame
     
 end
 delete(w)
+close all force
 end%EOF
 
 function [xmsmooth,ymsmooth] = retrackManip(frame)

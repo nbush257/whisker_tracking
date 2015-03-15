@@ -2,7 +2,7 @@ function wStructOut = rmManip(wStruct,manip,startFrame,endFrame);
 
 manip = manip(startFrame:endFrame);
 thresh = 10;
-for ii = 1:length(wStruct)
+parfor ii = 1:length(wStruct)
     
     %     if mod(round(ii/length(wStruct)*100),10)==0
     %         fprintf('. \n')
@@ -40,10 +40,6 @@ for ii = 1:length(wStruct)
         x(idx) = newX;
         y(idx) = newY;
     end
-    
-    
-    
-    
     wStructOut(ii).x = double(x);
     wStructOut(ii).y = double(y);
     wStructOut(ii).time = double(time);
