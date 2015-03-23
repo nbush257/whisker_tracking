@@ -83,7 +83,7 @@ for ii = 1:length(wstruct)
         
         fitted_whisker = polyfit(wstruct(ii).x,wstruct(ii).y,2);
         % Create manipulator point cloud
-        manipbinsize = 30;
+        manipbinsize = 5;
         if mm < manipbinsize
             mbin = 1:mm+manipbinsize;
         elseif mm > length(mstruct) - manipbinsize
@@ -95,8 +95,10 @@ for ii = 1:length(wstruct)
         manipcloudx = [];
         manipcloudy = [];
         for cc = 1:length(mbin)
-            manipcloudx = [manipcloudx;mstruct(mbin(cc)).x];
-            manipcloudy = [manipcloudy;mstruct(mbin(cc)).y];
+            % edited by NB 2015_03_23 to a horzcat instead of vertcat
+            % I think this doesn't change the result
+            manipcloudx = [manipcloudx mstruct(mbin(cc)).x];
+            manipcloudy = [manipcloudy mstruct(mbin(cc)).y];
         end
         
         manip_fit = polyfit(manipcloudx,manipcloudy,1);
@@ -148,7 +150,9 @@ for ii = 1:length(wstruct)
             [wskr_top,~] = BackProject3D(wstruct_3D(ii),A_camera,B_camera,A2B_transform);
             
             % Immediately replace short whiskers
-            if length(wskr_top(:,1)) < abs_length_cutoff
+            % edited by NB 2015_03_23 to look at the 3D length, not the 2D
+            % length
+            if length(tracked_3D(ii).x)< abs_length_cutoff
                 wstruct_3D(ii).x = wstruct_3D(ii-1).x;
                 wstruct_3D(ii).y = wstruct_3D(ii-1).y;
                 wstruct_3D(ii).z = wstruct_3D(ii-1).z;
