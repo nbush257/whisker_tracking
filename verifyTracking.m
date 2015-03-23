@@ -14,16 +14,16 @@ for i=startFrame:endFrame
     If = fVid.getframe();
     imshow(If);
     hold on
-    plot(fW(count).x,fW(count).y);
-    
+    plot(fW(count).x,fW(count).y,'.');
+    axis equal
     
     subplot(1,2,2,'replace')
     tVid.seek(i-1);
     It = tVid.getframe();
     imshow(It);
     hold on
-    plot(tW(count).x,tW(count).y)
-    
+    plot(tW(count).x,tW(count).y,'.')
+    axis equal
     pause(.01)
     cla
     

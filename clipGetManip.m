@@ -27,7 +27,7 @@ for ii = startFrame+1:endFrame
         scatter(ManipOut(ii-1).x,ManipOut(ii-1).y);
     end
     
-        
+    
     
     
     waitbar((ii-startFrame)/(endFrame-startFrame),w,message);
@@ -53,16 +53,24 @@ for ii = startFrame+1:endFrame
     end
     
     if length(lines)>1
-
-        if abs(lines(1).theta-lines(2).theta)<=2
+        
+        if abs(lines(1).theta-lines(2).theta)<=2% the threshold for parallel is 2 degrees
             %% if we find two parallel lines, take the average.
-            %first check that it is close to the old theta
             
+            
+            % If the lines are not near o the previous theta, check for
+            % retrack
             if abs(mean([lines.theta]-prevTheta))>thetaThresh
                 figure
                 imshow(FrameN)
                 ho
-                scatter(xmsmooth,ymsmooth)
+                plot([lines(1).point1(1) lines(1).point2(1)],[lines(1).point1(2) lines(1).point2(2)], 'go')
+                
+                try
+                    
+                    plot([lines(2).point1(1) lines(2).point2(1)],[lines(2).point1(2) lines(2).point2(2)], 'go')
+                end
+                %scatter(xmsmooth,ymsmooth)
                 title('Should we manually track?')
                 retrack = 0;
                 rt = uicontrol('Style','Pushbutton','String','Retrack','Position',[0 0 200 20],'Callback','global retrack; retrack = 1');
@@ -71,8 +79,21 @@ for ii = startFrame+1:endFrame
                 if retrack
                     %retrack function
                     [xmsmooth,ymsmooth] = retrackManip(FrameN);
+                    retrack = 0;
+                    manTracked = 1;
+                else % if we don't retrack we take the line closest to the previous theta
+                    p1(1) = mean([lines(1).point1(1) lines(2).point1(1)]);
+                    p1(2) = mean([lines(1).point1(2) lines(2).point1(2)]);
+                    p2(1) = mean([lines(1).point2(1) lines(2).point2(1)]);
+                    p2(2) = mean([lines(1).point2(2) lines(2).point2(2)]);
+                    dumtheta =mean([lines.theta]);
+                    lines =struct;
+                    lines.point1 = p1;
+                    lines.point2 = p2;
+                    lines.theta = dumtheta; clear dumtheta;
+                    
                 end
-            else
+            else % if the lines are parallel and not far from previous theta then take the mean
                 p1(1) = mean([lines(1).point1(1) lines(2).point1(1)]);
                 p1(2) = mean([lines(1).point1(2) lines(2).point1(2)]);
                 p2(1) = mean([lines(1).point2(1) lines(2).point2(1)]);
@@ -83,25 +104,14 @@ for ii = startFrame+1:endFrame
                 lines.point2 = p2;
                 lines.theta = dumtheta; clear dumtheta;
             end
-            
-        else %% if the lines are not parallel, take the line closest to the old theta
+        else % if the lines are not parallel, take the line closest to the old theta
             [~,idx] = min(abs([lines.theta]-prevTheta));
             lines = lines(idx);
         end
-        
-        %% take the longest line
-        %         else
-        %             l = [];
-        %             for jj =1:length(lines)
-        %                 l(jj) = sqrt((lines(jj).point1(1) - lines(jj).point2(1))^2 + (lines(jj).point1(2) - lines(jj).point2(2))^2);
-        %             end
-        %             [~,idx] = max(l);
-        %             lines = lines(idx);
-        %         end
     end
-    
-    
-    if ~isempty(lines)
+    %%
+    % if there is only one line, extract those
+    if ~isempty(lines) & length(lines)==1 & manTracked ~=1;
         
         xm = [lines.point1(:,1) lines.point2(:,1)];
         ym = [lines.point1(:,2) lines.point2(:,2)];
@@ -129,6 +139,8 @@ for ii = startFrame+1:endFrame
             figure
             imshow(FrameN)
             ho
+            
+            
             scatter(xmsmooth,ymsmooth)
             title('Should we manually track?')
             retrack = 0;
@@ -138,15 +150,12 @@ for ii = startFrame+1:endFrame
             if retrack
                 %retrack function
                 [xmsmooth,ymsmooth] = retrackManip(FrameN);
+                retrack =0;
             end
             
         else
             prevTheta = lines.theta;
         end
-        
-        
-        
-        
         
         
         mask = zeros(size(FrameN));
@@ -196,8 +205,30 @@ for ii = startFrame+1:endFrame
             clf;
         end
         
+    elseif manTracked ==1
+        ManipOut(ii).x = xmsmooth;
+        ManipOut(ii).y = ymsmooth;
+        ManipOut(ii).time = ii;
+        
+    elseif isempty(lines)
+        warning(['no line found at frame ' num2str(ii) ', Marking it empty'])
+        ManipOut(ii).x = [];
+        ManipOut(ii).y = [];
+        ManipOut(ii).time = ii;
+        
+        ManipOutAllPixels(ii).x = [];
+        ManipOutAllPixels(ii).y = [];
+        ManipOutAllPixels(ii).time = ii;
+        
     else
-        warning(['no line found at frame ' num2str(ii)])
+        warning(['Unknown error occurred at frame ' num2str(ii) ', setting the manipulator equal to the last frame'])
+        ManipOut(ii).x = xmsmootManipOut(ii-1).x;
+        ManipOut(ii).x = xmsmootManipOut(ii-1).y;
+        ManipOut(ii).time = ii;
+        
+        ManipOutAllPixels(ii).x = ManipOutAllPixels(ii-1).x;
+        ManipOutAllPixels(ii).y = ManipOutAllPixels(ii-1).y;
+        ManipOutAllPixels(ii).time = ii;
     end
     
 end

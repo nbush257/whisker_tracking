@@ -52,23 +52,22 @@ end
 % If the manip HAS been tracked and saved, load the file in here.
 
 %% Remove any tracked manipulator. Still need to implement a interpolation, still need to remove other stationary edges from the image if they are present.
-% also might want to extend the manipulator to cover the entire frame along
-% the line of the manipulator.
-% Also may want to restrict the manipulator to being within a certain angle
-% of the previous manipulator.
 
-front_manip_removed = rmManip(front,frontManip,startFrame,endFrame);
-top_manip_removed = rmManip(top,topManip,startFrame,endFrame);
+
+front_manip_removed = rmManip(front,manip_front,startFrame,endFrame);
+top_manip_removed = rmManip(top,manip_top,startFrame,endFrame);
 
 %%3D merge
-for ii = 1:1000:length(front_manip_removed)
+% LOAD CALIB FILE!!!
+
+for ii = 1%:1000:length(front_manip_removed)
     parfor i = ii:ii+999
-    [tracked_3D(i).x,tracked_3D(i).y,tracked_3D(i).z]= Merge3D_JAEv1(front_manip_removed(i).x,front_manip_removed(i).y,top_manip_removed(i).x,top_manip_removed(i).y,i,calib);
-	tracked_3D(i).frame = front_manip_removed(i).time;
+        [tracked_3D(i).x,tracked_3D(i).y,tracked_3D(i).z]= Merge3D_JAEv1(front_manip_removed(i).x,front_manip_removed(i).y,top_manip_removed(i).x,top_manip_removed(i).y,i,calib);
+        tracked_3D(i).frame = front_manip_removed(i).time;
     end
     flnm=['3D_rat2105_06_0226_FEB26_vg_B2_t01_CLIP_11008_20644_F',sprintf('%06d',ii),'F',sprintf('%06d',ii+999)];
-	save(flnm,'tracked_3D')
-	clear tracked_3D
+    save(flnm,'tracked_3D')
+    clear tracked_3D
 end
 
 % 
