@@ -152,7 +152,7 @@ for ii = 1:length(wstruct)
             % Immediately replace short whiskers
             % edited by NB 2015_03_23 to look at the 3D length, not the 2D
             % length
-            if length(tracked_3D(ii).x)< abs_length_cutoff
+            if length(wstruct_3D(ii).x)< abs_length_cutoff
                 wstruct_3D(ii).x = wstruct_3D(ii-1).x;
                 wstruct_3D(ii).y = wstruct_3D(ii-1).y;
                 wstruct_3D(ii).z = wstruct_3D(ii-1).z;
