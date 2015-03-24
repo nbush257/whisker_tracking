@@ -1,4 +1,4 @@
-function wStructOut = rmManip(wStruct,manip,startFrame,endFrame);
+function [wStructOut,CP] = rmManip(wStruct,manip,startFrame,endFrame);
 
 manip = manip(startFrame:endFrame);
 thresh = 15;
