@@ -2,28 +2,37 @@ function wStructOut = rmManip(wStruct,manip,startFrame,endFrame);
 
 manip = manip(startFrame:endFrame);
 thresh = 15;
+CP = nan(length(wStruct),2);
+
 parfor ii = 1:length(wStruct)
     
     %     if mod(round(ii/length(wStruct)*100),10)==0
     %         fprintf('. \n')
     %     end
-    x = wStruct(ii).x;
-    y = wStruct(ii).y;
-    time = wStruct(ii).time;
+    x = double(wStruct(ii).x);
+    y = double(wStruct(ii).y);
+    time = double(wStruct(ii).time);
+    
+    
+    
+    
     idx=[];
-    for jj = 1:length(x)
-        if isempty(manip(ii))
-            continue
-        end
-        d = sqrt((manip(ii).x-x(jj)).^2+(manip(ii).y-y(jj)).^2);
-        [~,CP] = min(d)
-        if any(d<=thresh)
-            idx = [idx jj];
-        end
-        %         plot(d);
-        %         pause(.01)
-        %         cla
+    if isempty(manip(ii))
+        continue
+    else
+        mX = manip(ii).x;
+        mY = manip(ii).y;
     end
+    
+    if isrow(mX)
+        mX = mX';
+        mY = mY';
+    end
+    [~,d] = dsearchn([x y],[mX mY]);
+    idx = find(d<thresh);
+    [~,CP_idx] = min(d);
+    
+    
     
     %this comment will just remove the points near the manipulator
     %     x(idx) = NaN;
@@ -69,6 +78,9 @@ parfor ii = 1:length(wStruct)
             y(idx) = newY;
         end
     end
+    
+    CP(ii,1) = x(CP_idx);
+    CP(ii,2) = y(CP_idx);
     wStructOut(ii).x = double(x);
     wStructOut(ii).y = double(y);
     wStructOut(ii).time = double(time);

@@ -60,7 +60,7 @@ top_manip_removed = rmManip(top,manip_top,startFrame,endFrame);
 %%3D merge
 % LOAD CALIB FILE!!!
 
-for ii = 1%:1000:length(front_manip_removed)
+for ii = 1:1000:length(front_manip_removed)
     parfor i = ii:ii+999
         [tracked_3D(i).x,tracked_3D(i).y,tracked_3D(i).z]= Merge3D_JAEv1(front_manip_removed(i).x,front_manip_removed(i).y,top_manip_removed(i).x,top_manip_removed(i).y,i,calib);
         tracked_3D(i).frame = front_manip_removed(i).time;
@@ -73,3 +73,18 @@ end
 % 
 % [top_proc,~,~,~] = preprocessWhiskerData_NoSlopeSmooth(top_manip_removed,[],1,0);
 % [front_proc,~,~,~] = preprocessWhiskerData_NoSlopeSmooth(front_manip_removed,[],1,0);
+
+A_camera = calib(1:4);%
+B_camera = calib(5:8);
+A2B_transform = calib([9 10]);
+
+[CP,CP3D,CP3Draw,CPind,ext3D,manipfits,outliers] = calc_CP(top_manip_removed(1:1000),manip_top(startFrame:endFrame),C,useX_top,basepointSmaller_top,tracked_3D, A_camera,B_camera,A2B_transform,[0:999]); % Step 02B
+
+for ii = 1:length(tracked_3D(1:1000))
+	xy(ii).x=ext3D(ii).x;
+	xy(ii).y=ext3D(ii).y;
+	xy(ii).time=ext3D(ii).frame;
+	xz(ii).x=ext3D(ii).x;
+	xz(ii).y=ext3D(ii).z;
+	xz(ii).time=ext3D(ii).frame;
+end
