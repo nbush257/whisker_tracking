@@ -1,10 +1,10 @@
 function [wStructOut,CP] = rmManip(wStruct,manip,startFrame,endFrame);
-
+% contact point is putative. Should only exist if there is contact. 
 manip = manip(startFrame:endFrame);
 thresh = 15;
 CP = nan(length(wStruct),2);
 
-parfor ii = 1:length(wStruct)
+for ii = 1:length(wStruct)
     
     %     if mod(round(ii/length(wStruct)*100),10)==0
     %         fprintf('. \n')
@@ -17,7 +17,7 @@ parfor ii = 1:length(wStruct)
     
     
     idx=[];
-    if isempty(manip(ii))
+    if isempty(manip(ii).x)
         continue
     else
         mX = manip(ii).x;
@@ -28,7 +28,7 @@ parfor ii = 1:length(wStruct)
         mX = mX';
         mY = mY';
     end
-    [~,d] = dsearchn([x y],[mX mY]);
+    [~,d] = dsearchn([mX mY],[x y]);
     idx = find(d<thresh);
     [~,CP_idx] = min(d);
     

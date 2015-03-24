@@ -54,8 +54,8 @@ end
 %% Remove any tracked manipulator. Still need to implement a interpolation, still need to remove other stationary edges from the image if they are present.
 
 
-front_manip_removed = rmManip(front,manip_front,startFrame,endFrame);
-top_manip_removed = rmManip(top,manip_top,startFrame,endFrame);
+[front_manip_removed,frontCP] = rmManip(front,manip_front,startFrame,endFrame);
+[top_manip_removed,topCP] = rmManip(top,manip_top,startFrame,endFrame);
 
 %%3D merge
 % LOAD CALIB FILE!!!
