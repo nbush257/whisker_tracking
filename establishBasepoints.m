@@ -33,8 +33,8 @@ end
 
 for count = 1:length(whiskerData)
 % Sorting the whisker indexes is not necessary for this routine.
-%   [whiskerData(count).x, whiskerData(count).y] = sortWhisker(whiskerData(count).x,whiskerData(count).y,useX);
-    [whiskerData(count).xBase,whiskerData(count).yBase] = getBasepoint(whiskerData(count).x,whiskerData(count).y,useX,basepointSmaller);
+%   [whiskerData(count).x, whiskerData(count).y] = LOCAL_sortWhisker(whiskerData(count).x,whiskerData(count).y,useX);
+    [whiskerData(count).xBase,whiskerData(count).yBase] = LOCAL_getBasepoint(whiskerData(count).x,whiskerData(count).y,useX,basepointSmaller);
 end
 
 xBase = nanmedian( [whiskerData.xBase] );
@@ -42,7 +42,7 @@ yBase = nanmedian( [whiskerData.yBase] );
 
 end % EOF
 
-function [x,y] = sortWhisker(x,y,useX)
+function [x,y] = LOCAL_sortWhisker(x,y,useX)
 
 if useX
     [x,indexes] = sort(x);
@@ -54,7 +54,7 @@ end
 
 end % EOF
 
-function [xBase,yBase] = getBasepoint(x,y,useX,basepointSmaller)
+function [xBase,yBase] = LOCAL_getBasepoint(x,y,useX,basepointSmaller)
 
 if useX
     if basepointSmaller

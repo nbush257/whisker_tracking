@@ -31,15 +31,15 @@ if nargin < 6
 end
 
 % Add more points to whisker
- 
-for count = 1:length(whiskerData)
-    xi = linspace(min(whiskerData(count).x),max(whiskerData(count).x),numNodes);
-    yi = interp1(whiskerData(count).x,whiskerData(count).y,xi);
-    whiskerData(count).xRaw = whiskerData(count).x;
-    whiskerData(count).yRaw = whiskerData(count).y;
-    whiskerData(count).x = xi;
-    whiskerData(count).y = yi;
-end
+
+% for count = 1:length(whiskerData)
+%     xi = linspace(min(whiskerData(count).x),max(whiskerData(count).x),numNodes);
+%     yi = interp1(whiskerData(count).x,whiskerData(count).y,xi);
+%     whiskerData(count).xRaw = whiskerData(count).x;
+%     whiskerData(count).yRaw = whiskerData(count).y;
+%     whiskerData(count).x = xi;
+%     whiskerData(count).y = yi;
+% end
 
 %{
 % Remove duplicate frames from whisker data.
@@ -104,7 +104,7 @@ for count = 1:length(whiskerData)
     whiskerData(count).x = double(whiskerData(count).x + xNudge);
     whiskerData(count).y = double(whiskerData(count).y + yNudge);
 end
-    
+
 % Compute the slope of the whisker via linear regression of first 20 points from basepoint.
 % slopeIndexes = 1:20; % use first 30 pts from basepoint to compute slope
 % slopeIndexes = 1:40; % use first 30 pts from basepoint to compute slope
@@ -122,6 +122,9 @@ for count = 1:length(whiskerData)
     %     whiskerData(count).whiskerAngleRaw = atan(betas(1));
     
     TH(count) = get_TH(whiskerData(count).x,whiskerData(count).y,PT);
+    if isnan(TH(count))
+        warning(['Theta not defined on frame ' num2str(count) '. Check for bad tracking.'])
+    end
     whiskerData(count).whiskerAngleRaw = TH(count);
 end
 
@@ -164,24 +167,24 @@ end
 % Rotate the whiskers based on the smoothed initial whisker segment slopes.
 for count = 1:numel(whiskerData)
     
-        x = whiskerData(count).x; thisBaseX = whiskerData(count).x(1);
-        y = whiskerData(count).y; thisBaseY = whiskerData(count).y(1);
-
-   % Subtract x(1) and y(1) from x/y vectors so that basepoint becomes the
-   % origin of coordinate system.
-   whiskerX = x - thisBaseX; %whiskerData(count).x(1); 
-   whiskerY = y - thisBaseY; %whiskerData(count).y(1);
-   
-   angleNudge = (whiskerData(count).whiskerAngleTarget - whiskerData(count).whiskerAngleRaw)*(pi/180);    % in radians
-   rotWhiskerXY = brotate([whiskerX(:),whiskerY(:)],-angleNudge);
-   
-   whiskerData(count).xRaw = whiskerData(count).x;
-   whiskerData(count).yRaw = whiskerData(count).y;
- 
-   %% Add basepoints back on after rotation.
-   whiskerData(count).x = double(rotWhiskerXY(:,1) + whiskerData(count).x(1));
-   whiskerData(count).y = double(rotWhiskerXY(:,2) + whiskerData(count).y(1)); 
-
+    x = whiskerData(count).x; thisBaseX = whiskerData(count).x(1);
+    y = whiskerData(count).y; thisBaseY = whiskerData(count).y(1);
+    
+    % Subtract x(1) and y(1) from x/y vectors so that basepoint becomes the
+    % origin of coordinate system.
+    whiskerX = x - thisBaseX; %whiskerData(count).x(1);
+    whiskerY = y - thisBaseY; %whiskerData(count).y(1);
+    
+    angleNudge = (whiskerData(count).whiskerAngleTarget - whiskerData(count).whiskerAngleRaw)*(pi/180);    % in radians
+    rotWhiskerXY = brotate([whiskerX(:),whiskerY(:)],-angleNudge);
+    
+    whiskerData(count).xRaw = whiskerData(count).x;
+    whiskerData(count).yRaw = whiskerData(count).y;
+    
+    %% Add basepoints back on after rotation.
+    whiskerData(count).x = double(rotWhiskerXY(:,1) + whiskerData(count).x(1));
+    whiskerData(count).y = double(rotWhiskerXY(:,2) + whiskerData(count).y(1));
+    
 end
 
 % THIS IS FOR CHECKING THAT WE SUCCESFULLY SMOOTEHD THE WHISKERS

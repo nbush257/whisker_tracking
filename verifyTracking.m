@@ -1,8 +1,8 @@
 startFrame = 11008;
 endFrame = 20644;
 count = 0;
-tW = top_manip_removed;
-fW = front_manip_removed;
+tW = top_smooth;
+fW = front_smooth;
 tVid = seqIo(topVidName,'r');
 fVid = seqIo(frontVidName,'r');
 close all

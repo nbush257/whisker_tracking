@@ -59,6 +59,8 @@ if ~isempty(xw)
         end
         
         TH = atan2(yye-yy1,xxe-xx1).*(180/pi);
+    else% added by NB 2015_03_26 because errors out if no TH called
         
+        TH = nan;
     end
 end

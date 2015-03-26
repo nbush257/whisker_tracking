@@ -1,5 +1,5 @@
 %generate settings file
-function genSettings2D(filename)
+
 %% Settings_VG2D_20140908_gamma_F001840F012839
 % -------------------------------------------------------------------------
 % Settings file for image processing
@@ -97,4 +97,4 @@ desired_freq = 25;
 samp_rate = 250; % Hz of video acquisition
 PT.filt = desired_freq/(samp_rate/2);
 
-save(filename)
+save([PT.save '\Settings_' PT.TAG '.mat'],'PT','desired_freq','samp_rate')
