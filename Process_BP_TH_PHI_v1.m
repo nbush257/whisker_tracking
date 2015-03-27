@@ -1,6 +1,6 @@
 % Get 3D linear fit then get BP_TH_PHI
 
-function [x,y,z] = Process_BP_TH_PHI_v1(x,y,z,PT)
+function [x,y,z,BP] = Process_BP_TH_PHI_v1(x,y,z,PT)
 %function Process_BP_TH_PHI_V1(x,y,z,PT)
 % need to fix the pix2m conversion thing. Currently taking only 10% of the
 % whisker. THIS IS A WORKAROUND. 
@@ -58,10 +58,14 @@ newY = linspace(pts(2,1),pts(2,2),length(x_seg));
 newZ = linspace(pts(3,1),pts(3,2),length(x_seg));
 
 %replace x,y,z
-x(idx) = newX;
-y(idx) = newY;
-z(idx) = newZ;
 
+    x(idx) = newX;
+    y(idx) = newY;
+    z(idx) = newZ;
+
+
+
+BP = [x(1) y(1) z(1)];
 
 
 

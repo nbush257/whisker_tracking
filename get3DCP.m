@@ -24,22 +24,8 @@ end
 
 
 
-% % interpolate the 3D whisker
-% 
-% for count = 1:length(wstruct_3D)
-%     xi = linspace(min(wstruct_3D(count).x),max(wstruct_3D(count).x),num_interp_nodes);
-%     yi = interp1(wstruct_3D(count).x,wstruct_3D(count).y,xi);
-%     zi = interp1(wstruct_3D(count).x,wstruct_3D(count).z,xi);
-%     wstruct_3D(count).x = xi;
-%     wstruct_3D(count).y = yi;
-%     wstruct_3D(count).z = zi;
-% end
-% 
-% 
 
 
-
-% will need to make sure all indexing is right
 
 
 needToExtend = [];
@@ -56,7 +42,7 @@ for ii = 1:iter_length
     end
     
     % short circuit if no contact
-    if isnan(CP(ii,1))
+    if ~contact(ii)
         continue
     end
     
@@ -66,7 +52,7 @@ for ii = 1:iter_length
     % Immediately replace short whiskers
     % edited by NB 2015_03_23 to look at the 3D length, not the 2D
     % length
-    if length(wstruct_3D(ii).x)< abs_length_cutoff
+    if size(wskr_top,1)< abs_length_cutoff
         wstruct_3D(ii).x = wstruct_3D(ii-1).x;
         wstruct_3D(ii).y = wstruct_3D(ii-1).y;
         wstruct_3D(ii).z = wstruct_3D(ii-1).z;
@@ -82,13 +68,13 @@ for ii = 1:iter_length
     % Calculate the number of nodes needed beyond the contact point
     desired_extra_nodes = ceil(length(wskr_top(:,1))/desired_extra_percent);
     %             desired_extra_nodes = 6;
-    
+     CP_ind(ii) = ind;
     if ind >= length(wskr_top(:,1)) - desired_extra_nodes
-%         xyfit = polyfit(wstruct_3D(ii).x,wstruct_3D(ii).y,3);
-%         xzfit = polyfit(wstruct_3D(ii).x,wstruct_3D(ii).z,3);
-%         xshift = 0;
-%         yshift = 0;
-        %[wstruct_3D(ii),ind] = LOCAL_extend_one_Seg(wstruct_3D(ii),xyfit,xzfit,CP(ii,:),[xshift,yshift],CP_ind(ii),use_x,BPsmaller);
+        xyfit = polyfit(wstruct_3D(ii).x,wstruct_3D(ii).y,3);
+        xzfit = polyfit(wstruct_3D(ii).x,wstruct_3D(ii).z,3);
+        xshift = 0;
+        yshift = 0;
+        [wstruct_3D(ii),ind] = LOCAL_extend_one_Seg(wstruct_3D(ii),xyfit,xzfit,CP(ii,:),[xshift,yshift],CP_ind(ii),use_x,BPsmaller);
         needToExtend = [needToExtend ii];
         
         extended = extended + 1;
@@ -97,7 +83,7 @@ for ii = 1:iter_length
     
     
     CP3D(ii,:) = [wstruct_3D(ii).x(ind),wstruct_3D(ii).y(ind),wstruct_3D(ii).z(ind)];
-    CP_ind(ii) = ind;
+   
     
     
     % Check real
@@ -111,7 +97,7 @@ delete(w)
 end%EOF
 
 function [wskr3D,CPind] = LOCAL_extend_one_Seg(wskr3D,whfitA,whfitB,cntc_pt,shift,lastCPind,use_x,BPsmaller)
-
+global A_camera B_camera A2B_transform desired_extra_nodes
 [wskrA,~] = BackProject3D(wskr3D,A_camera,B_camera,A2B_transform);
 
 % shift whisker

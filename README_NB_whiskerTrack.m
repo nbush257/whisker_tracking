@@ -96,36 +96,56 @@ tracked_3D_raw = tracked_3D;
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %THIS IS A SPECIFIC DATA FIX BECUASE MY SECOND POINT IS NOT GOOD. THIS DOES NOT
 %GENERALIZE TO ALL DATA!!!!!!!!!!!!!!!
-rm2 = input('Are you sure you want to remove the second point? (y/n)','s')
-if strcmp(rm2,'y')
-    for i = 1:length(tracked_3D)
-        tracked_3D(i).x(2) = [];
-        tracked_3D(i).y(2) = [];
-        tracked_3D(i).z(2) = [];
-    end
-end
+% rm2 = input('Are you sure you want to remove the second point? (y/n)','s')
+% if strcmp(rm2,'y')
+%     for i = 1:length(tracked_3D)
+%         tracked_3D(i).x(2) = [];
+%         tracked_3D(i).y(2) = [];
+%         tracked_3D(i).z(2) = [];
+%     end
+% end
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-tracked_3D = clean3Dwhisker(tracked_3D);
+[tracked_3D,shortWhisker] = clean3Dwhisker(tracked_3D);
 
 
 %Only need to use one view. Currently using top.
-[CP3D,tracked_3D,needToExtend] = get3DCP(top_manip_removed,manip_top,contact,1,0,topCP,tracked_3D,B_camera,A_camera,A2B_transform,[manip_top.time]);
+[CP3D,tracked_3D,needToExtend] = get3DCP(top_manip_removed,manip_top,C,1,0,topCP,tracked_3D,B_camera,A_camera,A2B_transform,[manip_top.time]);
 
 %linear fit to initial 3D segment.
+clear BP;
 for ii = 1:length(tracked_3D)
     x = tracked_3D(ii).x;
     y = tracked_3D(ii).y;
     z = tracked_3D(ii).z;
-    [xOut,yOut,zOut] = Process_BP_TH_PHI_v1(x,y,z,PT);
-    
-    tracked_3D(ii).x = xOut;
-    tracked_3D(ii).y = yOut;
-    tracked_3D(ii).z = zOut;
+    [~,~,~,BP(ii,:)] = Process_BP_TH_PHI_v1(x,y,z,PT);
+   
     clear x y z xOut yOut zOut
 end    
 
+%% Verify plots
+
+for ii = 1: length(tracked_3D)
+    x = tracked_3D(ii).x;
+    y = tracked_3D(ii).y;
+    z = tracked_3D(ii).z;
+    
+    plot3(x(1:10),y(1:10),z(1:10),'.')
+   % plot3(x(1),y(1),z(1),'r*')
+    ho
+    plot3(BP(ii,1),BP(ii,2),BP(ii,3),'r*')
+    pause(.1);
+    cla
+end
+
+
+
+%% check that all vars are in correct format/data quality for E3D
+
+CP = CP3D; clear CP3D;
+data_QA;
 
 save([PT.save '\' PT.TAG '_merged.mat']);
+save([PT.save '\' PT.TAG '_E3D.mat'],'xw3d','yw3d','zw3d','PT','C','CP','TH','PHI','BP');
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
