@@ -6,12 +6,21 @@ function tracked_3D = clean3Dwhisker(tracked_3D)
 % Sets the basepoint as the first node
 % Interpolates the nodes
 
+
+rmShort = input('Remove Short Whiskers? (y/n)','s');
+interpCheck = input('Interpolate Whisker? Num Nodes = 200 (y/n)','s');
+baseOrder = input('Order the wrt basepoint? (y/n)','s');
+hackFix = input('remove the second node? (y/n) This is not standard!!! Only do this if you are sure.','s');
+
+
 num_interp_nodes = 200;
 
 
-%% get UI for the basepoint
 
 for ii = 1:100
+    if ~strcmp(baseOrder,'y')
+        break
+    end
     plot(tracked_3D(ii).x,tracked_3D(ii).y,'.')
     pause(.02)
     if ii ~=100
@@ -21,35 +30,48 @@ for ii = 1:100
         title('Click on the basepoint');
         bp = ginput(1);
     end
-end    
+end
 close all
 %
 for ii = 1:length(tracked_3D)
     %% if the whsiker is short( Bad merge) then use the previous whisker
-    if length(tracked_3D(ii).x)<2 | length(tracked_3D(ii).y)<2 | length(tracked_3D(ii).z)<2
-        tracked_3D(ii).x = tracked_3D(ii-1).x;
-        tracked_3D(ii).y = tracked_3D(ii-1).y;
-        tracked_3D(ii).z = tracked_3D(ii-1).z;
+    if strcmp(rmShort,'y')
+        if length(tracked_3D(ii).x)<2 | length(tracked_3D(ii).y)<2 | length(tracked_3D(ii).z)<2
+            tracked_3D(ii).x = tracked_3D(ii-1).x;
+            tracked_3D(ii).y = tracked_3D(ii-1).y;
+            tracked_3D(ii).z = tracked_3D(ii-1).z;
+        end
     end
+    
     
     %% Flip node order if basepoint os not the first node
-    dis2bp_first = sqrt((tracked_3D(ii).x(1) - bp(1))^2+ (tracked_3D(ii).y(1) - bp(2))^2);
-    dis2bp_last = sqrt((tracked_3D(ii).x(end) - bp(1))^2+ (tracked_3D(ii).y(end) - bp(2))^2);
-    
-    if dis2bp_first>dis2bp_last
-        tracked_3D(ii).x = fliplr(tracked_3D(ii).x);
-        tracked_3D(ii).y = fliplr(tracked_3D(ii).y);
-        tracked_3D(ii).z = fliplr(tracked_3D(ii).z);
+    if strcmp(baseOrder,'s')
+        dis2bp_first = sqrt((tracked_3D(ii).x(1) - bp(1))^2+ (tracked_3D(ii).y(1) - bp(2))^2);
+        dis2bp_last = sqrt((tracked_3D(ii).x(end) - bp(1))^2+ (tracked_3D(ii).y(end) - bp(2))^2);
+        
+        if dis2bp_first>dis2bp_last
+            tracked_3D(ii).x = fliplr(tracked_3D(ii).x);
+            tracked_3D(ii).y = fliplr(tracked_3D(ii).y);
+            tracked_3D(ii).z = fliplr(tracked_3D(ii).z);
+        end
+    end
+    %% remove second node
+    if strcmp(hackFix,'y')
+        for i = 1:length(tracked_3D)
+            tracked_3D(i).x(2) = [];
+            tracked_3D(i).y(2) = [];
+            tracked_3D(i).z(2) = [];
+        end
     end
     
-    
     %% interpolate between whisker nodes
-    xi = linspace(min(tracked_3D(ii).x),max(tracked_3D(ii).x),num_interp_nodes);
-    yi = interp1(tracked_3D(ii).x,tracked_3D(ii).y,xi);
-    zi = interp1(tracked_3D(ii).x,tracked_3D(ii).z,xi);
-    tracked_3D(ii).x = xi;
-    tracked_3D(ii).y = yi;
-    tracked_3D(ii).z = zi;
-    
+    if strcmp(interpCheck,'y')
+        xi = linspace(min(tracked_3D(ii).x),max(tracked_3D(ii).x),num_interp_nodes);
+        yi = interp1(tracked_3D(ii).x,tracked_3D(ii).y,xi);
+        zi = interp1(tracked_3D(ii).x,tracked_3D(ii).z,xi);
+        tracked_3D(ii).x = xi;
+        tracked_3D(ii).y = yi;
+        tracked_3D(ii).z = zi;
+    end
 end
 
