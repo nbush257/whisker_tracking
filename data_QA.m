@@ -9,11 +9,11 @@ for ii = 1:length(tracked_3D)
     y = tracked_3D(ii).y;
     z = tracked_3D(ii).z;
     
-    if any([x(1) y(1) z(1)]-BP(ii,:)>2)% check to see if basepoint is off by more than 2 pixels
-        difference = num2str(sum([x(1) y(1) z(1)]-BP(ii,:)));
-        warning(['BP is different than the first node by ' difference 'at frame ' num2str(ii)])
-        diffBP = [diffBP ii];
-    end
+%     if any([x(1) y(1) z(1)]-BP(ii,:)>2)% check to see if basepoint is off by more than 2 pixels
+%         difference = num2str(sum([x(1) y(1) z(1)]-BP(ii,:)));
+%         warning(['BP is different than the first node by ' difference 'at frame ' num2str(ii)])
+%         diffBP = [diffBP ii];
+%     end
     
     if any(isnan(x)) | any(isnan(y)) | any(isnan(z))
         warning('NaNs found in the whisker. Fix them')
@@ -77,25 +77,25 @@ end
 
 
 %% BP
-
-if any(any(isnan(BP)))
-    error('NaNs found in BP');
-end
-
-if size(BP,2)~=3
-    if size(BP,1) == 3 & size(BP,2)==length(tracked_3D)
-        BP =BP';
-        warning('Transposed BP.')
-    else
-        error('Problem with the size of BP.')
-    end
-elseif size(BP,2) == 3 & size(BP,1)~=length(tracked_3D)
-    error('Length of BP is Incorrect. May need to alter')
-end
-if strcmp(lastwarn,'none')
-    fprintf('Congratulations!! \nYour data is acceptable to E3D. Go grab a beer. \n')
-end
-
+% 
+% if any(any(isnan(BP)))
+%     error('NaNs found in BP');
+% end
+% 
+% if size(BP,2)~=3
+%     if size(BP,1) == 3 & size(BP,2)==length(tracked_3D)
+%         BP =BP';
+%         warning('Transposed BP.')
+%     else
+%         error('Problem with the size of BP.')
+%     end
+% elseif size(BP,2) == 3 & size(BP,1)~=length(tracked_3D)
+%     error('Length of BP is Incorrect. May need to alter')
+% end
+% if strcmp(lastwarn,'none')
+%     fprintf('Congratulations!! \nYour data is acceptable to E3D. Go grab a beer. \n')
+% end
+% 
 
     
 
