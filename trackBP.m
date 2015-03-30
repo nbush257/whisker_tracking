@@ -1,24 +1,67 @@
 
-function [wStruct,xBaseMedian,yBaseMedian] = trackBP(vidFileName,wStruct,startFrame,endFrame)
+function [wStruct,xBaseMedian,yBaseMedian] = trackBP(vidFileName,wStruct,varargin)
+%% function [wStruct,xBaseMedian,yBaseMedian] = trackBP(vidFileName,wStruct,varargin)
+% -------------------------------------------------------------------------
+% Finds the basepoint by gettin user input as to where the basepoint is,
+% finding the nearest point on the 'whisk' tracked whisker, and cutting it
+% off there. 
+% -----------------------------------------------------------------------
+% INPUTS: 
+%   vidFileName = string of video file to grab the first frame. Can be a .see or .avi 
+%   wStruct = 2D tracked whisker structure.
+%   varargin:
+%       {1}: startFrame - if you want to use a particular frame for the
+%       user input, specify it here. Defaults to 1
+% OUTPUTS: 
+%   wstruct = 'whisk-like' structure with bpx and bpy fields appended [n]
+%       [n] length struct with x and y fields of whisker coordinates
+%
+%   xBaseMedian = median x position of the basepoint
+%   yBaseMedian = median y position of the basepoint
 
-v = seqIo(vidFileName,'r');
-v.seek(startFrame-1);
-I = v.getframe();
+
+%% Input handling
+% check for start frame
+if length(varargin) == 1
+    startFrame = varargin{1};
+elseif length(varargin)>1
+    warning(['Too many input arguments, taking the start frame to be 'num2str(varargin{1})])
+    startFrame = varargin{1};
+else
+    startFrame = 1;
+end
+% check for video file format
+if strcmp(vidFileName(end-2:end),'avi')
+    v = VideoReader(vidFileName);
+    I = read(v,startFrame)
+elseif strcmp(vidFileName(end-2:end),'seq')
+    v = seqIo(vidFileName,'r');
+    v.seek(startFrame-1);
+    I = v.getframe();
+else
+    error('Incompatible video format. Must be an .AVI or .SEQ')
+end
+
+%% User input Basepoint
 imshow(I);
 zoom on; title('zoom to the basepoint');pause;
 title('click on the basepoint')
 bp(1,:) = ginput(1);
+
+%% Trim the tracked whisker in each frame to the basepoint. 
+% Sequentially finds the nearest tracked whisker node to the most recent
+% basepoint.
 for ii = 1:length(wStruct);
     
-    % if this is the first frame, use theuser defined basepoint
+    % if this is the first frame, use the user defined basepoint
     if ii == 1
         d = sqrt((wStruct(ii).x-bp(1,1)).^2 + (wStruct(ii).y-bp(1,2)).^2);
-    
+        
     else % If this is not the first frame, find the nearest node to the last basepoint.
         d = sqrt((wStruct(ii).x-bp(ii-1,1)).^2 + (wStruct(ii).y-bp(ii-1,2)).^2);
     end
     [~,bpIdx(ii)] = (min(d));%find the index of the node closest to the last basepoint.
-
+    
     %get the basepoint value based on the index found previously
     bp(ii,1) = wStruct(ii).x(bpIdx(ii));
     bp(ii,2) = wStruct(ii).y(bpIdx(ii));
@@ -41,6 +84,7 @@ for ii = 1:length(wStruct);
     end
 end
 
+%% Output 
 for ii =1:length(wStruct)
     wStruct(ii).x = wStruct(ii).x(bpIdx(ii):end);
     wStruct(ii).y = wStruct(ii).y(bpIdx(ii):end);
