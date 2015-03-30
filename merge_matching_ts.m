@@ -25,13 +25,7 @@ for ii = min(allTimes):max(allTimes)
     newX = [];
     newY = [];
     %% skip frames with one or no whiskers tracked.
-    if length(sameTime)<=1
-        % sort the whisker
-        [newX,newY] = sortWhisker(x,y,useX,basepoint_smaller);
-        % Output
-        wStructOut(count).x = double(newX);
-        wStructOut(count).y = double(newY);
-        wStructOut(count).time = double(ii);
+    if isempty(sameTime)      
         continue
     end
     
@@ -45,7 +39,6 @@ for ii = min(allTimes):max(allTimes)
         if isrow(y)
             y = y';
         end
-        
         newX = [newX;x];
         newY = [newY;y];
     end % End single frame for loop
