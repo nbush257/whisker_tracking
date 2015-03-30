@@ -5,27 +5,27 @@
 % Settings file for image processing
 % -------------------------------------------------------------------------
 % DATA SPECIFICS:
-%   + Data author: James Ellis
-%   + Date taken: 11/20/14
-%   + Trial: E1
-%   + Frames: 1840 - 12839
+%   + Data author: Nick Bush
+%   + Date taken: 2015_02_26
+%   + Trial: B2
+%   + Frames: 11008 20644
 % -------------------------------------------------------------------------
-% James
-% Dec 17, 2014
+% Nick
+% 2015_03_30
 
 %% 00. Path names and labeling
 % ** CHANGE WITH EACH DATASET **
 
 % Data path location:
-PT.dataname = 'rat2105_06_0226_FEB26_vg_B2';
-PT.path = 'L:\raw\2015_06\rat2105_06_0226_FEB26_vg_B2';
-PT.data = 'L:\raw\2015_06\rat2105_06_0226_FEB26_vg_B2';
+PT.dataname = 'rat2105_06_FEB26_vg_B2';
+PT.path = 'L:\raw\2015_06\rat2105_06_FEB26_VG_B2';
+PT.data = 'L:\raw\2015_06\rat2105_06_FEB26_VG_B2';
 
 % Frame sequence
 PT.Frames = [11008 20644];
 
 % Data TAG:
-PT.TAG = ['rat2015_06_0226_FEB26_vg_B2_',num2str(PT.Frames(1),'%06.0f'),'F',num2str(PT.Frames(2),'%06.0f')];
+PT.TAG = ['rat2015_06_FEB26_VG_B2_','F',num2str(PT.Frames(1),'%06.0f'),'F',num2str(PT.Frames(2),'%06.0f')];
 
 % /////////////////////////////////////////////////////////////////////////
 
@@ -62,7 +62,7 @@ PT.save = 'L:\raw\2015_06\rat2105_06_0226_FEB26_vg_B2';
 % PT.zone = 'LT'; % L: Left, R: Right, T: Top, B: Bottom (Any order)
 % % Zone around crop-zone to check for whisker crossing
 
-PT.pix2m = .002/17;%17 pixels per 2 meters
+PT.pix2m = .0012;%17 pixels per 2 meters
 
 %% Run_Process_2D_WSKR
 % ** CHANGE WITH EACH DATASET: **
@@ -97,4 +97,3 @@ desired_freq = 25;
 samp_rate = 250; % Hz of video acquisition
 PT.filt = desired_freq/(samp_rate/2);
 
-save([PT.save '\Settings_' PT.TAG '.mat'],'PT','desired_freq','samp_rate')

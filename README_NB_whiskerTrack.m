@@ -1,49 +1,73 @@
-% whisker ttracking readme NB
+%%%%%%%%% THIS FILE IS DESIGNED TO BE UNEDITED %%%%%%%%%%%%%%%%%
+%%% BY THE USER. ALL CHANGES SHOULD BE MADE IN THE SETTINGS %%%%
+%%% FILE YOU CREATE. THAT SAID, IT IS PRUDENT TO RUN IT LINE %%%
+%%% LINE SO YOU CAN MAKE CHANGES TO YOUR DATA IF PROBLEMS ARISE%
 
-% Initialize with a settings file
+%%% This file takes 2 .whiskers files, 3D merges them, and saves the
+%%% appropriate data for E3D. If you do not want to use raw .whiskers files
+%%% you will have to set 'front' and 'top' to your data struct.
+
+%%% For 2 Camera Merges, make sure A  = front B = top.
+
+%% Get data specific information
+% get pix2m3D fron merge
+open pix2m3D;
+% Initialize with a settings file, run it.
 open genSettings2D;
 
+%% Set paths and names for loading in data
+% clip whisker files
+frontWhiskersName = [PT.path '\' PT.TAG '_Front.whiskers'];
+topWhiskersName = [PT.path '\' PT.TAG '_Top.whiskers'];
 
+% file for the clip avi.
+frontVidName = [PT.path '\' PT.TAG '_Front.avi']
+topVidName = [PT.path '\' PT.TAG '_Top.avi']';
 
-frontWhiskersName = 'L:\raw\2015_06\rat2105_06_0226_FEB26_vg_B2\rat2105_06_0226_FEB26_vg_B2_t01_Front_11008_20644.whiskers';
-topWhiskersName = 'L:\raw\2015_06\rat2105_06_0226_FEB26_vg_B2\rat2105_06_0226_FEB26_vg_B2_t01_Top_11008_20644.whiskers';
-frontVidName = 'L:\raw\2015_06\rat2105_06_0226_FEB26_vg_B2\rat2105_06_0226_FEB26_vg_B2_t01_Front.seq';
-topVidName = 'L:\raw\2015_06\rat2105_06_0226_FEB26_vg_B2\rat2105_06_0226_FEB26_vg_B2_t01_top.seq';
-topManipulatorName = '';
-frontManipulatorName= '';
+% all manipulatror
+frontManipulatorName= [PT.path '\' PT.dataname '_manip_Front.mat'];
+topManipulatorName = [PT.path '\' PT.dataname '_manip_Top.mat'];
 
-startFrame = 11008;
-endFrame =20644;
+contactName = [PT.path '\' PT.TAG '_contacts.mat'];
 
+% Frames are inclusive and indexed at 1
+startFrame = PT.Frames(1);
+endFrame =PT.Frames(2);
 
-useX_top = 1;
+% Used in some of the codee by James and John.
+useX_top = 1; % Should we sort on X?
 useX_front = 1;
-basepointSmaller_top = 0;
+basepointSmaller_top = 0; % Is the basepoint smaller or larger than teh rest of the whisker?
 basepointSmaller_front = 0;
+
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%% Do Not Edit Below This Line %%%%%%%%%%%%
 %%%%%%%%%%%%%% NB 3/12/2015 %%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-%%
-front  = LoadWhiskers(frontWhiskersName);
-top  = LoadWhiskers(topWhiskersName);
 
-for i = 1:4
-    front = merge_matching_ts(front,useX_front,basepointSmaller_front); %(wstruct, useX,basepointSmaller) %you might have to repeat this if you track more than 2 whiskers.
-    top = merge_matching_ts(top,useX_top,basepointSmaller_top);
+%% Load whisker and contact data
+load(contactName)
+
+if ~exist('C','var')
+    warning('There is not contact variable associated with this dataset')
+end
+if ~exist('front','var')
+    front  = LoadWhiskers(frontWhiskersName);
+end
+if ~exist('top','var')
+    top  = LoadWhiskers(topWhiskersName);
 end
 
-front = trackBP(frontVidName,front,startFrame,endFrame);
-top = trackBP(topVidName,top,startFrame,endFrame);
+%% Merges all whiskers in a frame together. This might still be cludgey as of 2015_03_30 NEB
+% Iterate because merge code only does one at a time.
+front = merge_matching_ts(front,useX_front,basepointSmaller_front); %(wstruct, useX,basepointSmaller) %you might have to repeat this if you track more than 2 whiskers.
+top = merge_matching_ts(top,useX_top,basepointSmaller_top);
+%% Track the basepoint
+front = trackBP(frontVidName,front);
+top = trackBP(topVidName,top);
 close all
-
-%smooth the initial segment in order to avoid weird kinks that throw off
-% %the basepoint
-%probably don't want to do this.
-% front = smoothInitSegment2D(front);
-% top = smoothInitSegment2D(top);
-
 
 %% The manip should generally be found earlier; the script goes through the whole seq and takes some time.
 %%the functions here are primarily for reference
@@ -53,179 +77,137 @@ close all
 %   topManip = findManip(topVidName,manipPresence);
 
 
-%% Remove any tracked manipulator. Still need to implement a interpolation, still need to remove other stationary edges from the image if they are present.
+%% Remove any tracked manipulator and calculate CP. This code takes some time
 [front_manip_removed,frontCP] = rmManip(front,manip_front,startFrame,endFrame);
 [top_manip_removed,topCP] = rmManip(top,manip_top,startFrame,endFrame);
+%
 
-%% make sure contact and CP are referenced the same.
-topCP(~contact,:)=nan;
-frontCP(~contact,:) = nan;
+%% Interpolate 2D Whiskers. VERY slow. Unknown effect on result. Kept for reference and posterity.
+% front_manip_removed_int = interp2D_wstruct(front_manip_removed(1));
+% top_manip_removed_int = interp2D_wstruct(top_manip_removed(1));
+
+
+%% Remove the contact point if there is no contact (the CP
+topCP(~C,:) = nan;
+frontCP(~C,:) = nan;
+
+%% Make sure no emptys in 3D merge input
+for ii = 1:length(top_manip_removed)
+    if isempty(top_manip_removed(ii).x)
+        top_manip_removed(ii).x = top_manip_removed(ii-1).x;
+        top_manip_removed(ii).y = top_manip_removed(ii-1).y;
+    end
+    
+    if isempty(front_manip_removed(ii).x)
+        front_manip_removed(ii).x = front_manip_removed(ii-1).x;
+        front_manip_removed(ii).y = front_manip_removed(ii-1).y;
+    end
+end
 
 %%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % 3D merge
-% LOAD CALIB FILE
-[calib_fName,calib_pName] = uigetfile('Load the calib file','*.mat');
+% Load Calibration file data.
+[calib_fName,calib_pName] = uigetfile('*.mat','Load the calib file');
 load([calib_pName calib_fName]);
+A_camera = calib(1:4);
+B_camera = calib(5:8);
+A2B_transform = calib([9 10]);
 
 savePath = uigetdir('Where do you want to save the merged tracking?')
 cd(savePath)
 
-% 3D Merge Whisker
-for ii = 1:1000:length(front_manip_removed)
-    parfor i = ii:ii+999
-        [tracked_3D(i).x,tracked_3D(i).y,tracked_3D(i).z]= Merge3D_JAEv1(front_manip_removed(i).x,front_manip_removed(i).y,top_manip_removed(i).x,top_manip_removed(i).y,i,calib);
+% 3D Merge Whisker % Might want to try to make the seed whisker variable.
+minDS = .40;% sets the minimum internode distance.
+minWhiskerSize = 20; % in # of nodes
+N = 20; % I think this is the number of fits to try. More should give a stabler fit.
+
+%Maybe only look at +- 100 around contact.
+
+tracked_3D = struct([]);
+
+%% This control breaks on the last
+tic;
+step = 1000;% Saves every 1000 frames
+% Outer loop is big serial chunks that saves every [step] frames
+for ii = 1:step:length(front_manip_removed)
+    
+    % Makes sure we don't try to access a frame past the last frame.
+    if (ii+step-1)>length(front_manip_removed)
+        iter = length(front_manip_removed)-ii;
+    else
+        iter = step-1;
+    end
+    % Parallel for loop which does the actual merging. Gets batches from
+    % the current outer loop.
+    parfor i = ii:ii+iter
+        close all
+        merge_x = [];merge_y = [];merge_z = [];
+        DS = minDS;
+        [merge_x,merge_y,merge_z]= Merge3D_JAEv1(front_manip_removed(i).x,front_manip_removed(i).y,top_manip_removed(i).x,top_manip_removed(i).y,i,calib,'wm_opts',{'DS',DS,'N',N});
+        
+        % The while loop steps DS up until either a satisfactory whisker is reached or DS gets too big.
+        while length(merge_x)<minWhiskerSize
+            DS = DS+.05;
+            [merge_x,merge_y,merge_z]= Merge3D_JAEv1(front_manip_removed(i).x,front_manip_removed(i).y,top_manip_removed(i).x,top_manip_removed(i).y,i,calib,'wm_opts',{'DS',DS,'N',N});
+            if DS>=2
+                break
+            end
+        end% end while
+        % Save into workspace
+        tracked_3D(i).x = merge_x; tracked_3D(i).y = merge_y; tracked_3D(i).z = merge_z;
         tracked_3D(i).frame = front_manip_removed(i).time;
     end
-    flnm=['3D_rat2105_06_0226_FEB26_vg_B2_t01_CLIP_11008_20644_F',sprintf('%06d',ii),'F',sprintf('%06d',ii+999)];
+    flnm=[PT.path '\' PT.TAG '_rawMerged.mat'];
     save(flnm,'tracked_3D')
-    clear tracked_3D
 end
+timer = toc;
+fprintf('It took %.1f seconds to merge %i frames \n',timer,length(tracked_3D));
 
-A_camera = calib(1:4);%
-B_camera = calib(5:8);
-A2B_transform = calib([9 10]);
+%% Clean whiskers and verify merge
+% Takes care of short whiskers, order, and interpolation
+[tracked_3D_clean,shortWhisker] = clean3Dwhisker(tracked_3D);
 
-%If you get weird results you might need to swith the cameras
-% I should put a test in here to check that.
-
-
-% takes care of short whiskers, order, and interpolation
-tracked_3D_raw = tracked_3D;
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%THIS IS A SPECIFIC DATA FIX BECUASE MY SECOND POINT IS NOT GOOD. THIS DOES NOT
-%GENERALIZE TO ALL DATA!!!!!!!!!!!!!!!
-% rm2 = input('Are you sure you want to remove the second point? (y/n)','s')
-% if strcmp(rm2,'y')
-%     for i = 1:length(tracked_3D)
-%         tracked_3D(i).x(2) = [];
-%         tracked_3D(i).y(2) = [];
-%         tracked_3D(i).z(2) = [];
-%     end
-% end
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-[tracked_3D,shortWhisker] = clean3Dwhisker(tracked_3D);
-
-
-%Only need to use one view. Currently using top.
-[CP3D,tracked_3D,needToExtend] = get3DCP(top_manip_removed,manip_top,C,1,0,topCP,tracked_3D,B_camera,A_camera,A2B_transform,[manip_top.time]);
-
-%linear fit to initial 3D segment.
-clear BP;
-for ii = 1:length(tracked_3D)
-    x = tracked_3D(ii).x;
-    y = tracked_3D(ii).y;
-    z = tracked_3D(ii).z;
-    [~,~,~,BP(ii,:)] = Process_BP_TH_PHI_v1(x,y,z,PT);
-   
-    clear x y z xOut yOut zOut
-end    
-
-%% Verify plots
-
-for ii = 1: length(tracked_3D)
-    x = tracked_3D(ii).x;
-    y = tracked_3D(ii).y;
-    z = tracked_3D(ii).z;
+% use to visually inspect the merge
+figure
+for ii =1:1000
+    [check_top,check_front] = BackProject3D(tracked_3D_clean(ii),B_camera,A_camera,A2B_transform);
     
-    plot3(x(1:10),y(1:10),z(1:10),'.')
-   % plot3(x(1),y(1),z(1),'r*')
-    ho
-    plot3(BP(ii,1),BP(ii,2),BP(ii,3),'r*')
-    pause(.1);
+    subplot(121);
+    plot(check_front(:,1),check_front(:,2),'.')
+    hold on
+    plot(front_manip_removed(ii).x,front_manip_removed(ii).y,'r.')
+    legend({'Back Project','Original Tracking'});
+    subplot(122);
+    plot(check_top(:,1),check_top(:,2),'.')
+    hold on
+    plot(top_manip_removed(ii).x,top_manip_removed(ii).y,'r.')
+    legend({'Back Project','Original Tracking'});
+    pause(.01)
+    clf
+end
+close all
+
+%% Get Contact Point
+[CP,tracked_3D_extended,needToExtend] = get3DCP(top_manip_removed,manip_top,C,1,0,topCP,tracked_3D_clean,B_camera,A_camera,A2B_transform,[manip_top.time]);
+% Visually inspect CP
+figure
+for ii = 1:length(CP)
+    if isnanCP(ii,1)
+        continue
+    end
+    plot3(tracked_3D_extended(ii).x,tracked_3D_extended(ii).y,tracked_3D_extended(ii).z,'.')
+    hold on
+    plot3(CP(ii,1),CP(ii,2),CP(ii,3),'r*');
+    pause(.01)
     cla
 end
 
 
 
 %% check that all vars are in correct format/data quality for E3D
-
-CP = CP3D; clear CP3D;
 data_QA;
 
 save([PT.save '\' PT.TAG '_merged.mat']);
-save([PT.save '\' PT.TAG '_E3D.mat'],'xw3d','yw3d','zw3d','PT','C','CP','TH','PHI','BP');
-
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%
-%
-% % get 2D structs.
-% for ii = 1:length(tracked_3D)
-%     xy(ii).x=tracked_3D(ii).x;
-%     xy(ii).y=tracked_3D(ii).y;
-%     xy(ii).time=tracked_3D(ii).frame;
-%     xz(ii).x=tracked_3D(ii).x;
-%     xz(ii).y=tracked_3D(ii).z;
-%     xz(ii).time=tracked_3D(ii).frame;
-% end
-%
-% % load settings file;
-% %
-% % [xy_proc,~,~] = preprocessWhiskerData_postMerge(xy,PT,useX_front,basepointSmaller_front);
-% % [xz_proc,~,~] = preprocessWhiskerData_postMerge(xz,PT,useX_top,basepointSmaller_top);
-% % Calc BP using Process BP_TH_v5 in 2D
-%
-% %%   Use XY and X from XY to evaluate for Z
-% clear xw yw zw
-% new_x = {xy_proc.x};
-% for ii = 1:length(xz)
-%     new_z = polyval(polyfit(xz(ii).x,xz(ii).y,3),new_x{ii});
-%     % process new x/new z
-%     mini_xz(ii).x = new_x{ii};
-%     mini_xz(ii).y = new_z;
-%     mini_xz(ii).time = xz(ii).time;
-%
-% end
-%
-% %change nans to previous whisker.
-% for i = 1:length(mini_xz)
-%     if isnan(mini_xz(i).x)
-%         mini_xz(i).x = mini_xz(i-1).x;
-%         mini_xz(i).y = mini_xz(i-1).y;
-%     end
-% end
-%
-% [mini_xz_proc,~,~] = preprocessWhiskerData_postMerge(mini_xz,PT,useX_front,basepointSmaller_front);
-%
-%
-% for ii = 1:length(xz)
-%     output_3D(ii).x = mean([new_x{ii},mini_xz_proc(ii).x],2);
-%     output_3D(ii).y = xy_proc(ii).y;
-%     output_3D(ii).z = mini_xz_proc(ii).y;
-%     output_3D(ii).frame = xy_proc(ii).time;
-%     xw{ii}=output_3D(ii).x;
-%     yw{ii}=output_3D(ii).y;
-%     zw{ii}=output_3D(ii).z;
-% end
-%
-%
-% for i = 1:length(xw)
-%     if isnan(xw{i})
-%         i
-%         xw{i} = [];
-%         yw{i} = [];
-%         zw{i} = [];
-%     end
-% end
-%
-%
-%
-% % Find final CP
-% tic
-%
-% finalCP = nan(length(xw),3);
-% finalCPind = nan(length(xw),3);
-% for ii = 1:length(xw)
-%     if ~isnan(CP3D(ii,1)) & ~isempty(xw{ii})
-%         T=delaunayn([xw{ii} yw{ii} zw{ii}]);% needs to be an nx3 matrix
-%         try
-%             finalCPind(ii,:) = dsearchn([xw{ii},yw{ii},zw{ii}],T,CP3D(ii,:));
-%             finalCP(ii,:) = [xw{ii}(finalCPind(ii)),yw{ii}(finalCPind(ii)),zw{ii}(finalCPind(ii))];
-%         end
-%
-%     end
-% end
-% toc
+save([PT.save '\' PT.TAG '_E3D.mat'],'xw3d','yw3d','zw3d','C','CP');
 
