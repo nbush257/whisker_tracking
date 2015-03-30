@@ -23,12 +23,11 @@ function [wStructOut,CP] = rmManip(wStruct,manip,startFrame,endFrame)
 % 2015_03_30
 %%
 warning('Manipulator Structures are referenced to the entire seq, whereas whisker structs are referenced to zero. High probability of off by one errors. Nick needs to fix this immediately')
-plotFlag = 0;
-order = 2;% flag to set the order of the fit.
+
 
 
 thresh = 15;% set the size of the ROI around the manipulator to exclude points from the whisker
-fitSurround = 30;% Number of points around the manipulator to use for the fit.
+fitSurround = 15;% Number of points around the manipulator to use for the fit.
 % init CP
 CP = nan(length(wStruct),2);
 
@@ -59,7 +58,7 @@ for ii = 1:length(wStruct)
     % find points within a thresholded distance of the manipulator
     [~,d] = dsearchn([mX mY],[x y]);
     idx = find(d<thresh);
-    [~,CP_idx] = min(d);
+    [~,CP_idx] = min(d);    
     
     %Uncomment to just remove the points near the manipulator
     %     x(idx) = NaN;
@@ -88,46 +87,22 @@ for ii = 1:length(wStruct)
             nearbyY = nearbyY(kept);
             
             
-            % interpolate over the break.
-            if var(nearbyX)>var(nearbyY)% If statement prevents failures when there is no variance over x.
-                
-                newX = linspace(x(idx(1)),x(idx(end)),length(idx))';
-                if newX(1)>newX(end)
-                    newX = flipud(newX);
-                end
-                
-                p = polyfit(nearbyX,nearbyY,order);
-                
-                newY = polyval(p,newX);
-            else
-                
-                newY = linspace(y(idx(1)),y(idx(end)),length(idx))';
-                if newY(1)>newY(end)
-                    newY = flipud(newY);
-                end
-                p = polyfit(nearbyY,nearbyX,order);
-                newX = polyval(p,newY);
-            end
+            %
+            %         if nearbyX(1)>nearbyX(end) & nearbyY(1)>nearbyY(end)
+            %             nearbyX = flipud(nearbyX);
+            %             nearbyY = flipud(nearbyY);
+            %             newX = flipud(newX);
+            %         elseif nearbyX(1)>nearbyX(end) | nearbyY(1)>nearbyY(end)
+            %             warning(['Non monotonic in one direction. Probably Going to error at frame ' num2str(time)])
+            %         end
             
-            %% set output
+            newY = interp1(nearbyX,nearbyY,newX);
+            
             x(idx) = newX;
             y(idx) = newY;
-            %% plot
-            if plotFlag
-                plot(x,y,'.')
-                hold on
-                %plot(newX,newY,'r.')
-                plot(newX,newY,'g.')
-                %legend({'original','Linear','7th'})
-                axis([0 640 0 480])
-                pause(.01)
-                cla
-            end
-            
-            
         end
     end
-    %% Outputs
+    
     CP(ii,1) = x(CP_idx);
     CP(ii,2) = y(CP_idx);
     wStructOut(ii).x = double(x);

@@ -7,6 +7,7 @@
 %%% appropriate data for E3D. If you do not want to use raw .whiskers files
 %%% you will have to set 'front' and 'top' to your data struct.
 
+
 %%% For 2 Camera Merges, make sure A  = front B = top.
 
 %% Get data specific information
@@ -34,7 +35,8 @@ contactName = [PT.path '\' PT.TAG '_contacts.mat'];
 startFrame = PT.Frames(1);
 endFrame =PT.Frames(2);
 
-% Used in some of the codee by James and John.
+% Generally, useX = 1. For whiskers on the animal's right,
+% basepoint_smaller is often 0, else 1.
 useX_top = 1; % Should we sort on X?
 useX_front = 1;
 basepointSmaller_top = 0; % Is the basepoint smaller or larger than teh rest of the whisker?
@@ -60,9 +62,8 @@ if ~exist('top','var')
     top  = LoadWhiskers(topWhiskersName);
 end
 
-%% Merges all whiskers in a frame together. This might still be cludgey as of 2015_03_30 NEB
-% Iterate because merge code only does one at a time.
-front = merge_matching_ts(front,useX_front,basepointSmaller_front); %(wstruct, useX,basepointSmaller) %you might have to repeat this if you track more than 2 whiskers.
+%% Merges all whiskers in a frame together. 
+front = merge_matching_ts(front,useX_front,basepointSmaller_front); 
 top = merge_matching_ts(top,useX_top,basepointSmaller_top);
 %% Track the basepoint
 front = trackBP(frontVidName,front);

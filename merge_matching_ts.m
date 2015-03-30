@@ -1,5 +1,5 @@
 function wStructOut = merge_matching_ts(wStruct,useX,basepoint_smaller)
-%% function wStructOut = merge_matching_ts(wStruct)
+%% function wStructOut = merge_matching_ts(wStructuseX,basepoint_smaller)
 % --------------------------------------------------------------------
 % Takes whisk input with multiple tracked whiskers per frame and combines
 % them into a single whisker per frame. Also sorts the whisker depending on
@@ -24,7 +24,6 @@ for ii = min(allTimes):max(allTimes)
     sameTime = find(ismember(allTimes,ii));
     newX = [];
     newY = [];
-    
     %% skip frames with one or no whiskers tracked.
     if length(sameTime)<=1
         % sort the whisker
