@@ -25,7 +25,7 @@ function [wStruct,xBaseMedian,yBaseMedian] = trackBP(vidFileName,wStruct,varargi
 if length(varargin) == 1
     startFrame = varargin{1};
 elseif length(varargin)>1
-    warning(['Too many input arguments, taking the start frame to be 'num2str(varargin{1})])
+    warning(['Too many input arguments, taking the start frame to be ' num2str(varargin{1})])
     startFrame = varargin{1};
 else
     startFrame = 1;
@@ -33,7 +33,7 @@ end
 % check for video file format
 if strcmp(vidFileName(end-2:end),'avi')
     v = VideoReader(vidFileName);
-    I = read(v,startFrame)
+    I = read(v,startFrame);
 elseif strcmp(vidFileName(end-2:end),'seq')
     v = seqIo(vidFileName,'r');
     v.seek(startFrame-1);
