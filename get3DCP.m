@@ -22,12 +22,6 @@ if ~isempty(varargin)
     manip_times = varargin{5};
 end
 
-
-
-
-
-
-
 needToExtend = [];
 iter_length = min(length(CP),length(wstruct_3D));
 m = getWaitMessage;
@@ -48,7 +42,8 @@ for ii = 1:iter_length
     
     
     [wskr_top,~] = BackProject3D(wstruct_3D(ii),A_camera,B_camera,A2B_transform);
-    
+   
+        
     % Immediately replace short whiskers
     % edited by NB 2015_03_23 to look at the 3D length, not the 2D
     % length
