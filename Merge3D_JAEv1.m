@@ -82,19 +82,19 @@ T = calib{10};
 %   Aims to fix basepoint mismatches on the spot
 %   You need to be sure that the xf,yf vectors correspond to the same view
 %   as REF.bp_Ap, and xt,yt to REF_bp_Bp
-% BP_er_thresh_low = 2;
-% BP_er_thresh_high = 100;
-% comments = {'We re-fitting that basepoint for you, right now!','Your basepoint is a little off, let me get that for you...','Basepoints are for the birds...and rats...and yours is off.  Fixing!','BP FIX MODE!!!','BP FIX, FTW!!'};
-% if er > BP_er_thresh_low && er < BP_er_thresh_high
-%     disp(comments{randsample(1:length(comments),1)})
-%    [xf,yf,xt,yt] = shall_not_be_denied(xf,yf,xt,yt,Front_projBP,Top_projBP);
-%    [bp_x,bp_y,bp_z] = Fit_3dBasepoint(xf,yf,xt,yt,...
-%     'A_proj',{fc_left,cc_left,kc_left,alpha_c_left}, ...
-%     'B_proj',{fc_right,cc_right,kc_right,alpha_c_right}, ...
-%     'A2B_transform',{om,T}, ...
-%     'Plot_Final',TGL_plot,bp_opts{:});
-% else disp(sprintf('er=%d',er))
-% end
+BP_er_thresh_low = 2;
+BP_er_thresh_high = 100;
+comments = {'We re-fitting that basepoint for you, right now!','Your basepoint is a little off, let me get that for you...','Basepoints are for the birds...and rats...and yours is off.  Fixing!','BP FIX MODE!!!','BP FIX, FTW!!'};
+if er > BP_er_thresh_low && er < BP_er_thresh_high
+    disp(comments{randsample(1:length(comments),1)})
+   [xf,yf,xt,yt] = shall_not_be_denied(xf,yf,xt,yt,Front_projBP,Top_projBP);
+   [bp_x,bp_y,bp_z] = Fit_3dBasepoint(xf,yf,xt,yt,...
+    'A_proj',{fc_left,cc_left,kc_left,alpha_c_left}, ...
+    'B_proj',{fc_right,cc_right,kc_right,alpha_c_right}, ...
+    'A2B_transform',{om,T}, ...
+    'Plot_Final',TGL_plot,bp_opts{:});
+else disp(sprintf('er=%d',er))
+end
 
 %% Use a set basepoint from attempts
 % chosen_point = 2;
@@ -107,12 +107,13 @@ T = calib{10};
 %% Fit 3D Worm
 %% Ellis control clause
 % if abs(length(xf)-length(xt)) < 200
+TGL_plotFull =0;
 [x,y,z,PT] = Fit_3dWorm(xf,yf,xt,yt, ...
     'BP',[bp_x,bp_y,bp_z], ...
     'A_proj',{fc_left,cc_left,kc_left,alpha_c_left}, ...
     'B_proj',{fc_right,cc_right,kc_right,alpha_c_right}, ...
     'A2B_transform',{om,T}, ...
-    'Plot_Final',TGL_plot,wm_opts{:});
+    'Plot_Final',TGL_plotFull,wm_opts{:});
 % else
 %     PT=[];
 %     x=0;
@@ -120,6 +121,6 @@ T = calib{10};
 %     z=0;
 % end
 
-close all
+%drawnow
 warning on
 summary_PT{count} = PT;
