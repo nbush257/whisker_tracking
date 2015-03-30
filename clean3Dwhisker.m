@@ -11,7 +11,6 @@ function [tracked_3D,shortWhiskers] = clean3Dwhisker(tracked_3D)
 rmShort = input('Remove Short Whiskers? (y/n)','s');
 interpCheck = input('Interpolate Whisker? Num Nodes = 200 (y/n)','s');
 baseOrder = input('Order the wrt basepoint? (y/n)','s');
-hackFix = input('remove the second node? (y/n) This is not standard!!! Only do this if you are sure.','s');
 shortWhiskers = [];
 figure
 num_interp_nodes = 200;
@@ -44,8 +43,6 @@ for ii = 1:length(tracked_3D)
         end
         shortWhiskers = [shortWhiskers ii];
     end
-    
-    
     %% Flip node order if basepoint os not the first node
     if strcmp(baseOrder,'y')
         dis2bp_first = sqrt((tracked_3D(ii).x(1) - bp(1))^2+ (tracked_3D(ii).y(1) - bp(2))^2);
@@ -57,13 +54,6 @@ for ii = 1:length(tracked_3D)
             tracked_3D(ii).z = fliplr(tracked_3D(ii).z);
         end
     end
-    %% remove second node
-    if strcmp(hackFix,'y')
-            tracked_3D(ii).x(2) = [];
-            tracked_3D(ii).y(2) = [];
-            tracked_3D(ii).z(2) = [];
-    end
-    
     %% interpolate between whisker nodes
     if strcmp(interpCheck,'y')
         xi = linspace(min(tracked_3D(ii).x),max(tracked_3D(ii).x),num_interp_nodes);
