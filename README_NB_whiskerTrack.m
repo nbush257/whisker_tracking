@@ -1,11 +1,20 @@
 %%%%%%%%% THIS FILE IS DESIGNED TO BE UNEDITED %%%%%%%%%%%%%%%%%
 %%% BY THE USER. ALL CHANGES SHOULD BE MADE IN THE SETTINGS %%%%
-%%% FILE YOU CREATE. THAT SAID, IT IS PRUDENT TO RUN IT LINE %%%
-%%% LINE SO YOU CAN MAKE CHANGES TO YOUR DATA IF PROBLEMS ARISE%
+%%% FILE YOU CREATE, OR TO THE FILENAMES OF YOUR DATA %%%%%%%%%%
+%%%. THAT SAID, IT IS PRUDENT TO RUN IT LINE LINE SO YOU %%%%%%%
+%%%CAN MAKE CHANGES TO YOUR DATA IF PROBLEMS ARISE %%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 %%% This file takes 2 .whiskers files, 3D merges them, and saves the
 %%% appropriate data for E3D. If you do not want to use raw .whiskers files
 %%% you will have to set 'front' and 'top' to your data struct.
+
+%%%     REQUIREMENTS: 
+%%%         1) Tracked Whiskers
+%%%         2) Contact Logical
+%%%         3) Tracked Manipulators
+%%%         4) Stereo Camera Calibration 
+%%%         5) Avi files of your clip.
 
 
 %%% For 2 Camera Merges, make sure A  = front B = top.
@@ -17,19 +26,28 @@ open pix2m3D;
 open genSettings2D;
 
 %% Set paths and names for loading in data
+
+% Need to inclhude a check that that file exists. 
+
 % clip whisker files
 frontWhiskersName = [PT.path '\' PT.TAG '_Front.whiskers'];
 topWhiskersName = [PT.path '\' PT.TAG '_Top.whiskers'];
 
 % file for the clip avi.
-frontVidName = [PT.path '\' PT.TAG '_Front.avi']
-topVidName = [PT.path '\' PT.TAG '_Top.avi']';
+frontVidName = [PT.path '\' PT.TAG '_Front.avi'];
+topVidName = [PT.path '\' PT.TAG '_Top.avi'];
 
 % all manipulatror
 frontManipulatorName= [PT.path '\' PT.dataname '_manip_Front.mat'];
 topManipulatorName = [PT.path '\' PT.dataname '_manip_Top.mat'];
 
 contactName = [PT.path '\' PT.TAG '_contacts.mat'];
+
+calibName = [PT.path '\' PT.dataname '_calib.mat'];
+% check existence of the input filenames
+checkDataExistence;
+%
+savePath = uigetdir('Where do you want to save the merged tracking?')
 
 % Frames are inclusive and indexed at 1
 startFrame = PT.Frames(1);
@@ -49,8 +67,10 @@ basepointSmaller_front = 0;
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 
-%% Load whisker and contact data
+%% Load whisker,manipulator, and contact data
 load(contactName)
+load(frontManipulatorName)
+load(topManipulatorName)
 
 if ~exist('C','var')
     warning('There is not contact variable associated with this dataset')
@@ -109,14 +129,13 @@ end
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % 3D merge
 % Load Calibration file data.
-[calib_fName,calib_pName] = uigetfile('*.mat','Load the calib file');
-load([calib_pName calib_fName]);
+cd(savePath)
+
+load(calibName);
 A_camera = calib(1:4);
 B_camera = calib(5:8);
 A2B_transform = calib([9 10]);
 
-savePath = uigetdir('Where do you want to save the merged tracking?')
-cd(savePath)
 
 % 3D Merge Whisker % Might want to try to make the seed whisker variable.
 minDS = .40;% sets the minimum internode distance.
