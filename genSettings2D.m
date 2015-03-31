@@ -17,20 +17,20 @@
 % ** CHANGE WITH EACH DATASET **
 
 % Data path location:
-PT.dataname = 'rat2105_06_FEB26_vg_B2';
-PT.path = 'L:\raw\2015_06\rat2105_06_FEB26_VG_B2';
-PT.data = 'L:\raw\2015_06\rat2105_06_FEB26_VG_B2';
+PT.dataname = 'rat2015_06_FEB26_VG_B2_t01';
+PT.path = 'L:\raw\2015_06\rat2015_06_FEB26_VG_B2\working';
+PT.data = 'L:\raw\2015_06\rat2015_06_FEB26_VG_B2\working';
 
 % Frame sequence
 PT.Frames = [11008 20644];
 
 % Data TAG:
-PT.TAG = ['rat2015_06_FEB26_VG_B2_','F',num2str(PT.Frames(1),'%06.0f'),'F',num2str(PT.Frames(2),'%06.0f')];
+PT.TAG = [PT.dataname ,'_F',num2str(PT.Frames(1),'%06.0f'),'F',num2str(PT.Frames(2),'%06.0f')];
 
 % /////////////////////////////////////////////////////////////////////////
 
 % Save path location:
-PT.save = 'L:\raw\2015_06\rat2105_06_0226_FEB26_vg_B2';
+PT.save = 'L:\raw\2015_06\rat2015_06_FEB26_VG_B2';
 
 %% Run_Extract_2D_WSKR
 % --> Run: Setup_PEG_Top_v2.m

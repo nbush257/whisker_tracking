@@ -1,4 +1,3 @@
-
 function [wStruct,xBaseMedian,yBaseMedian] = trackBP(vidFileName,wStruct,varargin)
 %% function [wStruct,xBaseMedian,yBaseMedian] = trackBP(vidFileName,wStruct,varargin)
 % -------------------------------------------------------------------------

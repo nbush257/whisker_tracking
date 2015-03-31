@@ -17,7 +17,7 @@
 %%%         5) Avi files of your clip.
 
 
-%%% For 2 Camera Merges, make sure A  = front B = top.
+%%% For 2 Camera Merges, make sure A  = front = left; B = top = right.
 
 %% Get data specific information
 % get pix2m3D fron merge
@@ -43,11 +43,11 @@ topManipulatorName = [PT.path '\' PT.dataname '_manip_Top.mat'];
 
 contactName = [PT.path '\' PT.TAG '_contacts.mat'];
 
-calibName = [PT.path '\' PT.dataname '_calib.mat'];
+calibName = [PT.path '\' PT.dataname '_calibration.mat'];
 % check existence of the input filenames
 checkDataExistence;
 %
-savePath = uigetdir('Where do you want to save the merged tracking?')
+savePath = uigetdir(PT.path,'Where do you want to save the merged tracking?');
 
 % Frames are inclusive and indexed at 1
 startFrame = PT.Frames(1);
@@ -190,19 +190,21 @@ fprintf('It took %.1f seconds to merge %i frames \n',timer,length(tracked_3D));
 
 % use to visually inspect the merge
 figure
-for ii =1:1000
+for ii =1:100
     [check_top,check_front] = BackProject3D(tracked_3D_clean(ii),B_camera,A_camera,A2B_transform);
     
     subplot(121);
     plot(check_front(:,1),check_front(:,2),'.')
     hold on
     plot(front_manip_removed(ii).x,front_manip_removed(ii).y,'r.')
+    title('Front')
     legend({'Back Project','Original Tracking'});
     subplot(122);
     plot(check_top(:,1),check_top(:,2),'.')
     hold on
     plot(top_manip_removed(ii).x,top_manip_removed(ii).y,'r.')
     legend({'Back Project','Original Tracking'});
+    title('Top')
     pause(.01)
     clf
 end
@@ -211,20 +213,17 @@ close all
 %% Get Contact Point
 [CP,tracked_3D_extended,needToExtend] = get3DCP(top_manip_removed,manip_top,C,1,0,topCP,tracked_3D_clean,B_camera,A_camera,A2B_transform,[manip_top.time]);
 % Visually inspect CP
-figure
-for ii = 1:length(CP)
-    if isnanCP(ii,1)
-        continue
-    end
+cpCheck = figure;
+contactFrames = find(~isnan(CP(:,1)));
+for i = 1:100
+    ii = contactFrames(i);
     plot3(tracked_3D_extended(ii).x,tracked_3D_extended(ii).y,tracked_3D_extended(ii).z,'.')
     hold on
-    plot3(CP(ii,1),CP(ii,2),CP(ii,3),'r*');
+    plot3(CP(ii,1),CP(ii,2),CP(ii,3),'r*')
+    legend({'Whisker','Contact Point'});
     pause(.01)
-    cla
+    clf
 end
-
-
-
 %% check that all vars are in correct format/data quality for E3D
 data_QA;
 

@@ -1,11 +1,20 @@
 
 function [tracked_3D,shortWhiskers] = clean3Dwhisker(tracked_3D)
-%function tracked_3D = clean3Dwhisker(tracked_3D)
-
+%% function tracked_3D = clean3Dwhisker(tracked_3D)
+%--------------------------------------------------------------
 % Fixes whiskers that are too short after merge
 % Sets the basepoint as the first node
 % Interpolates the nodes
-
+% -------------------------------------------------------------
+% INPUT:
+%       tracked_3D      = a 3d whisker struct with x,y,z and time fields.
+% OUTPUTS: 
+%       tracked_3D      = the processed 3D whisker struct with x,y,z, and time
+%                       fields
+%       shortWhiskers   = a 1 x N vector of frame indices where the whisker
+%                         was too short and had to be copied from the previous frame
+% ---------------------------------------------------------------
+% NOTES: 
 
 
 rmShort = input('Remove Short Whiskers? (y/n)','s');
@@ -17,13 +26,16 @@ num_interp_nodes = 200;
 
 
 
-for ii = 1:100
+for ii = 1:300
     if ~strcmp(baseOrder,'y')
         break
     end
     plot(tracked_3D(ii).x,tracked_3D(ii).y,'.')
-    pause(.02)
-    if ii ~=100
+    axes=gca;
+    axes.XLim = 1.5*axes.XLim;
+    axes.YLim = 1.5*axes.YLim;
+    pause(.01)
+    if ii ~=300
         cla
     else
         

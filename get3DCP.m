@@ -1,5 +1,35 @@
 function [CP3D,wstruct_3D,needToExtend] = get3DCP(wstruct,mstruct,contact,use_x,BPsmaller,CP,varargin)
-% Finds the contact point and interpolates the 3D whisker
+%% function [CP3D,wstruct_3D,needToExtend] = get3DCP(wstruct,mstruct,contact,use_x,BPsmaller,CP,varargin)
+% Finds the 3D contact point given a manipulator by finding the
+% intersection of the whisker and manip in 2D and projecting into 3D. 
+% -------------------------------------------------------------------
+%   INPUT:
+%       wstruct     = whisker struct with var x, y, and time
+%       mstrcut     = manipulator struct with var x, y, and time
+%       contact     = logical vector of contact
+%       use_x       = logical, use the x-axis to sort
+%       BPsmaller   = logical, is the basepoint smaller than the tip
+%       CP          = N x 2 matrix of contact point in the 2D view
+%                      corresponding to the wstruct. (x,y)
+%       VARARGINS:
+%           1:      3D whisker struct  (x,y,z fields)
+%           2:      A_camera
+%           3:      B_camera
+%           4:      A2Btransform
+%           5:      manip_times - vector of times for manipulator tracking
+%   OUTPUT:
+%       CP3D        = N x 3 matrix of 3D contact point coordinates (x,y,z)
+%       wstruct_3D  = output whisker struct with the extended segment if
+%                   needed
+%       needToExtend= 1 x M vector of frame numbers that are to be
+%                   extended.
+% ---------------------------------------------------------------------
+% NOTES: The code is taken from calc_CP.m And is poorly commented ATM.
+% ---------------------------------------------------------------------
+% Nick Bush
+% 2015_03_31
+% ---------------------------------------------------------------------
+%%
 
 
 global A_camera B_camera A2B_transform desired_extra_nodes

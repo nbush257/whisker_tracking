@@ -35,7 +35,9 @@ CP = nan(length(wStruct),2);
 % reduce manip struct to relevant struct.
 manip = manip(startFrame:endFrame);
 
-for ii = 1:length(wStruct)
+CP = nan(length(wStruct),2);
+
+parfor ii = 1:length(wStruct)
     
     % Get coords
     x = double(wStruct(ii).x);
@@ -107,7 +109,7 @@ for ii = 1:length(wStruct)
                 end
                 p = polyfit(nearbyY,nearbyX,order);
                 newX = polyval(p,newY);
-            end
+            end 
             
             %% set output
             x(idx) = newX;
@@ -125,11 +127,14 @@ for ii = 1:length(wStruct)
             end
             
             
-        end
-    end
+        end % end if we are not near the basepoint or tip
+    end% end if the manipulator is close enough to at least one whisker node.
     %% Outputs
-    CP(ii,1) = x(CP_idx);
-    CP(ii,2) = y(CP_idx);
+    % necesarry for the parfor.
+    CPx = x(CP_idx);
+    CPy = y(CP_idx);
+    CP(ii,:) = [CPx CPy];
+    
     wStructOut(ii).x = double(x);
     wStructOut(ii).y = double(y);
     wStructOut(ii).time = double(time);
