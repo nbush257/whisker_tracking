@@ -8,18 +8,19 @@ function [tracked_3D,shortWhiskers] = clean3Dwhisker(tracked_3D)
 % -------------------------------------------------------------
 % INPUT:
 %       tracked_3D      = a 3d whisker struct with x,y,z and time fields.
-% OUTPUTS: 
+% OUTPUTS:
 %       tracked_3D      = the processed 3D whisker struct with x,y,z, and time
 %                       fields
 %       shortWhiskers   = a 1 x N vector of frame indices where the whisker
 %                         was too short and had to be copied from the previous frame
 % ---------------------------------------------------------------
-% NOTES: 
+% NOTES:
 
 
 rmShort = input('Remove Short Whiskers? (y/n)','s');
 interpCheck = input('Interpolate Whisker? Num Nodes = 200 (y/n)','s');
 baseOrder = input('Order the wrt basepoint? (y/n)','s');
+
 shortWhiskers = [];
 figure
 num_interp_nodes = 200;
@@ -30,21 +31,23 @@ for ii = 1:300
     if ~strcmp(baseOrder,'y')
         break
     end
-    plot(tracked_3D(ii).x,tracked_3D(ii).y,'.')
-    axes=gca;
-    axes.XLim = 1.5*axes.XLim;
-    axes.YLim = 1.5*axes.YLim;
-    pause(.01)
-    if ii ~=300
-        cla
-    else
-        
-        title('Click on the basepoint');
-        bp = ginput(1);
+    plot3(tracked_3D(ii).x,tracked_3D(ii).y,tracked_3D(ii).z,'.')
+    ho
+    plot3(tracked_3D(ii).x(1),tracked_3D(ii).y(1),tracked_3D(ii).z(1),'ro')
+    pause(.02)
+    if ii~=300
+    cla
     end
 end
+input('-------------------------------- \nFlip the Basepoint? \n (y) to flip \n (n) to keep \n (z) if basepoint is not consistent on one side \n','s');
 close all
-%
+
+% if the basepoint isn't consistently on one side.
+if strcmp(baseOrder,'z')
+    [dis2bp_first, dis2bp_last] = plotGinput2D(tracked_3D);
+end
+
+
 for ii = 1:length(tracked_3D)
     %% if the whsiker is short(Bad merge) then use the previous whisker
     if strcmp(rmShort,'y')
@@ -55,16 +58,21 @@ for ii = 1:length(tracked_3D)
         end
         shortWhiskers = [shortWhiskers ii];
     end
-    %% Flip node order if basepoint os not the first node
-    if strcmp(baseOrder,'y')
+    %% If basepoint isn't consistent on one side, makes it so.
+    if strcmp(baseOrder,'z')
         dis2bp_first = sqrt((tracked_3D(ii).x(1) - bp(1))^2+ (tracked_3D(ii).y(1) - bp(2))^2);
         dis2bp_last = sqrt((tracked_3D(ii).x(end) - bp(1))^2+ (tracked_3D(ii).y(end) - bp(2))^2);
         
         if dis2bp_first>dis2bp_last
-            tracked_3D(ii).x = fliplr(tracked_3D(ii).x);
-            tracked_3D(ii).y = fliplr(tracked_3D(ii).y);
-            tracked_3D(ii).z = fliplr(tracked_3D(ii).z);
+            disp('You should not be here. I did not expect this issue to occur. Now you have to write code that makes the BP consistent on one side.')
         end
+    end
+    
+    %% If the basepoint is on the wrong side
+    if strcmp(baseOrder,'y')
+        tracked_3D(ii).x = fliplr(tracked_3D(ii).x);
+        tracked_3D(ii).y = fliplr(tracked_3D(ii).y);
+        tracked_3D(ii).z = fliplr(tracked_3D(ii).z);
     end
     %% interpolate between whisker nodes
     if strcmp(interpCheck,'y')
@@ -76,4 +84,29 @@ for ii = 1:length(tracked_3D)
         tracked_3D(ii).z = zi;
     end
 end
+end %EOF
+
+
+
+function [dis2bp_first, dis2bp_last] = plotGinput2D(tracked_3D)
+warning('This has not been debugged because no one expects it to happen.')
+% if you find yourself here, we are getting a UI for the basepoint an
+% finding the node closest to it.
+
+for ii = 1:300
+    if ~strcmp(baseOrder,'y')
+        break
+    end
+    plot2(tracked_3D(ii).x,tracked_3D(ii).y,'.')
+    pause(.02)
+    if ii ~= 3
+        cla
+    else
+        bp = ginput(1);
+    end
+    
+end
+
+end
+
 

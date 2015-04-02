@@ -92,10 +92,13 @@ end
 % elseif size(BP,2) == 3 & size(BP,1)~=length(tracked_3D)
 %     error('Length of BP is Incorrect. May need to alter')
 % end
-% if strcmp(lastwarn,'none')
-%     fprintf('Congratulations!! \nYour data is acceptable to E3D. Go grab a beer. \n')
-% end
-% 
+
+
+
+if strcmp(lastwarn,'none')
+    fprintf('Congratulations!! \nYour data is acceptable to E3D. Go grab a beer. \n')
+end
+
 
     
 

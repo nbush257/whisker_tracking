@@ -21,9 +21,9 @@ if ~exist(topManipulatorName,'file')
     warning('Top Manipulator Filename incorrect')
 end
 
-if ~exist(contactName,'file')
-    warning('Contact Filename incorrect')
-end
+% if ~exist(contactName,'file')
+%     warning('Contact Filename incorrect')
+% end
 
 if ~exist(calibName,'file')
     warning('Calibration Filename incorrect')

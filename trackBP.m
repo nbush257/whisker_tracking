@@ -1,4 +1,4 @@
-function [wStruct,xBaseMedian,yBaseMedian] = trackBP(vidFileName,wStruct,varargin)
+function [wStruct,emptyWhiskers] = trackBP(vidFileName,wStruct,varargin)
 %% function [wStruct,xBaseMedian,yBaseMedian] = trackBP(vidFileName,wStruct,varargin)
 % -------------------------------------------------------------------------
 % Finds the basepoint by gettin user input as to where the basepoint is,
@@ -15,8 +15,10 @@ function [wStruct,xBaseMedian,yBaseMedian] = trackBP(vidFileName,wStruct,varargi
 %   wstruct = 'whisk-like' structure with bpx and bpy fields appended [n]
 %       [n] length struct with x and y fields of whisker coordinates
 %
-%   xBaseMedian = median x position of the basepoint
-%   yBaseMedian = median y position of the basepoint
+%   emptyWhiskers = index of a whisker that had to be replaced. If there
+%   are a long string of these it is a serious problem. Should probably
+%   remove that chunk of data. 
+%   
 
 
 %% Input handling
@@ -50,7 +52,15 @@ bp(1,:) = ginput(1);
 %% Trim the tracked whisker in each frame to the basepoint. 
 % Sequentially finds the nearest tracked whisker node to the most recent
 % basepoint.
+repCount = [];
+emptyWhiskers = [];
 for ii = 1:length(wStruct);
+    if isempty(wStruct(ii).x)
+        wStruct(ii).x = wStruct(ii-1).x;
+        wStruct(ii).y = wStruct(ii-1).y;
+        repCount = repCount+1;
+        emptyWhiskers = [emptyWhiskers ii];
+    end
     
     % if this is the first frame, use the user defined basepoint
     if ii == 1
