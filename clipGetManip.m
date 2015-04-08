@@ -1,84 +1,102 @@
-function [ManipOut,ManipOutAllPixels]= clipGetManip(seqObj,initialROI,startFrame,endFrame);
+function [ManipOut,ManipOutAllPixels]= clipGetManip(videoObj,initialROI,startFrame,endFrame);
 %% want to add functionality that only looks for lines in an angle close to the previous angle of the manipulator.
 %frame numbers are referenced to entire video, the first frame indexes at
 %1;
+
+global N
 thetaThresh = 5;
 plotting = 0;
 lastwarn('overwrite');
-N = 25; %size to dilate the ROI
+N = 15; %size to dilate the ROI
 if iscell(initialROI)
     initialROI =initialROI{1};
 end
+isSeq = isstruct(videoObj);
+
 ManipROI = initialROI;
 prevTheta = [];
 message = getWaitMessage;
 w = waitbar(0,message);
 observe = figure;
+title('Observe')
+manTracked = 0;
 global retrack
 tic;
+count = 0;
 for ii = startFrame+1:endFrame
+    count = count+1;
+    %% User monitoring
     timer = toc;
-    if timer>20;
+    if timer>2;
         tic
         message = getWaitMessage;
-        figure(observe)
+        if ~exist('observe')
+            observe = figure;
+            title('Observe')
+        end
+        
         clf
         imshow(FrameN);ho
         scatter(ManipOut(ii-1).x,ManipOut(ii-1).y);
     end
-    
-    
-    
-    
     waitbar((ii-startFrame)/(endFrame-startFrame),w,message);
+    %% Get the current Frame
+    if isSeq
+        videoObj.seek(ii-1);
+        FrameN = videoObj.getframe();
+    else
+        FrameN = read(videoObj,count);
+        FrameN = squeeze(FrameN(:,:,1));
+    end
     
+    FrameN = medfilt2(FrameN,[3 3]);
     
-    
-    seqObj.seek(ii-1);
-    FrameN = seqObj.getframe();
-    
-    
+    % Use the previous manipROI to defint the current region of
+    % investigation
     s = regionprops(ManipROI,'pixellist');
     xvals = min(s.PixelList(:,1)):max(s.PixelList(:,1)); % if this throws an error you can try increasing your ROI dilation.
     yvals = min(s.PixelList(:,2)):max(s.PixelList(:,2));
     xoffset = min(xvals); yoffset = min(yvals);
-    
     FrameN_Manip = FrameN(yvals,xvals);
+    % Line Detect
     manipEdge = edge(FrameN_Manip,'canny');
     [h,t,r]=hough(manipEdge);
     p = houghpeaks(h,2);
-    lines = houghlines(manipEdge,t,r,p);
+    lines = houghlines(manipEdge,t,r,p,'MinLength',10);
+    
     if ii == startFrame + 1
-        prevTheta = mean([lines.theta]);
+        if length(lines)==0
+            prevTheta = t(p(1,2));
+        else
+            prevTheta = mean([lines.theta]);
+        end
     end
     
     if length(lines)>1
-        
+        lines = lines(1:2);
         if abs(lines(1).theta-lines(2).theta)<=2% the threshold for parallel is 2 degrees
             %% if we find two parallel lines, take the average.
-            
-            
             % If the lines are not near o the previous theta, check for
             % retrack
             if abs(mean([lines.theta]-prevTheta))>thetaThresh
                 figure
                 imshow(FrameN)
                 ho
-                plot([lines(1).point1(1) lines(1).point2(1)],[lines(1).point1(2) lines(1).point2(2)], 'go')
+                plot([lines(1).point1(1)+xoffset-1 lines(1).point2(1)+xoffset-1],[lines(1).point1(2)+yoffset-1 lines(1).point2(2)+yoffset-1], 'go')
                 
                 try
                     
-                    plot([lines(2).point1(1) lines(2).point2(1)],[lines(2).point1(2) lines(2).point2(2)], 'go')
+                    plot([lines(2).point1(1)+xoffset-1 lines(2).point2(1)+xoffset-1],[lines(2).point1(2)+yoffset-1 lines(2).point2(2)+yoffset-1], 'go')
                 end
                 %scatter(xmsmooth,ymsmooth)
                 title('Should we manually track?')
                 retrack = 0;
-                rt = uicontrol('Style','Pushbutton','String','Retrack','Position',[0 0 200 20],'Callback','global retrack; retrack = 1');
-                pause
+                rt = uicontrol('Style','Pushbutton','String','Retrack','Position',[0 0 200 20],'Callback','global retrack; retrack = 1;uiresume(gcbf)');
+                uiwait(gcf)
                 close all
                 if retrack
                     %retrack function
-                    [xmsmooth,ymsmooth] = retrackManip(FrameN);
+                    [xmsmooth,ymsmooth,ManipROI] = retrackManip(FrameN);
                     retrack = 0;
                     manTracked = 1;
                 else % if we don't retrack we take the line closest to the previous theta
@@ -110,8 +128,23 @@ for ii = startFrame+1:endFrame
         end
     end
     %%
+    
+    if isempty(lines)
+        
+        disp('Manually track because lines was empty')
+        [xmsmooth,ymsmooth,ManipROI] = retrackManip(FrameN);
+        
+        ManipOut(ii).x = xmsmooth;
+        ManipOut(ii).y = ymsmooth;
+        ManipOut(ii).time = ii;
+        
+        ManipOutAllPixels(ii).x = xmsmooth;
+        ManipOutAllPixels(ii).y = ymsmooth;
+        ManipOutAllPixels(ii).time = ii;
+        continue
+    end
     % if there is only one line, extract those
-    if ~isempty(lines) & length(lines)==1 & manTracked ~=1;
+    if ~isempty(lines) & length(lines)==1
         
         xm = [lines.point1(:,1) lines.point2(:,1)];
         ym = [lines.point1(:,2) lines.point2(:,2)];
@@ -144,13 +177,14 @@ for ii = startFrame+1:endFrame
             scatter(xmsmooth,ymsmooth)
             title('Should we manually track?')
             retrack = 0;
-            rt = uicontrol('Style','Pushbutton','String','Retrack','Position',[0 0 200 20],'Callback','global retrack; retrack = 1');
-            pause
+            rt = uicontrol('Style','Pushbutton','String','Retrack','Position',[0 0 200 20],'Callback','global retrack; retrack = 1;uiresume(gcbf)');
+            uiwait(gcf)
             close all
             if retrack
                 %retrack function
-                [xmsmooth,ymsmooth] = retrackManip(FrameN);
+                [xmsmooth,ymsmooth,ManipROI] = retrackManip(FrameN);
                 retrack =0;
+                
             end
             
         else
@@ -205,19 +239,13 @@ for ii = startFrame+1:endFrame
             clf;
         end
         
-    elseif manTracked ==1
+    elseif manTracked==1 & ~isempty(lines)
         ManipOut(ii).x = xmsmooth;
         ManipOut(ii).y = ymsmooth;
         ManipOut(ii).time = ii;
         
-    elseif isempty(lines)
-        warning(['no line found at frame ' num2str(ii) ', Marking it empty'])
-        ManipOut(ii).x = [];
-        ManipOut(ii).y = [];
-        ManipOut(ii).time = ii;
-        
-        ManipOutAllPixels(ii).x = [];
-        ManipOutAllPixels(ii).y = [];
+        ManipOutAllPixels(ii).x = ManipOutAllPixels(ii-1).x;
+        ManipOutAllPixels(ii).y = ManipOutAllPixels(ii-1).y;
         ManipOutAllPixels(ii).time = ii;
         
     else
@@ -231,15 +259,17 @@ for ii = startFrame+1:endFrame
         ManipOutAllPixels(ii).time = ii;
     end
     
+    
 end
 delete(w)
 close all force
 end%EOF
 
-function [xmsmooth,ymsmooth] = retrackManip(frame)
+function [xmsmooth,ymsmooth,ROI] = retrackManip(frame)
+global N
 disp('track the manipulator');
 fig;set(gcf,'color','w');
-imagesc(frame); colormap('gray'); hold on;title('zoom in on manipulator');zoom on; pause;
+imagesc(frame); colormap('gray'); hold on;title('zoom in on manipulator');
 title('track the manipulator')
 x = NaN;
 counter  = 0;
@@ -263,6 +293,17 @@ xmsmooth = round(xmsmooth);
 idx = xmsmooth>size(frame,2) | ymsmooth>size(frame,1);
 xmsmooth(idx) = [];
 ymsmooth(idx) = [];
+
+bw = logical(zeros(size(frame)));
+for i = 1:length(xmsmooth)
+    bw(ymsmooth(i),xmsmooth(i)) = 1;
+end
+
+se = strel('disk',N);
+ROI = imdilate(bw,se);
+
+
+
 end %EOLF
 
 

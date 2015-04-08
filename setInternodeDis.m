@@ -1,7 +1,8 @@
 function wStruct_3D_out = setInternodeDis(wStruct_3D,ds)
 %Gets evenly spaced nodes of a defined length. Good for comparing the same
 %node across time. Probably useful for a kalman filter.
-
+padFlag = 1;
+maxLength = 400;
 for ii = 1:length(wStruct_3D)
     
     x = wStruct_3D(ii).x;
@@ -13,13 +14,20 @@ for ii = 1:length(wStruct_3D)
     newz = interp1(y,z,newy);
     
     [x,y,z] = getNodes(newx,newy,newz,ds);
+     if padFlag
+        padLength = maxLength - length(x);
+        if padLength >1
+        x = padarray(x,[0,padLength],nan,'post');
+        y = padarray(y,[0,padLength],nan,'post');
+        z = padarray(z,[0,padLength],nan,'post');
+        end
+     end
+     
+    
     wStruct_3D_out(ii).x = x;
     wStruct_3D_out(ii).y = y;
     wStruct_3D_out(ii).z = z;
-    
-    
-    
-    
+
 end
 end
 

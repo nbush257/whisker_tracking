@@ -1,36 +1,19 @@
-function wStructOut = whiskKalman3D(wStruct_3D_clean,varianceIn)
-%% Problem: NaNs kill the tracking
-% Smooth each node temporally using a kalman filter. Large values of
-% varianceIn give the whisker more 'inertia'.
+% Spatially Smooth the whisker along the length.
+
+function smoothed = kalman_whisker(tracked_3D,varIn)
 global r
-
-r = varianceIn;
-ds = .2;
-disp('Getting regular internode distances')
-wStructRegularNodes = setInternodeDis(wStruct_3D_clean,ds);
-
-numNodes = 400;
-
-x = vertcat(wStructRegularNodes.x);
-y = vertcat(wStructRegularNodes.y);
-z = vertcat(wStructRegularNodes.z);
-disp('applying kalman filter to each node')
-
-for i = 1:numNodes
-    
-    pos = [x(:,i) y(:,i) z(:,i)]';
-    
-
-
-[newx(i,:),newy(i,:),newz(i,:)] = applyKalman(pos);
+r = varIn;
+for ii = 1:length(tracked_3D)
+    pos = [tracked_3D(ii).x;tracked_3D(ii).y;tracked_3D(ii).z];
+    [x,y,z] = applyKalman(pos);
+    smoothed(ii).x = x;
+    smoothed(ii).y = y;
+    smoothed(ii).z = z;
+    end
 end
 
-for ii = 1:length(wStruct_3D_clean)
-    wStructOut(ii).x = newx(:,ii);
-    wStructOut(ii).y = newy(:,ii);
-    wStructOut(ii).z = newz(:,ii);
-end
-end%EOF
+
+
 
 
 function [x,y,z] = applyKalman(pos)

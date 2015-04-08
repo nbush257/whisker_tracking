@@ -1,6 +1,6 @@
 %generate settings file
 
-%% Settings_VG2D_20140908_gamma_F001840F012839
+%% Settings_rat2015_06_FEB26_VG_B2_t01
 % -------------------------------------------------------------------------
 % Settings file for image processing
 % -------------------------------------------------------------------------
@@ -8,10 +8,10 @@
 %   + Data author: Nick Bush
 %   + Date taken: 2015_02_26
 %   + Trial: B2
-%   + Frames: 30038 32380
+%   + Frames: 
 % -------------------------------------------------------------------------
-% Nick
-% 2015_04_01
+% Nick and Pravin
+% 2015_04_08
 
 %% 00. Path names and labeling
 % ** CHANGE WITH EACH DATASET **

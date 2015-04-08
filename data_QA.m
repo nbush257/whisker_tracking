@@ -4,10 +4,11 @@ lastwarn('none')
 %% Whisker
 nanWskr = [];
 diffBP = [];
-for ii = 1:length(tracked_3D)
-    x = tracked_3D(ii).x;
-    y = tracked_3D(ii).y;
-    z = tracked_3D(ii).z;
+clear xw3d yw3d zw3d
+for ii = 1:length(tracked_3D_clean)
+    x = tracked_3D_clean(ii).x;
+    y = tracked_3D_clean(ii).y;
+    z = tracked_3D_clean(ii).z;
     
 %     if any([x(1) y(1) z(1)]-BP(ii,:)>2)% check to see if basepoint is off by more than 2 pixels
 %         difference = num2str(sum([x(1) y(1) z(1)]-BP(ii,:)));
@@ -24,6 +25,11 @@ for ii = 1:length(tracked_3D)
     yw3d{ii,1} = y;
     zw3d{ii,1} = z;
     clear x y z;
+end
+for ii = 1:length(xw3d)
+    if length(xw3d{ii})<5
+        error(['Short Whisker Found at frame ' num2str(ii)])
+    end
 end
 
 %% C
