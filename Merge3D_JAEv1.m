@@ -107,7 +107,7 @@ end
 %% Fit 3D Worm
 %% Ellis control clause
 % if abs(length(xf)-length(xt)) < 200
-TGL_plotFull =0;
+TGL_plotFull =1;
 [x,y,z,PT] = Fit_3dWorm(xf,yf,xt,yt, ...
     'BP',[bp_x,bp_y,bp_z], ...
     'A_proj',{fc_left,cc_left,kc_left,alpha_c_left}, ...
@@ -121,6 +121,6 @@ TGL_plotFull =0;
 %     z=0;
 % end
 
-%drawnow
+drawnow
 warning on
 summary_PT{count} = PT;

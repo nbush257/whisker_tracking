@@ -51,8 +51,8 @@ endFrame =PT.Frames(2);
 % basepoint_smaller is often 0, else 1.
 useX_top = 1; % Should we sort on X?
 useX_front = 1;
-basepointSmaller_top = 0; % Is the basepoint smaller or larger than teh rest of the whisker?
-basepointSmaller_front = 0;
+basepointSmaller_top = 1; % Is the basepoint smaller or larger than teh rest of the whisker?
+basepointSmaller_front = 1;
 spatialSmoothing = 3; % Parameter that changes the smoothing effect of the spatial kalman filter.
 
 
@@ -139,7 +139,7 @@ tracked_3D = struct([]);
 tic;
 step = 1000;% Saves every step [default = 1000] frames
 % Outer loop is big serial chunks that saves every [step] frames
-for ii = 1:step:length(front_manip_removed)
+for ii = 1%:10%step:length(front_manip_removed)
     % Makes sure we don't try to access a frame past the last frame.
     if (ii+step-1)>length(front_manip_removed)
         iter = length(front_manip_removed)-ii;
@@ -148,7 +148,7 @@ for ii = 1:step:length(front_manip_removed)
     end
     % Parallel for loop which does the actual merging. Gets batches from
     % the current outer loop.
-    parfor i = ii:ii+iter
+    for i = ii:ii+iter
         close all
         merge_x = [];merge_y = [];merge_z = [];
         DS = minDS;
@@ -175,7 +175,8 @@ fprintf('It took %.1f seconds to merge %i frames \n',timer,length(tracked_3D));
 % End Merge
 
 
-%% Clean whiskers and verify merge
+%% Clean whiskers and verify merge 
+% TRY IMPLEMENTING TEMPORAL KALMAN BEFORE SPATIAL KALMAN
 % Takes care of short whiskers, order, and interpolation
 tracked_3D_smooth = tracked_3D;%spatialWhiskerKalman3D(tracked_3D,spatialSmoothing);
 [tracked_3D_clean,shortWhisker] = clean3Dwhisker(tracked_3D_smooth);
