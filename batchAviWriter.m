@@ -42,6 +42,10 @@ for ii = 1:numSeqs
         % Prevents errors on the end of the .SEQ
         firstFrame = lastFrame+1;
         lastFrame = firstFrame+step-1;
+        if lastFrame>numFrames
+            lastFrame = numFrames;
+        end
+        
         fileOutName = sprintf([d(ii).name(1:end-4) '_F%06iF%06i.avi'],firstFrame,lastFrame);
         outName = [pName '\' fileOutName];
         w = VideoWriter(outName,'Motion JPEG AVI');
