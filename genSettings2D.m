@@ -1,6 +1,6 @@
 %generate settings file
 
-%% Settings_VG2D_20140908_gamma_F001840F012839
+%% Settings_rat2015_06_FEB26_VG_B2_t01
 % -------------------------------------------------------------------------
 % Settings file for image processing
 % -------------------------------------------------------------------------
@@ -8,21 +8,21 @@
 %   + Data author: Nick Bush
 %   + Date taken: 2015_02_26
 %   + Trial: B2
-%   + Frames: 11008 20644
+%   + Frames: 
 % -------------------------------------------------------------------------
-% Nick
-% 2015_03_30
+% Nick and Pravin
+% 2015_04_08
 
 %% 00. Path names and labeling
 % ** CHANGE WITH EACH DATASET **
 
 % Data path location:
 PT.dataname = 'rat2015_06_FEB26_VG_B2_t01';
-PT.path = 'L:\raw\2015_06\rat2015_06_FEB26_VG_B2\working';
-PT.data = 'L:\raw\2015_06\rat2015_06_FEB26_VG_B2\working';
+PT.path = 'C:\Users\guru\Documents\hartmann_lab\data\2015_06';
+PT.data = 'C:\Users\guru\Documents\hartmann_lab\data\2015_06';
 
 % Frame sequence
-PT.Frames = [11008 20644];
+PT.Frames = [30038 32380];
 
 % Data TAG:
 PT.TAG = [PT.dataname ,'_F',num2str(PT.Frames(1),'%06.0f'),'F',num2str(PT.Frames(2),'%06.0f')];
@@ -30,7 +30,7 @@ PT.TAG = [PT.dataname ,'_F',num2str(PT.Frames(1),'%06.0f'),'F',num2str(PT.Frames
 % /////////////////////////////////////////////////////////////////////////
 
 % Save path location:
-PT.save = 'L:\raw\2015_06\rat2015_06_FEB26_VG_B2';
+PT.save ='C:\Users\guru\Documents\hartmann_lab\data\2015_06';
 
 %% Run_Extract_2D_WSKR
 % --> Run: Setup_PEG_Top_v2.m
