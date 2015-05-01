@@ -3,7 +3,7 @@ NAME.saveFolder = 'D:\data\2015_08\analyzed\';
 NAME.tag = 'rat2015_08_APR09_VG_C1_t01_';
 frames = [1 20000];
 NAME.frames = sprintf('F%06iF%06i',frames(1),frames(2));
-%%
+%% Load in data and set paths for loading and saving.
 tT = LoadWhiskers([NAME.path NAME.tag 'Top_' NAME.frames '_whisker.whiskers']);
 tM = LoadMeasurements([NAME.path NAME.tag 'Top_' NAME.frames '_whisker.measurements']);
 fT = LoadWhiskers([NAME.path NAME.tag 'Front_' NAME.frames '_whisker.whiskers']);
@@ -17,8 +17,9 @@ tMManip = LoadMeasurements([NAME.path NAME.tag 'Top_' NAME.frames '_manip.measur
 fTManip = LoadWhiskers([NAME.path NAME.tag 'Front_' NAME.frames '_manip.whiskers']);
 fMManip = LoadMeasurements([NAME.path NAME.tag 'Front_' NAME.frames '_manip.measurements']);
 savePrepLoc = [NAME.saveFolder NAME.tag NAME.frames '_preMerge.mat'];
-%%
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% Get the labeled whisker from the measurents files.
+
 numFrames = max([fM.fid])+1;
 frontMeasure = fM([fM.label]==0);
 ID = [[frontMeasure.fid];[frontMeasure.wid]]';
@@ -33,10 +34,10 @@ traceIDX = ismember(traceID,ID,'rows');
 t = tT(traceIDX);
 
 
-
+%% Track the base point
 t = trackBP(tV,t);
 f = trackBP(fV,f);
-
+%% Fill in the whisker structs with empties if untracked
 clear tTemp
 tTemp(numFrames) = t(end);
 tTemp([t.time]+1) = t;
@@ -61,17 +62,12 @@ fMTemp([frontMeasure.fid]+1) = frontMeasure;
 frontMeasure = fMTemp;
 clear fMTemp
 
-
-
-
 if length(f)~=numFrames | length(t)~=numFrames
     error('front and top not of equal length to the number of frames in the clip. This probably means there are some frames at the end of the clip that dont have a tracked whisker')
 end
 
-
-%% Get Contact Still should edit this to check within windows as regards to findin peaks pos or neg.
-% front
-figure
+%% Get the tip position for top and front for use in contact detection. 
+% Untracked are set as NaN
 for ii = 1:numFrames
     if isempty(topMeasure(ii).tip_x)
         top_tip(ii).x = NaN;
@@ -97,7 +93,9 @@ for ii = 1:numFrames
     
 end
 
-
+%% Get contact
+% use tip position as an indicator; find the peaks and corresponding widths
+% to flag contact.
 frontCind = sqrt([front_tip.x].^2 + [front_tip.y].^2);
 frontCind = tsmovavg(frontCind,'s',10);
 plot(frontCind)
@@ -140,6 +138,10 @@ frontContactEnds = frontFrames(frontB);
 topFrames= [top_tip.time];
 topContactStarts = topFrames(topA);
 topContactEnds = topFrames(topB);
+% Use the peaks to mark contact in the logical 'C'
+
+% Use windows around contact regions to only merge frames near contact.
+% Will prevent us from merging frames where nothing is happening. 
 
 C = logical(zeros(numFrames,1));
 mergeFlags = logical(zeros(numFrames,1));
@@ -157,6 +159,9 @@ for ii = 1:length(frontContactStarts)
     C(idx) = 1;
     mergeFlags(idxMerge) = 1;
 end
+close all
+% Visualize contact and merge flags to see that it makes sense
+
 figure
 plot(topCind)
 title('Verify that contact is good')
@@ -192,6 +197,7 @@ for ii = 1:numFrames
     f(ii).x = double(f(ii).x);
     f(ii).y = double(f(ii).y);
 end
-save(savePrepLoc);
+%% Save to HDD
+save(savePrepLoc)
 
 
