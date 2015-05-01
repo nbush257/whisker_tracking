@@ -1,17 +1,23 @@
-tT = LoadWhiskers('D:\data\2015_08\analyzed\C1_top\rat2015_08_APR09_VG_C1_t01_Top_F000001F020000_noClass.whiskers');
-tM = LoadMeasurements('D:\data\2015_08\analyzed\C1_top\rat2015_08_APR09_VG_C1_t01_Top_F000001F020000_whisker.measurements');
-fT = LoadWhiskers('D:\data\2015_08\analyzed\C1_front\rat2015_08_APR09_VG_C1_t01_Front_F000001F020000_noClass.whiskers');
-fM = LoadMeasurements('D:\data\2015_08\analyzed\C1_front\rat2015_08_APR09_VG_C1_t01_Front_F000001F020000_whiskers.measurements');
-fV = 'D:\data\2015_08\avis\rat2015_08_APR09_VG_C1_t01_Front_F000001F020000.avi';
-tV = 'D:\data\2015_08\avis\rat2015_08_APR09_VG_C1_t01_Top_F000001F020000.avi';
-stereo_c = 'D:\data\2015_08\analyzed\rat2015_08_APR09_VG_C1_t01_stereo_calib.mat';
-tracked_3D_fileName = 'D:\data\2015_08\analyzed\rat2015_08_APR09_VG_C1_t01_F000001F020001_tracked_3D.mat';
-tTManip = LoadWhiskers('D:\data\2015_08\analyzed\C1_top\rat2015_08_APR09_VG_C1_t01_Top_F000001F020000_noClass.whiskers');
-tMManip = LoadMeasurements('D:\data\2015_08\analyzed\C1_top\rat2015_08_APR09_VG_C1_t01_Top_F000001F020000_manip.measurements');
-fTManip = LoadWhiskers('D:\data\2015_08\analyzed\C1_front\rat2015_08_APR09_VG_C1_t01_Front_F000001F020000_manip.whiskers');
-fMManip = LoadMeasurements('D:\data\2015_08\analyzed\C1_front\rat2015_08_APR09_VG_C1_t01_Front_F000001F020000_manip.measurements');
-savePrepLoc = 'D:\data\2015_08\analyzed\C1_front\rat2015_08_APR09_VG_C1_t01_F000001F020001_preMerge.mat';
-
+NAME.path = 'D:\data\2015_08\working\';
+NAME.saveFolder = 'D:\data\2015_08\analyzed\';
+NAME.tag = 'rat2015_08_APR09_VG_C1_t01_';
+frames = [1 20000];
+NAME.frames = sprintf('F%06iF%06i',frames(1),frames(2));
+%%
+tT = LoadWhiskers([NAME.path NAME.tag 'Top_' NAME.frames '_whisker.whiskers']);
+tM = LoadMeasurements([NAME.path NAME.tag 'Top_' NAME.frames '_whisker.measurements']);
+fT = LoadWhiskers([NAME.path NAME.tag 'Front_' NAME.frames '_whisker.whiskers']);
+fM = LoadMeasurements([NAME.path NAME.tag 'Front_' NAME.frames '_whisker.measurements']);
+fV = [NAME.path NAME.tag 'Front_' NAME.frames '.avi'];
+tV = [NAME.path NAME.tag 'Top_' NAME.frames '.avi'];
+stereo_c = [NAME.path NAME.tag 'stereo_calib.mat'];
+tracked_3D_fileName = [NAME.path NAME.tag NAME.frames '_tracked_3D.mat'];
+tTManip = LoadWhiskers([NAME.path NAME.tag 'Top_' NAME.frames '_manip.whiskers']);
+tMManip = LoadMeasurements([NAME.path NAME.tag 'Top_' NAME.frames '_manip.measurements']);
+fTManip = LoadWhiskers([NAME.path NAME.tag 'Front_' NAME.frames '_manip.whiskers']);
+fMManip = LoadMeasurements([NAME.path NAME.tag 'Front_' NAME.frames '_manip.measurements']);
+savePrepLoc = [NAME.saveFolder NAME.tag NAME.frames '_preMerge.mat'];
+%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 numFrames = max([fM.fid])+1;
 frontMeasure = fM([fM.label]==0);
@@ -158,6 +164,7 @@ hold on
 plot(frontCind);
 plot(C*500)
 plot(mergeFlags*600)
+pause
 
 %% Set merge flags to zero if both views don't have a whisker
 for ii = 1:numFrames
@@ -177,7 +184,14 @@ calib_stuffz;
 frontCam = calib(1:4);
 topCam = calib(5:8);
 A2B_transform = calib(9:10);
-
-%save(savePrepLoc);
+% convert to doubles
+for ii = 1:numFrames
+    t(ii).x = double(t(ii).x);
+    t(ii).y = double(t(ii).y);
+    
+    f(ii).x = double(f(ii).x);
+    f(ii).y = double(f(ii).y);
+end
+save(savePrepLoc);
 
 
