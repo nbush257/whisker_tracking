@@ -3,7 +3,7 @@ clear
 NAME.path = 'D:\data\2015_08\working\';
 NAME.saveFolder = 'D:\data\2015_08\analyzed\';
 NAME.tag = 'rat2015_08_APR09_VG_C1_t01_';
-frames = [40001 60000];
+frames = [60001 80000];
 NAME.frames = sprintf('F%06iF%06i',frames(1),frames(2));
 %% Load in data and set paths for loading and saving.
 fprintf('Loading Data...')
@@ -152,6 +152,8 @@ mergeFlags = logical(zeros(numFrames,1));
 for ii = 1:length(topContactStarts)
     idx = topContactStarts(ii)+1:topContactEnds(ii)+1;
     idxMerge = (topContactStarts(ii)-30):(topContactEnds(ii)+30);
+    idxMerge(idxMerge<1)=1;
+    idxMerge(idxMerge>numFrames) = numFrames;
     C(idx) = 1;
     mergeFlags(idxMerge) = 1;
 end
@@ -160,6 +162,8 @@ end
 for ii = 1:length(frontContactStarts)
     idx = frontContactStarts(ii)+1:frontContactEnds(ii)+1;
     idxMerge = frontContactStarts(ii)-30:frontContactEnds(ii)+30;
+    idxMerge(idxMerge<1)=1;
+    idxMerge(idxMerge>numFrames) = numFrames;
     C(idx) = 1;
     mergeFlags(idxMerge) = 1;
 end
