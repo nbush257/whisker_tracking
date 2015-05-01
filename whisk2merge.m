@@ -13,8 +13,6 @@ fMManip = LoadMeasurements('D:\data\2015_08\analyzed\C1_front\rat2015_08_APR09_V
 savePrepLoc = 'D:\data\2015_08\analyzed\C1_front\rat2015_08_APR09_VG_C1_t01_F000001F020001_preMerge.mat';
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-f = struct([]);
-t = struct([]);
 numFrames = max([fM.fid])+1;
 frontMeasure = fM([fM.label]==0);
 ID = [[frontMeasure.fid];[frontMeasure.wid]]';
@@ -28,20 +26,41 @@ traceID = [[tT.time];[tT.id]]';
 traceIDX = ismember(traceID,ID,'rows');
 t = tT(traceIDX);
 
-[t,f] = match_whisker_struct_by_ts(t,f);
 
 
 t = trackBP(tV,t);
 f = trackBP(fV,f);
 
-f([f.time]+1) = f;
-t([t.time]+1) = t;
-frontMeasure([frontMeasure.fid]+1) = frontMeasure;
-topMeasure([topMeasure.fid]+1) = topMeasure;
+clear tTemp
+tTemp(numFrames) = t(end);
+tTemp([t.time]+1) = t;
+t = tTemp;
+clear tTemp
+
+clear fTemp
+fTemp(numFrames) = f(end);
+fTemp([f.time]+1) = f;
+f = fTemp;
+clear fTemp
+
+clear tMTemp
+tMTemp(numFrames) = topMeasure(end);
+tMTemp([topMeasure.fid]+1) = topMeasure;
+topMeasure = tMTemp;
+clear tMTemp
+
+clear fMTemp
+fMTemp(numFrames) = frontMeasure(end);
+fMTemp([frontMeasure.fid]+1) = frontMeasure;
+frontMeasure = fMTemp;
+clear fMTemp
+
+
+
+
 if length(f)~=numFrames | length(t)~=numFrames
     error('front and top not of equal length to the number of frames in the clip. This probably means there are some frames at the end of the clip that dont have a tracked whisker')
 end
-
 
 
 %% Get Contact Still should edit this to check within windows as regards to findin peaks pos or neg.
@@ -140,6 +159,17 @@ plot(frontCind);
 plot(C*500)
 plot(mergeFlags*600)
 
+%% Set merge flags to zero if both views don't have a whisker
+for ii = 1:numFrames
+    if isempty(t(ii)) | isempty(f(ii))
+        mergeFlags(ii) = 0
+        continue
+    end
+    if isempty(t(ii).x) | isempty(f(ii).x)
+        mergeFlags(ii)=0;
+    end
+end
+
 
 %% load calibration
 load(stereo_c)
@@ -148,6 +178,6 @@ frontCam = calib(1:4);
 topCam = calib(5:8);
 A2B_transform = calib(9:10);
 
-save(savePrepLoc);
+%save(savePrepLoc);
 
 
