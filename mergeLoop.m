@@ -26,24 +26,14 @@ for ii = 1:step:numFrames
     for i = ii:ii+iter
         %initialize the merged values in the parfor loop.
         merge_x = [];merge_y = [];merge_z = [];last_merge_x = []; last_merge_y = []; last_merge_z = [];
-        % if this frame is not flagged for merging, skip it. 
-        if ~mergeFlags(i)
+        % if this frame is not flagged for merging, skip it. This should
+        % have already checked for empties in both views
+        if ~mergeFlags(i) 
             tracked_3D(i).x = []; tracked_3D(i).y = []; tracked_3D(i).z = [];
             tracked_3D(i).time = i-1;
             continue
         end
-        % If this frame does not exist, skip it. 
-        if isempty(t(i)) | isempty(f(i))
-            tracked_3D(i).x = []; tracked_3D(i).y = []; tracked_3D(i).z =[];
-            tracked_3D(i).time = i-1;
-            continue
-        end
-        % If this frame has no whisker skip it. 
-        if isempty(t(i).x) | isempty(f(i).x)
-            tracked_3D(i).x = []; tracked_3D(i).y = []; tracked_3D(i).z = [];
-            tracked_3D(i).time = i-1;
-            continue
-        end
+        
         
         prevWhiskerSize = 0;
         close all
