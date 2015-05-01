@@ -6,6 +6,12 @@ fV = 'D:\data\2015_08\avis\rat2015_08_APR09_VG_C1_t01_Front_F000001F020000.avi';
 tV = 'D:\data\2015_08\avis\rat2015_08_APR09_VG_C1_t01_Top_F000001F020000.avi';
 stereo_c = 'D:\data\2015_08\analyzed\rat2015_08_APR09_VG_C1_t01_stereo_calib.mat';
 tracked_3D_fileName = 'D:\data\2015_08\analyzed\rat2015_08_APR09_VG_C1_t01_F000001F020001_tracked_3D.mat';
+tTManip = LoadWhiskers('D:\data\2015_08\analyzed\C1_top\rat2015_08_APR09_VG_C1_t01_Top_F000001F020000_noClass.whiskers');
+tMManip = LoadMeasurements('D:\data\2015_08\analyzed\C1_top\rat2015_08_APR09_VG_C1_t01_Top_F000001F020000_manip.measurements');
+fTManip = LoadWhiskers('D:\data\2015_08\analyzed\C1_front\rat2015_08_APR09_VG_C1_t01_Front_F000001F020000_manip.whiskers');
+fMManip = LoadMeasurements('D:\data\2015_08\analyzed\C1_front\rat2015_08_APR09_VG_C1_t01_Front_F000001F020000_manip.measurements');
+savePrepLoc = 'D:\data\2015_08\analyzed\C1_front\rat2015_08_APR09_VG_C1_t01_F000001F020001_preMerge.mat';
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 f = struct([]);
 t = struct([]);
@@ -28,13 +34,48 @@ t = tT(traceIDX);
 t = trackBP(tV,t);
 f = trackBP(fV,f);
 
+f([f.time]+1) = f;
+t([t.time]+1) = t;
+frontMeasure([frontMeasure.fid]+1) = frontMeasure;
+topMeasure([topMeasure.fid]+1) = topMeasure;
+if length(f)~=numFrames | length(t)~=numFrames
+    error('front and top not of equal length to the number of frames in the clip. This probably means there are some frames at the end of the clip that dont have a tracked whisker')
+end
+
+
 
 %% Get Contact Still should edit this to check within windows as regards to findin peaks pos or neg.
 % front
 figure
-frontCind = sqrt([frontMeasure.tip_x].^2 + [frontMeasure.tip_y].^2);
+for ii = 1:numFrames
+    if isempty(topMeasure(ii).tip_x)
+        top_tip(ii).x = NaN;
+        top_tip(ii).y = NaN;
+        top_tip(ii).time = ii-1;
+    else
+        
+        top_tip(ii).x = topMeasure(ii).tip_x;
+        top_tip(ii).y = topMeasure(ii).tip_y;
+        top_tip(ii).time = ii-1;
+    end
+    if isempty(frontMeasure(ii).tip_x)
+        front_tip(ii).x = NaN;
+        front_tip(ii).y = NaN;
+        front_tip(ii).time = ii-1;
+    else
+        
+        front_tip(ii).x = frontMeasure(ii).tip_x;
+        front_tip(ii).y = frontMeasure(ii).tip_y;
+        front_tip(ii).time = ii-1;
+    end
+    
+    
+end
+
+
+frontCind = sqrt([front_tip.x].^2 + [front_tip.y].^2);
 frontCind = tsmovavg(frontCind,'s',10);
-plot([frontMeasure.fid],frontCind)
+plot(frontCind)
 baselineFront = ginput(1);
 baselineFront = baselineFront(2);
 frontCind_rect = abs(frontCind - baselineFront);
@@ -50,9 +91,9 @@ scatter(frontB,frontCind(frontB));
 
 % top
 figure
-topCind = sqrt([topMeasure.tip_x].^2 + [topMeasure.tip_y].^2);
+topCind = sqrt([top_tip.x].^2 + [top_tip.y].^2);
 topCind = tsmovavg(topCind,'s',10);
-plot([topMeasure.fid],topCind)
+plot(topCind)
 baselinetop = ginput(1);
 baselinetop = baselinetop(2);
 topCind_rect = abs(topCind - baselinetop);
@@ -67,90 +108,46 @@ scatter(topA,topCind(topA));
 scatter(topB,topCind(topB));
 
 
-frontFrames= [frontMeasure.fid];
+frontFrames= [front_tip.time];
 frontContactStarts = frontFrames(frontA);
 frontContactEnds = frontFrames(frontB);
 
-topFrames= [topMeasure.fid];
+topFrames= [top_tip.time];
 topContactStarts = topFrames(topA);
 topContactEnds = topFrames(topB);
 
 C = logical(zeros(numFrames,1));
+mergeFlags = logical(zeros(numFrames,1));
 for ii = 1:length(topContactStarts)
     idx = topContactStarts(ii)+1:topContactEnds(ii)+1;
+    idxMerge = (topContactStarts(ii)-30):(topContactEnds(ii)+30);
     C(idx) = 1;
+    mergeFlags(idxMerge) = 1;
 end
 
 
 for ii = 1:length(frontContactStarts)
     idx = frontContactStarts(ii)+1:frontContactEnds(ii)+1;
+    idxMerge = frontContactStarts(ii)-30:frontContactEnds(ii)+30;
     C(idx) = 1;
+    mergeFlags(idxMerge) = 1;
 end
 figure
-plot(topFrames,topCind)
+plot(topCind)
 title('Verify that contact is good')
 hold on
-plot(frontFrames,frontCind);
+plot(frontCind);
 plot(C*500)
+plot(mergeFlags*600)
 
 
 %% load calibration
 load(stereo_c)
 calib_stuffz;
+frontCam = calib(1:4);
+topCam = calib(5:8);
+A2B_transform = calib(9:10);
 
-frontCam = calib{1:4};
-topCam = calib{5:8};
-A2Btransform = calib{9:10};
-
-%% merge
-
-
-% 3D Merge Whisker % Might want to try to make the seed whisker variable.
-minDS = .7;% sets the minimum internode distance.
-minWhiskerSize = 20; % in # of nodes
-N = 20; % I think this is the number of fits to try. More should give a stabler fit.
-
-%Maybe only look at +- 100 around contact.
-
-tracked_3D = struct([]);
-
-tic;
-step = 1000;% Saves every 1000 frames
-% Outer loop is big serial chunks that saves every [step] frames
-for ii = 1:step:length(front)
-    
-    % Makes sure we don't try to access a frame past the last frame.
-    if (ii+step-1)>length(f)
-        iter = length(f)-ii;
-    else
-        iter = step-1;
-    end
-    % Parallel for loop which does the actual merging. Gets batches from
-    % the current outer loop.
-    parfor i = ii:ii+iter
-        prevWhiskerSize = 0;
-        close all
-        merge_x = [];merge_y = [];merge_z = [];
-        DS = minDS;
-        [merge_x,merge_y,merge_z]= Merge3D_JAEv1(f(i).x,f(i).y,t(i).x,t(i).y,i,calib,'wm_opts',{'DS',DS,'N',N});
-        
-        % The while loop steps DS down until whisker stops increasing by 5 nodes in
-        % node size
-        while length(merge_x)>prevWhiskerSize+5
-            prevWhiskerSize = length(merge_x);
-            DS = DS-.1;
-            [merge_x,merge_y,merge_z]= Merge3D_JAEv1(f(i).x,f(i).y,t(i).x,t(i).y,i,calib,'wm_opts',{'DS',DS,'N',N});
-            if DS<.1
-                break
-            end
-        end% end while
-        % Save into workspace
-        tracked_3D(i).x = merge_x; tracked_3D(i).y = merge_y; tracked_3D(i).z = merge_z;
-        tracked_3D(i).time = f(i).time;
-    end
-    save(tracked_3d_flieName,'tracked_3D')
-end
-timer = toc;
-fprintf('It took %.1f seconds to merge %i frames \n',timer,length(tracked_3D));
+save(savePrepLoc);
 
 

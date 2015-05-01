@@ -5,6 +5,7 @@ global r
 r = varIn;
 for ii = 1:length(tracked_3D)
     pos = [tracked_3D(ii).x;tracked_3D(ii).y;tracked_3D(ii).z];
+
     [x,y,z] = applyKalman(pos);
     smoothed(ii).x = x;
     smoothed(ii).y = y;
@@ -97,4 +98,3 @@ x = SM(1,:);
 y = SM(2,:);
 z = SM(3,:);
 end %EOLF
-
