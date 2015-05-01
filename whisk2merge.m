@@ -5,6 +5,7 @@ NAME.tag = 'rat2015_08_APR09_VG_C1_t01_';
 frames = [20001 40000];
 NAME.frames = sprintf('F%06iF%06i',frames(1),frames(2));
 %% Load in data and set paths for loading and saving.
+fprintf('Loading Data...')
 tT = LoadWhiskers([NAME.path NAME.tag 'Top_' NAME.frames '_whisker.whiskers']);
 tM = LoadMeasurements([NAME.path NAME.tag 'Top_' NAME.frames '_whisker.measurements']);
 fT = LoadWhiskers([NAME.path NAME.tag 'Front_' NAME.frames '_whisker.whiskers']);
@@ -20,7 +21,6 @@ fMManip = LoadMeasurements([NAME.path NAME.tag 'Front_' NAME.frames '_manip.meas
 savePrepLoc = [NAME.saveFolder NAME.tag NAME.frames '_preMerge.mat'];
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% Get the labeled whisker from the measurents files.
-
 numFrames = max([fM.fid])+1;
 frontMeasure = fM([fM.label]==0);
 ID = [[frontMeasure.fid];[frontMeasure.wid]]';
@@ -34,7 +34,7 @@ traceID = [[tT.time];[tT.id]]';
 traceIDX = ismember(traceID,ID,'rows');
 t = tT(traceIDX);
 
-
+fprintf('Done Loading')
 %% Track the base point
 t = trackBP(tV,t);
 f = trackBP(fV,f);
@@ -67,7 +67,9 @@ if length(f)~=numFrames | length(t)~=numFrames
     error('front and top not of equal length to the number of frames in the clip. This probably means there are some frames at the end of the clip that dont have a tracked whisker')
 end
 
+
 %% Get the tip position for top and front for use in contact detection. 
+fprintf('Getting Contact')
 % Untracked are set as NaN
 for ii = 1:numFrames
     if isempty(topMeasure(ii).tip_x)
@@ -191,6 +193,7 @@ frontCam = calib(1:4);
 topCam = calib(5:8);
 A2B_transform = calib(9:10);
 % convert to doubles
+fprintf('Saving to HDD')
 for ii = 1:numFrames
     t(ii).x = double(t(ii).x);
     t(ii).y = double(t(ii).y);
@@ -200,5 +203,6 @@ for ii = 1:numFrames
 end
 %% Save to HDD
 save(savePrepLoc)
+fprintf('All Done! Your data are ready to merge!')
 
 
