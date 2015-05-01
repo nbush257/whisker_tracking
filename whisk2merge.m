@@ -203,6 +203,6 @@ for ii = 1:numFrames
 end
 %% Save to HDD
 save(savePrepLoc)
-fprintf('All Done! Your data are ready to merge!')
+fprintf('\nAll Done! Your data are ready to merge!')
 
 
