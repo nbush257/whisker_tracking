@@ -1,4 +1,5 @@
 close all force
+clear
 NAME.path = 'D:\data\2015_08\working\';
 NAME.saveFolder = 'D:\data\2015_08\analyzed\';
 NAME.tag = 'rat2015_08_APR09_VG_C1_t01_';
