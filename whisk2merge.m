@@ -2,7 +2,7 @@ close all force
 NAME.path = 'D:\data\2015_08\working\';
 NAME.saveFolder = 'D:\data\2015_08\analyzed\';
 NAME.tag = 'rat2015_08_APR09_VG_C1_t01_';
-frames = [20001 40000];
+frames = [40001 60000];
 NAME.frames = sprintf('F%06iF%06i',frames(1),frames(2));
 %% Load in data and set paths for loading and saving.
 fprintf('Loading Data...')
@@ -69,7 +69,7 @@ end
 
 
 %% Get the tip position for top and front for use in contact detection. 
-fprintf('Getting Contact')
+fprintf('\nGetting Contact')
 % Untracked are set as NaN
 for ii = 1:numFrames
     if isempty(topMeasure(ii).tip_x)
@@ -193,7 +193,7 @@ frontCam = calib(1:4);
 topCam = calib(5:8);
 A2B_transform = calib(9:10);
 % convert to doubles
-fprintf('Saving to HDD')
+fprintf('\nSaving to HDD')
 for ii = 1:numFrames
     t(ii).x = double(t(ii).x);
     t(ii).y = double(t(ii).y);
