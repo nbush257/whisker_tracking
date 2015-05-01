@@ -1,7 +1,8 @@
+close all force
 NAME.path = 'D:\data\2015_08\working\';
 NAME.saveFolder = 'D:\data\2015_08\analyzed\';
 NAME.tag = 'rat2015_08_APR09_VG_C1_t01_';
-frames = [1 20000];
+frames = [20001 40000];
 NAME.frames = sprintf('F%06iF%06i',frames(1),frames(2));
 %% Load in data and set paths for loading and saving.
 tT = LoadWhiskers([NAME.path NAME.tag 'Top_' NAME.frames '_whisker.whiskers']);
