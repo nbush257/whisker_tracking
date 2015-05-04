@@ -1,4 +1,4 @@
-%Created by Nick Bush, Jan 2014
+% Created by Nick Bush, Jan 2014
 %Converts a subset of a seq file into an avi. When converting to avi, you are
 %liable to have issues if your timestamps are not perfectly sequential.
 %ALWAYS check the video for jumping. You may need to rewrite the

@@ -32,15 +32,8 @@ useFront(frontL>topL)=1;
 
 CP3D = nan(numFrames,3);
 badFrames = [];
-thundreds = 1:numFrames/50:numFrames;
-fprintf('\nGetting the contact point. \n')
-equiFrames = [];
-overshoot = [];
+
 for ii = 1:numFrames
-    if ismember(ii,thundreds)
-        fprintf('.')
-    end
-    
     wskr3D = tracked_3D([tracked_3D.time]==ii-1);
     if isempty(wskr3D)
         continue
@@ -60,34 +53,16 @@ for ii = 1:numFrames
     
     if useFront(ii) == 1
         [wskr_top,wskr_front] = BackProject3D(wskr3D,B_camera,A_camera,A2B_transform);
-        
-        manX = fManip([fManip.time]==ii-1).x;manX = manX(:,1);
-        manY = fManip([fManip.time]==ii-1).y;manY = manY(:,1);
-        
-        man = [manX manY];
+        man = [fManip([fManip.time]==ii-1).x fManip([fManip.time]==ii-1).y];
         [k,d] = dsearchn(wskr_front,man);
         idx = k(d==min(d));
     end
     if useFront(ii) == 0
         [wskr_top,wskr_front] = BackProject3D(wskr3D,B_camera,A_camera,A2B_transform);
-        manX = tManip([tManip.time]==ii-1).x;manX = manX(:,1);
-        manY = tManip([tManip.time]==ii-1).y;manY = manY(:,1);
-        
-        man = [manX manY];
+        man = [tManip([tManip.time]==ii-1).x tManip([tManip.time]==ii-1).y];
         [k,d] = dsearchn(wskr_top,man);
         idx = k(d==min(d));
         
     end
-    if length(idx)>1
-        warning(['Two equidistant points found in frame' num2str(ii)])
-        equiFrames = [equiFrames ii];
-        idx = idx(1);
-    end
-    if idx>length(wskr3D.x)
-        warning(['Contact point is past 3D whisker at frame ' num2str(ii)]);
-        idx = length(wskr3D.x);
-        overshoot = [overshoot ii];
-    end
-        
     CP3D(ii,:) = [wskr3D.x(idx),wskr3D.y(idx),wskr3D.z(idx)];
 end

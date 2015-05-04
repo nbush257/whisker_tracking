@@ -1,2 +1,2 @@
-for %%i in (L:\raw\2015_08\*.avi) do (
-	trace %%i C:\Users\guru\Desktop\%%~ni.whiskers)
+for %%i in (C:\Users\guru\Documents\hartmann_lab\data\2015_08\converting\*.avi) do (
+	trace %%i C:\Users\guru\Documents\hartmann_lab\data\2015_08\converting\%%~ni.whiskers)
