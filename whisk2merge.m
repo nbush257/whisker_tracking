@@ -3,7 +3,7 @@ clear
 NAME.path = 'D:\data\2015_08\working\';
 NAME.saveFolder = 'D:\data\2015_08\analyzed\';
 NAME.tag = 'rat2015_08_APR09_VG_C1_t01_';
-frames = [60001 80000];
+frames = [80001 100000];
 NAME.frames = sprintf('F%06iF%06i',frames(1),frames(2));
 %% Load in data and set paths for loading and saving.
 fprintf('Loading Data...')
@@ -164,6 +164,7 @@ for ii = 1:length(frontContactStarts)
     idxMerge = frontContactStarts(ii)-30:frontContactEnds(ii)+30;
     idxMerge(idxMerge<1)=1;
     idxMerge(idxMerge>numFrames) = numFrames;
+    
     C(idx) = 1;
     mergeFlags(idxMerge) = 1;
 end
@@ -208,6 +209,6 @@ for ii = 1:numFrames
 end
 %% Save to HDD
 save(savePrepLoc)
-fprintf('\nAll Done! Your data are ready to merge!')
+fprintf('\nAll Done! Your data are ready to merge!\n')
 
 
