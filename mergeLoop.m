@@ -23,7 +23,7 @@ for ii = 1:step:numFrames
     
     % Parallel for loop which does the actual merging. Gets batches from
     % the current outer loop.
-    for i = ii:ii+iter
+    parfor i = ii:ii+iter
         %initialize the merged values in the parfor loop.
         merge_x = [];merge_y = [];merge_z = [];last_merge_x = []; last_merge_y = []; last_merge_z = [];
         % if this frame is not flagged for merging, skip it. This should
