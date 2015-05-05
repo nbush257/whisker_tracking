@@ -1,23 +1,23 @@
 close all force
 clear
-NAME.path = 'D:\data\2015_08\working\';
-NAME.saveFolder = 'D:\data\2015_08\analyzed\';
-NAME.tag = 'rat2015_08_APR09_VG_C1_t01_';
-frames = [180001 181497];
+NAME.path = 'C:\Users\guru\Documents\hartmann_lab\data\2015_08\rat2015_08_APR09_VG_C2_t01\';
+NAME.saveFolder = 'C:\Users\guru\Documents\hartmann_lab\data\2015_08\rat2015_08_APR09_VG_C2_t01';
+NAME.tag = 'rat2015_08_APR09_VG_C2_t01_';
+frames = [040001 060000];
 NAME.frames = sprintf('F%06iF%06i',frames(1),frames(2));
 %% Load in data and set paths for loading and saving.
 fprintf('Loading Data...')
-tT = LoadWhiskers([NAME.path NAME.tag 'Top_' NAME.frames '_whisker.whiskers']);
+tT = LoadWhiskers([NAME.path NAME.tag 'Top_' NAME.frames '_noClass.whiskers']);
 tM = LoadMeasurements([NAME.path NAME.tag 'Top_' NAME.frames '_whisker.measurements']);
-fT = LoadWhiskers([NAME.path NAME.tag 'Front_' NAME.frames '_whisker.whiskers']);
+fT = LoadWhiskers([NAME.path NAME.tag 'Front_' NAME.frames '_noClass.whiskers']);
 fM = LoadMeasurements([NAME.path NAME.tag 'Front_' NAME.frames '_whisker.measurements']);
 fV = [NAME.path NAME.tag 'Front_' NAME.frames '.avi'];
 tV = [NAME.path NAME.tag 'Top_' NAME.frames '.avi'];
 stereo_c = [NAME.path NAME.tag 'stereo_calib.mat'];
 tracked_3D_fileName = [NAME.path NAME.tag NAME.frames '_tracked_3D.mat'];
-tTManip = LoadWhiskers([NAME.path NAME.tag 'Top_' NAME.frames '_manip.whiskers']);
+tTManip = LoadWhiskers([NAME.path NAME.tag 'Top_' NAME.frames '_noClass.whiskers']);
 tMManip = LoadMeasurements([NAME.path NAME.tag 'Top_' NAME.frames '_manip.measurements']);
-fTManip = LoadWhiskers([NAME.path NAME.tag 'Front_' NAME.frames '_manip.whiskers']);
+fTManip = LoadWhiskers([NAME.path NAME.tag 'Front_' NAME.frames '_noClass.whiskers']);
 fMManip = LoadMeasurements([NAME.path NAME.tag 'Front_' NAME.frames '_manip.measurements']);
 savePrepLoc = [NAME.saveFolder NAME.tag NAME.frames '_preMerge.mat'];
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -147,6 +147,8 @@ topA = round(locs-w);
 topB = round(locs+w);
 scatter(topA,topCind(topA));
 scatter(topB,topCind(topB));
+topA(topA<1)=1;
+frontA(frontA<1)=1;
 
 
 frontFrames= [front_tip.time];
@@ -156,8 +158,8 @@ frontContactEnds = frontFrames(round(frontB));
 
 
 topFrames= [top_tip.time];
-topContactStarts = topFrames(topA);
-topContactEnds = topFrames(topB);
+topContactStarts = topFrames(round(topA));
+topContactEnds = topFrames(round(topB));
 % Use the peaks to mark contact in the logical 'C'
 
 % Use windows around contact regions to only merge frames near contact.
@@ -224,13 +226,7 @@ for ii = 1:numFrames
 end
 
 
-%% load calibration
-load(stereo_c)
-calib_stuffz;
-frontCam = calib(1:4);
-topCam = calib(5:8);
-A2B_transform = calib(9:10);
-% convert to doubles
+%% convert to doubles
 fprintf('\nSaving to HDD')
 for ii = 1:numFrames
     t(ii).x = double(t(ii).x);
