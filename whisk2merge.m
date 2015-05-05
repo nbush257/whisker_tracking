@@ -3,7 +3,7 @@ clear
 NAME.path = 'D:\data\2015_08\working\';
 NAME.saveFolder = 'D:\data\2015_08\analyzed\';
 NAME.tag = 'rat2015_08_APR09_VG_C1_t01_';
-frames = [80001 100000];
+frames = [180001 181497];
 NAME.frames = sprintf('F%06iF%06i',frames(1),frames(2));
 %% Load in data and set paths for loading and saving.
 fprintf('Loading Data...')
@@ -69,7 +69,7 @@ if length(f)~=numFrames | length(t)~=numFrames
 end
 
 
-%% Get the tip position for top and front for use in contact detection. 
+%% Get the tip position for top and front for use in contact detection.
 fprintf('\nGetting Contact')
 % Untracked are set as NaN
 for ii = 1:numFrames
@@ -101,7 +101,14 @@ end
 % use tip position as an indicator; find the peaks and corresponding widths
 % to flag contact.
 frontCind = sqrt([front_tip.x].^2 + [front_tip.y].^2);
-frontCind = tsmovavg(frontCind,'s',10);
+for kk = 2:length(frontCind)
+    
+    if isnan(frontCind(ii))
+        frontCind(ii) = frontCind(ii-1);
+    end
+end
+
+frontCind = tsmovavg(frontCind,'s',20);
 plot(frontCind)
 baselineFront = ginput(1);
 baselineFront = baselineFront(2);
@@ -113,12 +120,19 @@ hold on
 scatter(locs,frontCind(locs));
 frontA = round(locs-w);
 frontB = round(locs+w);
-scatter(frontA,frontCind(frontA));
-scatter(frontB,frontCind(frontB));
+scatter(frontA,frontCind(round(frontA)));
+scatter(frontB,frontCind(round(frontB)));
 
 % top
 figure
 topCind = sqrt([top_tip.x].^2 + [top_tip.y].^2);
+for kk = 2:length(topCind)
+    
+    if isnan(topCind(ii))
+        topCind(ii) = topCind(ii-1);
+    end
+end
+
 topCind = tsmovavg(topCind,'s',10);
 plot(topCind)
 baselinetop = ginput(1);
@@ -136,8 +150,10 @@ scatter(topB,topCind(topB));
 
 
 frontFrames= [front_tip.time];
-frontContactStarts = frontFrames(frontA);
-frontContactEnds = frontFrames(frontB);
+frontContactStarts = frontFrames(round(frontA));
+frontContactEnds = frontFrames(round(frontB));
+
+
 
 topFrames= [top_tip.time];
 topContactStarts = topFrames(topA);
@@ -145,7 +161,20 @@ topContactEnds = topFrames(topB);
 % Use the peaks to mark contact in the logical 'C'
 
 % Use windows around contact regions to only merge frames near contact.
-% Will prevent us from merging frames where nothing is happening. 
+% Will prevent us from merging frames where nothing is happening.
+
+%% Manual get contact
+%Use this if it is easier to spot contact manually (usually larger contact
+% bouts
+subplot(211)
+title('Click on the left and right of each contact period')
+plot(frontCind)
+subplot(212)
+plot(topCind)
+ui = ginput;
+frontA = ui(1:2:end,1);
+frontB = ui(2:2:end,1);
+%%
 
 C = logical(zeros(numFrames,1));
 mergeFlags = logical(zeros(numFrames,1));
@@ -180,6 +209,9 @@ plot(C*500)
 plot(mergeFlags*600)
 pause
 
+
+
+
 %% Set merge flags to zero if both views don't have a whisker
 for ii = 1:numFrames
     if isempty(t(ii)) | isempty(f(ii))
@@ -210,6 +242,3 @@ end
 %% Save to HDD
 save(savePrepLoc)
 fprintf('\nAll Done! Your data are ready to merge!\n')
-
-
->>>>>>> c33d2df8561096cecb6312c7dc677ed5440f042a
