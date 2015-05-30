@@ -1,13 +1,23 @@
 % Use this to preprocess 2D data to E2D
 
-whiskerName = '';
-measureName = '';
-videoName = '';
+%======================================
+% may want to manually define contact!!
+%=====================================
+whiskerName = 'rat2015_06_FEB26_vg_C1_t01_Top_F040001F060000_whisker.whiskers';
+measureName = 'rat2015_06_FEB26_vg_C1_t01_Top_F040001F060000_whisker.measurements';
+videoName = 'D:\data\avis\2015_06\rat2015_06_FEB26_vg_C1_t01\rat2015_06_FEB26_vg_C1_t01_Top_F040001F060000.avi';
+
+manipTraceName = 'D:\data\tracked\2015_06\rat2015_06_0226_FEB26_vg_C1_t01\rat2015_06_FEB26_vg_C1_t01_Top_F040001F060000_manip_2D.whiskers';
+manipMeasureName = 'D:\data\tracked\2015_06\rat2015_06_0226_FEB26_vg_C1_t01\rat2015_06_FEB26_vg_C1_t01_Top_F040001F060000_manip_2D.measurements';
+
 saveName = '';
-isRight = 0;
+isRight = 1;
 %%
 tT = LoadWhiskers(whiskerName);
 tM = LoadMeasurements(measureName);
+tTManip = LoadWhiskers(manipTraceName);
+tMManip = LoadMeasurements(manipMeasureName);
+
 tV = videoName;
 
 numFrames = max([tT.time]);
@@ -19,6 +29,8 @@ traceID = [[tT.time];[tT.id]]';
 traceIDX = ismember(traceID,ID,'rows');
 t = tT(traceIDX);
 
+
+
 if isRight
     for ii = 1:length(t)
         t(ii).x = flipud(t(ii).x);
@@ -26,7 +38,7 @@ if isRight
     end
 end
 
-t = trackBP(t,tV);
+t = trackBP(tV,t);
 
 clear tTemp
 tTemp(numFrames) = t(end);
@@ -79,7 +91,7 @@ topB = round(locs+w);
 scatter(topA,topCind(topA));
 scatter(topB,topCind(topB));
 topA(topA<1)=1;
-frontA(frontA<1)=1;
+
 
 topFrames= [top_tip.time];
 topContactStarts = topFrames(round(topA));
@@ -102,27 +114,43 @@ close all
 figure
 plot(topCind)
 title('Verify that contact is good')
-
+ho
 plot(C*500)
-plot(mergeFlags*600)
 pause
 
 %% Set merge flags to zero if both views don't have a whisker
-for ii = 1:numFrames
-    if isempty(t(ii))
-        mergeFlags(ii) = 0;
-        continue
-    end
-    if isempty(t(ii).x)
-        mergeFlags(ii)=0;
-    end
-end
 
-fprintf('\nSaving to HDD')
 for ii = 1:numFrames
     t(ii).x = double(t(ii).x);
     t(ii).y = double(t(ii).y);
 end
-%% Save to HDD
-save(saveName)
-fprintf('\nAll Done! Your data are ready to merge!\n') 
+
+
+
+%% Get CP
+topManipMeasure = tMManip([tMManip.label]==0);
+ID = [[topManipMeasure.fid];[topManipMeasure.wid]]';
+traceID = [[tTManip.time];[tTManip.id]]';
+traceIDX = ismember(traceID,ID,'rows');
+tManip = tTManip(traceIDX);
+
+for ii = 1:numFrames
+    [k,d] = dsearchn([t(ii).x t(ii).y],[tManip(ii).x tManip(ii).y]);
+    idx = k(d==min(d));
+    CP(ii,:) = [t(ii).x(idx) t(ii).y(idx)];
+end
+
+%% View
+
+
+for ii = 1:2384
+    if ~C(ii)
+        continue
+    end
+    plot(t(ii).x,t(ii).y,'.')
+    ho
+    plot(CP(ii,1),CP(ii,2),'r*')
+    axis([0 640 0 480])
+    pause(.01)
+    cla
+end
