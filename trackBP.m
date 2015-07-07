@@ -44,6 +44,7 @@ else
 end
 
 %% User input Basepoint
+I = read(v,5000);
 imshow(I);
 zoom on; title('zoom to the basepoint');pause;
 title('click on the basepoint')
@@ -79,7 +80,7 @@ for ii = 1:length(wStruct);
     if ii~=1
         bp_movement = sqrt((bp(ii,1)-bp(ii-1,1)).^2 + (bp(ii,2)-bp(ii-1,2)).^2);
         
-        if bp_movement>5 %If it has moved more than 5 pixels, use the previous basepoint as the current basepoint.
+        if bp_movement>2 %If it has moved more than 1 pixels, use the previous basepoint as the current basepoint.
             %and set the first node on the whisker equal to the last
             %basepoint.
             bpIdx(ii) = 1;

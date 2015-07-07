@@ -5,10 +5,10 @@ lastwarn('none')
 nanWskr = [];
 diffBP = [];
 clear xw3d yw3d zw3d
-for ii = 1:length(tracked_3D_clean)
-    x = tracked_3D_clean(ii).x;
-    y = tracked_3D_clean(ii).y;
-    z = tracked_3D_clean(ii).z;
+for ii = 1:length(tracked_3D)
+    x = tracked_3D(ii).x;
+    y = tracked_3D(ii).y;
+    z = tracked_3D(ii).z;
     
 %     if any([x(1) y(1) z(1)]-BP(ii,:)>2)% check to see if basepoint is off by more than 2 pixels
 %         difference = num2str(sum([x(1) y(1) z(1)]-BP(ii,:)));
