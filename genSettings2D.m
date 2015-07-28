@@ -1,23 +1,23 @@
 %generate settings file
 
-%% Settings_rat2015_06_FEB26_VG_B2_t01
+%% Settings_rat2015_08_APR09_VG_C1_t01
 % -------------------------------------------------------------------------
 % Settings file for image processing
 % -------------------------------------------------------------------------
 % DATA SPECIFICS:
 %   + Data author: Nick Bush
-%   + Date taken: 2015_02_26
-%   + Trial: B2
-%   + Frames: 
+%   + Date taken: 2015_04_09
+%   + Trial: C1
+%   + Frames: 20001 40000
 % -------------------------------------------------------------------------
-% Nick and Pravin
+% Nick 
 % 2015_04_08
 
 %% 00. Path names and labeling
 % ** CHANGE WITH EACH DATASET **
 
 % Data path location:
-PT.dataname = 'rat2015_06_FEB26_VG_B2_t01';
+PT.dataname = 'rat2015_08_APR09_VG_C1_t01';
 PT.path = 'C:\Users\guru\Documents\hartmann_lab\data\2015_06';
 PT.data = 'C:\Users\guru\Documents\hartmann_lab\data\2015_06';
 

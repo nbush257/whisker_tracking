@@ -7,9 +7,9 @@ numCorners =25;
 cornersFront = struct([]);
 cornersTop = struct([]);
 calibSize = 2; % in mm
-frontCalib = 'L:\raw\2015_06\rat2105_06_0226_FEB26_vg_B2\calibration\Calib_Results_rat2105_06_0226_FEB26_vg_B2_calib_pre_Front.mat';
-topCalib = 'L:\raw\2015_06\rat2105_06_0226_FEB26_vg_B2\calibration\Calib_Results_rat2105_06_0226_FEB26_vg_B2_calib_pre_top.mat';
-stereoCalib = 'L:\raw\2015_06\rat2105_06_0226_FEB26_vg_B2\calibration\calib.mat';
+frontCalib = ;
+topCalib = ;
+stereoCalib = ;
 cornerIdx = 1:numCorners;
 %% 
 for ii = 1:numIms

@@ -1,23 +1,23 @@
 close all force
 clear
-NAME.path = 'C:\Users\guru\Documents\hartmann_lab\data\2015_08\rat2015_08_APR09_VG_C2_t01\';
-NAME.saveFolder = 'C:\Users\guru\Documents\hartmann_lab\data\2015_08\rat2015_08_APR09_VG_C2_t01';
-NAME.tag = 'rat2015_08_APR09_VG_C2_t01_';
-frames = [040001 060000];
+NAME.path = 'D:\data\tracked\2015_06\rat2015_06_0226_FEB26_vg_C1_t01\';
+NAME.saveFolder = 'D:\data\tracked\2015_06\rat2015_06_0226_FEB26_vg_C1_t01\';
+NAME.tag = 'rat2015_06_0226_FEB26_vg_C1_t01_';
+frames = [020001 040000];
 NAME.frames = sprintf('F%06iF%06i',frames(1),frames(2));
 %% Load in data and set paths for loading and saving.
 fprintf('Loading Data...')
-tT = LoadWhiskers([NAME.path NAME.tag 'Top_' NAME.frames '_noClass.whiskers']);
+tT = LoadWhiskers([NAME.path NAME.tag 'Top_' NAME.frames '_whisker.whiskers']);
 tM = LoadMeasurements([NAME.path NAME.tag 'Top_' NAME.frames '_whisker.measurements']);
-fT = LoadWhiskers([NAME.path NAME.tag 'Front_' NAME.frames '_noClass.whiskers']);
+fT = LoadWhiskers([NAME.path NAME.tag 'Front_' NAME.frames '_whisker.whiskers']);
 fM = LoadMeasurements([NAME.path NAME.tag 'Front_' NAME.frames '_whisker.measurements']);
 fV = [NAME.path NAME.tag 'Front_' NAME.frames '.avi'];
 tV = [NAME.path NAME.tag 'Top_' NAME.frames '.avi'];
 stereo_c = [NAME.path NAME.tag 'stereo_calib.mat'];
 tracked_3D_fileName = [NAME.path NAME.tag NAME.frames '_tracked_3D.mat'];
-tTManip = LoadWhiskers([NAME.path NAME.tag 'Top_' NAME.frames '_noClass.whiskers']);
+tTManip = LoadWhiskers([NAME.path NAME.tag 'Top_' NAME.frames '_manip.whiskers']);
 tMManip = LoadMeasurements([NAME.path NAME.tag 'Top_' NAME.frames '_manip.measurements']);
-fTManip = LoadWhiskers([NAME.path NAME.tag 'Front_' NAME.frames '_noClass.whiskers']);
+fTManip = LoadWhiskers([NAME.path NAME.tag 'Front_' NAME.frames '_manip.whiskers']);
 fMManip = LoadMeasurements([NAME.path NAME.tag 'Front_' NAME.frames '_manip.measurements']);
 savePrepLoc = [NAME.saveFolder NAME.tag NAME.frames '_preMerge.mat'];
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -108,13 +108,13 @@ for kk = 2:length(frontCind)
     end
 end
 
-frontCind = tsmovavg(frontCind,'s',20);
+frontCind = tsmovavg(frontCind,'s',30);
 plot(frontCind)
 baselineFront = ginput(1);
 baselineFront = baselineFront(2);
 frontCind_rect = abs(frontCind - baselineFront);
 
-[~,locs,w] = findpeaks(frontCind_rect,'MinPeakProminence',10);
+[~,locs,w] = findpeaks(frontCind_rect,'MinPeakProminence',15);
 plot(frontCind);
 hold on
 scatter(locs,frontCind(locs));
