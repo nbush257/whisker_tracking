@@ -1,7 +1,10 @@
+%% This function finds frames that are missing tracking, has you manually choose the whisker, and combines them into one mat file.
+
 clear all
 close all
 DM = dir('*whisker.measurements');
-DW = dir('*Top*.whiskers');
+DW = dir('*whisker.whiskers');
+DV = dir('*.avi')
 
 for ii = 1:length(DW)
     rm(ii)= any(regexp(DW(ii).name,'manip'));
@@ -16,6 +19,8 @@ allW = [];
 allM = [];
 for ii = 1:length(DM)
     close all
+    noWhisker = [];
+    V = VideoReader(DV(ii).name);
     pause(.001)
     m = LoadMeasurements(DM(ii).name);
     w = LoadWhiskers(DW(ii).name);
@@ -26,8 +31,8 @@ for ii = 1:length(DM)
     wID = [[w.id];[w.time]];
     m = m(~rmID);
     w = w(~ismember(wID',toRMID','rows'));
-        wID = [[w.id];[w.time]];
-
+    wID = [[w.id];[w.time]];
+    
     keepM = m([m.label]==0);
     
     ID = [[keepM.wid];[keepM.fid]];
@@ -37,7 +42,8 @@ for ii = 1:length(DM)
     keepW = w(ismember(wID',ID','rows'));
     
     %% see if there is any region of space to remove traces from.
-    %This section is not complete, it doesn't do anything yet.
+    
+    
     ho
     for jj = 1:5:length(keepW)
         plot(keepW(jj).x,keepW(jj).y,'-.')
@@ -72,7 +78,7 @@ for ii = 1:length(DM)
     for jj = 1:length(missing)
         
         traceTime =find([w.time]==missing(jj));
-        if jj>1 % check last choice point to see if it falls close to another trace
+        if jj>1 & ~isempty(choice) % check last choice point to see if it falls close to another trace
             closestPt = [];
             for kk = 1:length(traceTime)
                 [~,tD] = dsearchn(choice,[w(traceTime(kk)).x w(traceTime(kk)).y]);
@@ -90,27 +96,36 @@ for ii = 1:length(DM)
                 
                 closestPt = [];
                 ca
+                imshow(read(V,missing(jj)));
                 ho
                 for kk = 1:length(traceTime)
                     plot(w(traceTime(kk)).x,w(traceTime(kk)).y,'-o')
                 end
                 title([num2str(jj) ' of ' num2str(length(missing))])
                 choice = ginput(1);
-                for kk = 1:length(traceTime)
+                if ~isempty(choice)
+                    for kk = 1:length(traceTime)
+                        
+                        [~,tD] = dsearchn(choice,[w(traceTime(kk)).x w(traceTime(kk)).y]);
+                        closestPt(kk) = min(tD);
+                    end
+                    [~,idx] = min(closestPt);
+                    c = dsearchn([w(traceTime(idx)).x w(traceTime(idx)).y],choice);
                     
-                    [~,tD] = dsearchn(choice,[w(traceTime(kk)).x w(traceTime(kk)).y]);
-                    closestPt(kk) = min(tD);
+                    choice = [w(traceTime(idx)).x(c) w(traceTime(idx)).y(c)];
+                    new = w(traceTime(idx));
+                    
+                    m([m.wid]==new.id & [m.fid]==new.time).label = 0;
+                else
+                    noWhisker = [noWhisker jj];
                 end
-                [~,idx] = min(closestPt);
-                c = dsearchn([w(traceTime(idx)).x w(traceTime(idx)).y],choice);
                 
-                choice = [w(traceTime(idx)).x(c) w(traceTime(idx)).y(c)];
-                new = w(traceTime(idx));
-                m([m.wid]==new.id & [m.fid]==new.time).label = 0;
             end
         else
             closestPt = [];
             close all
+            imshow(read(V,missing(jj)));
+            
             hold on
             
             for kk = 1:length(traceTime)
@@ -118,20 +133,57 @@ for ii = 1:length(DM)
             end
             title([num2str(jj) ' of ' num2str(length(missing))])
             choice = ginput(1);
-            
-            for kk = 1:length(traceTime)
-                [~,tD] = dsearchn(choice,[w(traceTime(kk)).x w(traceTime(kk)).y]);
-                closestPt(kk) = min(tD);
+            if ~isempty(choice)
+                for kk = 1:length(traceTime)
+                    [~,tD] = dsearchn(choice,[w(traceTime(kk)).x w(traceTime(kk)).y]);
+                    closestPt(kk) = min(tD);
+                end
+                [~,idx] = min(closestPt);
+                c = dsearchn([w(traceTime(idx)).x w(traceTime(idx)).y],choice);
+                %replace choice with a point on the closest trace. This is useful
+                %for serial tracking.
+                choice = [w(traceTime(idx)).x(c) w(traceTime(idx)).y(c)];
+                new = w(traceTime(idx));
+                m([m.wid]==new.id & [m.fid]==new.time).label = 0;
+                
+            else
+                noWhisker = [noWhisker missing(jj)
+                    
+                
+                
+                
+                
+                
+                ];
             end
-            [~,idx] = min(closestPt);
-            c = dsearchn([w(traceTime(idx)).x w(traceTime(idx)).y],choice);
-            %replace choice with a point on the closest trace. This is useful
-            %for serial tracking.
-            choice = [w(traceTime(idx)).x(c) w(traceTime(idx)).y(c)];
-            new = w(traceTime(idx));
-            m([m.wid]==new.id & [m.fid]==new.time).label = 0;
         end
     end
+    lm = length(m);
+    lw = length(w);
+    for jj = 1:length(noWhisker)
+        
+        names = fieldnames(m);
+        timer = strcmp(names,'fid');
+        names = names(~timer);
+        for kk = 1:length(names)
+            m(lm+jj).(names{kk}) = [];
+        end
+        m(lm+jj).fid = noWhisker(jj);
+        m(lm+jj).label = 0;
+        m(lm+jj).wid = 888;
+        
+        names = fieldnames(w);
+        timer = strcmp(names,'time');
+        names = names(~timer);
+        
+        for kk = 1:length(names)
+            w(lw+jj).(names{kk}) = [];
+        end
+        w(lw+jj).time= noWhisker(jj);
+        w(lw+jj).id= 888;
+    end
+    
+    
     keepM = m([m.label]==0);
     if length(keepM)~=max([m.fid])+1
         error('Number of tracked whiskers does not equal number of frames')
@@ -145,7 +197,24 @@ for ii = 1:length(DM)
     [~,I] = sort([keepW.time]);
     keepW = keepW(I);
     [~,I] = sort([keepM.fid]);
-    keepM = keepM(I);
+     keepM = keepM(I);
+%     for jj = 1:length(noWhisker)
+%         names = fieldnames(m);
+%         timer = strcmp(names,'fid');
+%         names = names(~timer);
+%         for kk = 1:length(names)
+%             keepM(noWhisker(jj)).(names{kk}) = [];
+%         end
+%         
+%         names = fieldnames(w);
+%         timer = strcmp(names,'time');
+%         names = names(~timer);
+%         
+%         for kk = 1:length(names)
+%             keepW(noWhisker(jj)).(names{kk}) = [];
+%         end
+%     end
+    
     
     if any(diff([keepW.time])~=1) | any(diff([keepM.fid])~=1)
         error('Some timestep is not equal to 1')
