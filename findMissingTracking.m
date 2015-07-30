@@ -2,9 +2,9 @@
 
 clear all
 close all
-DM = dir('*whisker.measurements');
-DW = dir('*whisker.whiskers');
-DV = dir('*.avi')
+DM = dir('*Front*whisker.measurements');
+DW = dir('*Front*whisker.whiskers');
+DV = dir('*Front*.avi')
 
 for ii = 1:length(DW)
     rm(ii)= any(regexp(DW(ii).name,'manip'));
@@ -19,6 +19,7 @@ allW = [];
 allM = [];
 for ii = 1:length(DM)
     close all
+    choice = [];
     noWhisker = [];
     V = VideoReader(DV(ii).name);
     pause(.001)
@@ -76,6 +77,10 @@ for ii = 1:length(DM)
     %%
     missing = setdiff([0:max([m.fid])],[keepM.fid]);
     for jj = 1:length(missing)
+        if ~any([m.fid]==missing(jj))
+            noWhisker = [noWhisker missing(jj)];
+            continue
+        end
         
         traceTime =find([w.time]==missing(jj));
         if jj>1 & ~isempty(choice) % check last choice point to see if it falls close to another trace
@@ -96,7 +101,7 @@ for ii = 1:length(DM)
                 
                 closestPt = [];
                 ca
-                imshow(read(V,missing(jj)));
+                imshow(read(V,missing(jj)+1));
                 ho
                 for kk = 1:length(traceTime)
                     plot(w(traceTime(kk)).x,w(traceTime(kk)).y,'-o')
@@ -117,14 +122,14 @@ for ii = 1:length(DM)
                     
                     m([m.wid]==new.id & [m.fid]==new.time).label = 0;
                 else
-                    noWhisker = [noWhisker jj];
+                    noWhisker = [noWhisker missing(jj)];
                 end
                 
             end
         else
             closestPt = [];
             close all
-            imshow(read(V,missing(jj)));
+            imshow(read(V,missing(jj)+1));
             
             hold on
             
@@ -147,40 +152,33 @@ for ii = 1:length(DM)
                 m([m.wid]==new.id & [m.fid]==new.time).label = 0;
                 
             else
-                noWhisker = [noWhisker missing(jj)
-                    
-                
-                
-                
-                
-                
-                ];
+                noWhisker = [noWhisker missing(jj)];
             end
         end
     end
     lm = length(m);
     lw = length(w);
-    for jj = 1:length(noWhisker)
+    for jjj = 1:length(noWhisker)
         
         names = fieldnames(m);
         timer = strcmp(names,'fid');
         names = names(~timer);
         for kk = 1:length(names)
-            m(lm+jj).(names{kk}) = [];
+            m(lm+jjj).(names{kk}) = [];
         end
-        m(lm+jj).fid = noWhisker(jj);
-        m(lm+jj).label = 0;
-        m(lm+jj).wid = 888;
+        m(lm+jjj).fid = noWhisker(jjj);
+        m(lm+jjj).label = 0;
+        m(lm+jjj).wid = 888;
         
         names = fieldnames(w);
         timer = strcmp(names,'time');
         names = names(~timer);
         
         for kk = 1:length(names)
-            w(lw+jj).(names{kk}) = [];
+            w(lw+jjj).(names{kk}) = [];
         end
-        w(lw+jj).time= noWhisker(jj);
-        w(lw+jj).id= 888;
+        w(lw+jjj).time= noWhisker(jjj);
+        w(lw+jjj).id= 888;
     end
     
     
