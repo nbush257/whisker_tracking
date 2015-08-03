@@ -3,7 +3,7 @@
 clear all
 close all
 DM = dir('*Front*whisker.measurements');
-DW = dir('*Front*whisker.whiskers');
+DW = dir('*Front*_whisker.whiskers');
 DV = dir('*Front*.avi')
 
 for ii = 1:length(DW)
