@@ -8,8 +8,10 @@ DV = dir('*Front*.avi')
 
 for ii = 1:length(DW)
     rm(ii)= any(regexp(DW(ii).name,'manip'));
+    rm2(ii) = any(regexp(DW(ii).name,'_whisker'));
 end
 DW = DW(~rm);
+
 
 if length(DM)~=length(DW)
     error('number of whiskers files does not match number of measurements')

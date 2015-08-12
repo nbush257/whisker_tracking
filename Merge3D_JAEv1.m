@@ -115,6 +115,7 @@ end
 
 %% Fit 3D Worm
 %% Ellis control clause
+
 if abs(length(xf)-length(xt)) < 200  & ~noFit
     TGL_plotFull =0;
     [x,y,z,PT] = Fit_3dWorm(xf,yf,xt,yt, ...

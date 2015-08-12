@@ -10,10 +10,10 @@ numFrames = numel(C);
  tracked_3D = struct([]);
 count = 0;
 
-tic;
 step =10000;% Saves every 10000 frames
 tracked_3D_fileName = 'rat2015_15_JUN11_VG_B1_t01_tracked_3D.mat';
-exitCounter = 0;
+
+numFrames = numel(C);
 % Outer loop is big serial chunks that saves every [step] frames
 for ii = 1:step:numFrames
     count = count+1;
@@ -28,10 +28,12 @@ for ii = 1:step:numFrames
     % Parallel for loop which does the actual merging. Gets batches from
     % the current outer loop.
     for i = ii:ii+iter
-                %initialize the merged values in the parfor loop.
-        % merge_x = [];merge_y = [];merge_z = [];last_merge_x = []; last_merge_y = []; last_merge_z = [];
+        %initialize the merged values in the parfor loop.
+        merge_x = [];merge_y = [];merge_z = [];last_merge_x = []; last_merge_y = []; last_merge_z = [];
+
         % if this frame is not flagged for merging, skip it. This should
         % have already checked for empties in both views
+
         if ~mergeFlags(i) || isempty(t(i).x) || isempty(f(i).x)
             tracked_3D(i).x = []; tracked_3D(i).y = []; tracked_3D(i).z = [];
             tracked_3D(i).time = i-1;
@@ -43,16 +45,11 @@ for ii = 1:step:numFrames
         close all
         DS = minDS;
         
-%         % Initial merge.
-%         ca
-%         if check
-%             [merge_x,merge_y,merge_z,~,exits]= Merge3D_JAEv1(f(i).x,f(i).y,t(i).x,t(i).y,i,calib,'wm_opts',{'PreviousFit',{merge_x,merge_y,merge_z},'PreviousFit_GuessOnly',1,'DS',DS,'N',N});
-%         else
-%             check = 1;
-%             [merge_x,merge_y,merge_z,~,exits]= Merge3D_JAEv1(f(i).x,f(i).y,t(i).x,t(i).y,i,calib,'wm_opts',{'DS',DS,'N',N});
-%         end
-        [merge_x,merge_y,merge_z,~,exits]= Merge3D_JAEv1(f(i).x,f(i).y,t(i).x,t(i).y,i,calib,'wm_opts',{'DS',DS,'N',N});
-        
+
+        % Initial merge.
+        [merge_x,merge_y,merge_z]= Merge3D_JAEv1(f(i).x,f(i).y,t(i).x,t(i).y,i,calib,'wm_opts',{'DS',DS,'N',N});
+
+
         % The while loop steps DS down until whisker stops increasing by 5 nodes in
         % node size
         %
