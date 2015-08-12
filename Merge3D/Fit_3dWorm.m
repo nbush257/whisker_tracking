@@ -3,12 +3,12 @@ disp(sprintf('\nFit_3dWorm.m\n'))
 %% function [wx,wy,wz] = Fit_3dWorm(AAX,AAY,BBX,BBY,{'setting_name',setting})
 % -------------------------------------------------------------------------
 % INPUT:
-%   (AAX,AAY) - (x,y) points corresponding to line in image A 
+%   (AAX,AAY) - (x,y) points corresponding to line in image A
 %               ... FRONT (Left) Camera (e.g. [y,z] projection)
-%   (BBX,BBY) - (x,y) points corresponding to line in image B 
+%   (BBX,BBY) - (x,y) points corresponding to line in image B
 %               ... TOP (Right) Camera (e.g. [x,y] projection)
-%   varargin: 
-%   
+%   varargin:
+%
 %       + Fit Related:
 %       'BP' - (x,y,z) 3D point of base. If not provided, assumes (0,0,0)
 %       'DS' - incremental segment length to fit 3D object
@@ -22,7 +22,7 @@ disp(sprintf('\nFit_3dWorm.m\n'))
 %
 %       + fminsearch Related:
 %       'set_fminsearch' - {'param',param_setting} settings for optimset
-%       
+%
 %       + Camera Related:
 %       'A_proj' - projection selection for image A (for Get_3DtoCameraProjection)
 %           + either 'YZ' or cell array of camera parameters {fc,cc,kc,alpha_c}
@@ -31,28 +31,28 @@ disp(sprintf('\nFit_3dWorm.m\n'))
 %       'A2B_transform' - Transformation matrix components for A->B
 %           + Formatted as: {om,T}
 %           + Required if A_proj and B_proj are camera projections
-%   
+%
 %       + Toggles
 %       'Plot_Steps' - 1/0 to show intermediate fitting
 %       'Plot_Final' - 1/0 to show final fit
 %       'spline' - 1/0 to toggle spline smoothing of final 3D data
-%       
+%
 % OUTPUT:
-%   (wx,wy,wz) - 3D points fit by the 3D worm 
+%   (wx,wy,wz) - 3D points fit by the 3D worm
 % -------------------------------------------------------------------------
 % NOTES:
 %   + A2B_transform is required if A_proj and B_proj are camera projections
 %   + TOP and FRONT camera views should have same object orientation
 %     e.g. top-right of checkboard is top-right in both views
 % -------------------------------------------------------------------------
-% Brian Quist 
+% Brian Quist
 % March 2, 2012
 global TGL_PltSteps DS PT mAAX mAAY mBBX mBBY A_proj B_proj A2B
 
 DS = []; PT = []; mAAX = []; mAAY = []; mBBX = []; mBBY = []; A2B = [];%#ok<NASGU>
 
 %% Handle inputs
-TGL_PltSteps = 0; 
+TGL_PltSteps = 0;
 TGL_PltFinal = 0;
 TGL_spline = 0;
 TGL_previousfit = 0;
@@ -76,6 +76,8 @@ Hwz = NaN;
 
 % fminsearch settings
 fmin_settings = {'maxfunevals',500};
+exitflag = NaN;
+exitval = NaN;
 
 % User inputs
 % -------------------------------------------------------------------------
@@ -120,7 +122,7 @@ if TGL_previousfit,
     BP(2) = Hwy(Hii);
     BP(3) = Hwz(Hii);
     % Increment index for next fit
-    Hii = Hii+1;    
+    Hii = Hii+1;
 end
 
 % Compute reference projections: A_proj
@@ -140,13 +142,13 @@ PT.BP_B = [BP_Bx;BP_By];
 clear r BP_Ax BP_Ay BP_Bx BP_By
 
 %% Search 3D space
-flag = true; 
+flag = true;
 flip = true;
 
 % Setup base points
-PT.wx = BP(1); 
-PT.wy = BP(2); 
-PT.wz = BP(3); 
+PT.wx = BP(1);
+PT.wy = BP(2);
+PT.wz = BP(3);
 PT.BP = [BP(1) BP(2) BP(3)];
 
 % Setup Axc
@@ -186,10 +188,10 @@ while flag,
         
         % Compute reference projections; B_proj
         [Bxc,Byc] = Get_3DtoCameraProjection(r(1,:),r(2,:),r(3,:),'proj',B_proj);
-               
-        PT.Axc = [PT.Axc; Axc]; 
+        
+        PT.Axc = [PT.Axc; Axc];
         PT.Ayc = [PT.Ayc; Ayc];
-        PT.Bxc = [PT.Bxc; Bxc]; 
+        PT.Bxc = [PT.Bxc; Bxc];
         PT.Byc = [PT.Byc; Byc];
         
         % Compute Error
@@ -216,11 +218,11 @@ while flag,
             PT.BP_B = [Bxc; Byc];
             % ---
             Hii = Hii+1;
-            if Hii > length(Hwx), flag = false; end            
+            if Hii > length(Hwx), flag = false; end
         else
             % Start full Fit_3dWorm function
-        end      
-
+        end
+        
         % Toggle for PreviousFit_GuessOnly
         if TGL_preivousfit_guessonly,
             % Stop using previous data and use only as a guess
@@ -274,9 +276,9 @@ while flag,
         CHK_A(goodA) = 1;
         CHK_B(goodB) = 1;
         
-       if ~TGL_preivousfit_guessonly,
-           % Setup guess
-           % --------------------------------------------------------------
+        if ~TGL_preivousfit_guessonly,
+            % Setup guess
+            % --------------------------------------------------------------
             switch flip
                 case 1
                     DA = sqrt( ...
@@ -310,138 +312,146 @@ while flag,
                 A2B_transform{1},A2B_transform{2}, ...
                 A_proj{1},A_proj{2},A_proj{3},A_proj{4}, ...
                 B_proj{1},B_proj{2},B_proj{3},B_proj{4});
-       else
-           % USE PREVIOUS GUESS
-           % --------------------------------------------------------------
-           
-           % Compute 3D projection
-           % -----------------------------------------------------------------
-           ZZ(1) = Hwx(Hii);
-           ZZ(2) = Hwy(Hii);
-           ZZ(3) = Hwz(Hii);
-           
-           % Increment index for next fit
-           Hii = Hii+1;
-           
-           % Check Hii length
-           if Hii > length(Hwx),
-               TGL_preivousfit_guessonly = false;
-           end
-       end
-       
-       % Compute guess for q0
-       R = sqrt( (ZZ(2)-PT.BP(2))^2 + (ZZ(1)-PT.BP(1))^2 );
-       % (1) Estimate PHI angle (-'ve b.c. of right hand rule)
-       q0(1) = - atan2(ZZ(3)-PT.BP(3),R)*(180/pi);
-       % (2) Estimate THETA angle
-       q0(2) = atan2(ZZ(2)-PT.BP(2), ZZ(1)-PT.BP(1))*(180/pi);
-       
-       % Find optimal segment orientation
-       % -----------------------------------------------------------------
-       PT.E_q = []; PT.E_e = []; PT.E_eA = []; PT.E_eB = [];
-       options = optimset(fmin_settings{:}); % fminsearch options
-       fminsearch(@LOCAL_FitWorm,q0,options);
-       
-       % Append new fit data
-       % -----------------------------------------------------------------
-       PT.wx = [PT.wx PT.wx(end)+PT.x(end)];
-       PT.wy = [PT.wy PT.wy(end)+PT.y(end)];
-       PT.wz = [PT.wz PT.wz(end)+PT.z(end)];
-       
-       % Check if done
-       % -----------------------------------------------------------------
-       % Stop if all points fitted
-       if sum(CHK_A) == length(CHK_A) && sum(CHK_B) == length(CHK_B),
-           flag = false;
-       end
-       
-       % Stop if error from single projection is too large
-       eA = sqrt( (PT.Axc(end)-AAX).^2 + (PT.Ayc(end)-AAY).^2 );
-       eB = sqrt( (PT.Bxc(end)-BBX).^2 + (PT.Byc(end)-BBY).^2 );
-       if min(eA) > ER_thresh,
-           disp(['eA error (',num2str(min(eA)),') is too large2'])
-           flag = false;
-           clip = find(PT.E_eA(:,end) <= ER_thresh,1,'last');
-           %    JAE addition 140925
-           wx = PT.wx;
-           wy = PT.wy;
-           wz = PT.wz;
-           if isempty(clip), clip = -999; end
-       elseif min(eB) > ER_thresh,
-           disp(['eB error (',num2str(min(eB)),') is too large2'])
-           flag = false;
-           clip = find(PT.E_eB(:,end) <= ER_thresh,1,'last');
-           %    JAE addition 140925
-           wx = PT.wx;
-           wy = PT.wy;
-           wz = PT.wz;
-           if isempty(clip), clip = -999; end
-       end
-       
-       % Stop if fit folds back on itself
-       dA = sqrt( (PT.Axc(end)-PT.Axc(1:end-PT.N)).^2 + ...
-           (PT.Ayc(end)-PT.Ayc(1:end-PT.N)).^2 );
-       dB = sqrt( (PT.Bxc(end)-PT.Bxc(1:end-PT.N)).^2 + ...
-           (PT.Byc(end)-PT.Byc(1:end-PT.N)).^2 );
-       % Commented out by @JAE 2014_03_06
-       if min(dA) < ER_thresh && min(dB) < ER_thresh,
-           disp('fit folding back on itself')
-           flag = false;
-           clip = 1;
-           %    JAE addition 140925
-           wx = PT.wx;
-           wy = PT.wy;
-           wz = PT.wz;
-       end
-       
-       % Clip bad data
-       if isempty(clip), clip = 1; end
-       if clip == -999,
-           % Enters if no additional data is good to add -> clip it all
-           if PT.N >= 2,
-               PT.wx = PT.wx(1:(end-1)); % 1/3/2012
-               PT.wy = PT.wy(1:(end-1)); % 1/3/2012
-               PT.wz = PT.wz(1:(end-1)); % 1/3/2012
-               % ---
-               PT.Axc = PT.Axc(1:(end-(PT.N)));
-               PT.Ayc = PT.Ayc(1:(end-(PT.N)));
-               PT.Bxc = PT.Bxc(1:(end-(PT.N)));
-               PT.Byc = PT.Byc(1:(end-(PT.N)));
-           else
-               PT.wx = PT.wx(1:(end-1));
-               PT.wy = PT.wy(1:(end-1));
-               PT.wz = PT.wz(1:(end-1));
-               % ---
-               PT.Axc = PT.Axc(1:(end-1));
-               PT.Ayc = PT.Ayc(1:(end-1));
-               PT.Bxc = PT.Bxc(1:(end-1));
-               PT.Byc = PT.Byc(1:(end-1));
-           end
-       elseif ~isnan(clip) && PT.N >= 2,
-           PT.wx(end) = PT.wx(end-1)+PT.x(clip);
-           PT.wy(end) = PT.wy(end-1)+PT.y(clip);
-           PT.wz(end) = PT.wz(end-1)+PT.z(clip);
-           % ---
-           PT.Axc = PT.Axc(1:(end-(PT.N-clip)));
-           PT.Ayc = PT.Ayc(1:(end-(PT.N-clip)));
-           PT.Bxc = PT.Bxc(1:(end-(PT.N-clip)));
-           PT.Byc = PT.Byc(1:(end-(PT.N-clip)));
-       elseif ~isnan(clip) && PT.N == 1,
-           PT.wx = PT.wx(1:end-1);
-           PT.wy = PT.wy(1:end-1);
-           PT.wz = PT.wz(1:end-1);
-           % ---
-           PT.Axc = PT.Axc(1:(end-1));
-           PT.Ayc = PT.Ayc(1:(end-1));
-           PT.Bxc = PT.Bxc(1:(end-1));
-           PT.Byc = PT.Byc(1:(end-1));
-       end
-       
-       switch flip
-           case 1, flip = 2;
-           case 2, flip = 0;
-       end
-       
+        else
+            % USE PREVIOUS GUESS
+            % --------------------------------------------------------------
+            
+            % Compute 3D projection
+            % -----------------------------------------------------------------
+            ZZ(1) = Hwx(Hii);
+            ZZ(2) = Hwy(Hii);
+            ZZ(3) = Hwz(Hii);
+            
+            % Increment index for next fit
+            Hii = Hii+1;
+            
+            % Check Hii length
+            if Hii > length(Hwx),
+                TGL_preivousfit_guessonly = false;
+            end
+        end
+        
+        % Compute guess for q0
+        R = sqrt( (ZZ(2)-PT.BP(2))^2 + (ZZ(1)-PT.BP(1))^2 );
+        % (1) Estimate PHI angle (-'ve b.c. of right hand rule)
+        q0(1) = - atan2(ZZ(3)-PT.BP(3),R)*(180/pi);
+        % (2) Estimate THETA angle
+        q0(2) = atan2(ZZ(2)-PT.BP(2), ZZ(1)-PT.BP(1))*(180/pi);
+        
+        % Find optimal segment orientation
+        % -----------------------------------------------------------------
+        PT.E_q = []; PT.E_e = []; PT.E_eA = []; PT.E_eB = [];
+        options = optimset(fmin_settings{:}); % fminsearch options
+        [~,exitval,exitflag] = fminsearch(@LOCAL_FitWorm,q0,options);
+        
+        % Append new fit data
+        % -----------------------------------------------------------------
+        PT.wx = [PT.wx PT.wx(end)+PT.x(end)];
+        PT.wy = [PT.wy PT.wy(end)+PT.y(end)];
+        PT.wz = [PT.wz PT.wz(end)+PT.z(end)];
+        
+        % Check if done
+        % -----------------------------------------------------------------
+        % Stop if all points fitted
+        if sum(CHK_A) == length(CHK_A) && sum(CHK_B) == length(CHK_B),
+            flag = false;
+        end
+        
+        % Stop if error from single projection is too large
+        eA = sqrt( (PT.Axc(end)-AAX).^2 + (PT.Ayc(end)-AAY).^2 );
+        eB = sqrt( (PT.Bxc(end)-BBX).^2 + (PT.Byc(end)-BBY).^2 );
+        if min(eA) > ER_thresh,
+            disp(['eA error (',num2str(min(eA)),') is too large2'])
+            flag = false;
+            clip = find(PT.E_eA(:,end) <= ER_thresh,1,'last');
+            %    JAE addition 140925
+            wx = PT.wx;
+            wy = PT.wy;
+            wz = PT.wz;
+            if isempty(clip), clip = -999; end
+        elseif min(eB) > ER_thresh,
+            disp(['eB error (',num2str(min(eB)),') is too large2'])
+            flag = false;
+            clip = find(PT.E_eB(:,end) <= ER_thresh,1,'last');
+            %    JAE addition 140925
+            wx = PT.wx;
+            wy = PT.wy;
+            wz = PT.wz;
+            if isempty(clip), clip = -999; end
+        end
+        
+        % Stop if fit folds back on itself
+        dA = sqrt( (PT.Axc(end)-PT.Axc(1:end-PT.N)).^2 + ...
+            (PT.Ayc(end)-PT.Ayc(1:end-PT.N)).^2 );
+        dB = sqrt( (PT.Bxc(end)-PT.Bxc(1:end-PT.N)).^2 + ...
+            (PT.Byc(end)-PT.Byc(1:end-PT.N)).^2 );
+        % Commented out by @JAE 2014_03_06
+        if min(dA) < ER_thresh && min(dB) < ER_thresh,
+            disp('fit folding back on itself')
+            flag = false;
+            clip = 1;
+            %    JAE addition 140925
+            wx = PT.wx;
+            wy = PT.wy;
+            wz = PT.wz;
+        end
+        % Stop if output of fminsearch is NaN
+        if isnan(exitval)
+            fprintf('fminsearch returned a NaN, exiting fit\n')
+            flag = false;
+            wx = PT.wx;
+            wy = PT.wy;
+            wz = PT.wz;
+        end
+        
+        % Clip bad data
+        if isempty(clip), clip = 1; end
+        if clip == -999,
+            % Enters if no additional data is good to add -> clip it all
+            if PT.N >= 2,
+                PT.wx = PT.wx(1:(end-1)); % 1/3/2012
+                PT.wy = PT.wy(1:(end-1)); % 1/3/2012
+                PT.wz = PT.wz(1:(end-1)); % 1/3/2012
+                % ---
+                PT.Axc = PT.Axc(1:(end-(PT.N)));
+                PT.Ayc = PT.Ayc(1:(end-(PT.N)));
+                PT.Bxc = PT.Bxc(1:(end-(PT.N)));
+                PT.Byc = PT.Byc(1:(end-(PT.N)));
+            else
+                PT.wx = PT.wx(1:(end-1));
+                PT.wy = PT.wy(1:(end-1));
+                PT.wz = PT.wz(1:(end-1));
+                % ---
+                PT.Axc = PT.Axc(1:(end-1));
+                PT.Ayc = PT.Ayc(1:(end-1));
+                PT.Bxc = PT.Bxc(1:(end-1));
+                PT.Byc = PT.Byc(1:(end-1));
+            end
+        elseif ~isnan(clip) && PT.N >= 2,
+            PT.wx(end) = PT.wx(end-1)+PT.x(clip);
+            PT.wy(end) = PT.wy(end-1)+PT.y(clip);
+            PT.wz(end) = PT.wz(end-1)+PT.z(clip);
+            % ---
+            PT.Axc = PT.Axc(1:(end-(PT.N-clip)));
+            PT.Ayc = PT.Ayc(1:(end-(PT.N-clip)));
+            PT.Bxc = PT.Bxc(1:(end-(PT.N-clip)));
+            PT.Byc = PT.Byc(1:(end-(PT.N-clip)));
+        elseif ~isnan(clip) && PT.N == 1,
+            PT.wx = PT.wx(1:end-1);
+            PT.wy = PT.wy(1:end-1);
+            PT.wz = PT.wz(1:end-1);
+            % ---
+            PT.Axc = PT.Axc(1:(end-1));
+            PT.Ayc = PT.Ayc(1:(end-1));
+            PT.Bxc = PT.Bxc(1:(end-1));
+            PT.Byc = PT.Byc(1:(end-1));
+        end
+        
+        switch flip
+            case 1, flip = 2;
+            case 2, flip = 0;
+        end
+        
     end % if ~TGL_previousfit
     
     % Plot current step
@@ -462,14 +472,16 @@ while flag,
         axis equal;
         title('TOP View');
     end
- 
+    
 end % while flag
 
 
 % JAE addition: save the PT file so the two-dim back projections from the
 % 3D-guessed points can be used for splining (useful if there is a
 % basepoint mismatch)
-save 'PT_file' PT
+PT.exitflag = exitflag;
+PT.exitval = exitval;
+%save 'PT_file' PT
 
 %% Final plot
 if TGL_PltFinal,
@@ -496,6 +508,8 @@ end
 wx = PT.wx;
 wy = PT.wy;
 wz = PT.wz;
+PT.exitval = exitval;
+PT.exitflag = exitflag;
 
 %% Smoothed output
 % -> Not yet tested
@@ -503,11 +517,11 @@ if TGL_spline,
     % Construct spline
     W = [wx;wy;wz];
     sp = spaps(1:length(wx),W,0);
-
+    
     % Resample
     t = 1:1:length(wx);
     Wt = ppval(sp,t);
-
+    
     % Plot
     figure;
     plot3(Wt(1,:),Wt(2,:),Wt(3,:),'b.-'); hold on;
@@ -517,7 +531,7 @@ if TGL_spline,
     wx = Wt(1,:)';
     wy = Wt(2,:)';
     wz = Wt(3,:)';
-
+    
 end
 
 
@@ -547,7 +561,7 @@ r = rigid_motion([x;y;z],A2B{1},A2B{2});
 [Bxc,Byc] = Get_3DtoCameraProjection(r(1,:),r(2,:),r(3,:),'proj',B_proj);
 
 % Reference output
-PT.Axc = Axc; PT.Ayc = Ayc; 
+PT.Axc = Axc; PT.Ayc = Ayc;
 PT.BP_A = [PT.Axc(end); PT.Ayc(end)];
 PT.Bxc = Bxc; PT.Byc = Byc;
 PT.BP_B = [PT.Bxc(end); PT.Byc(end)];
@@ -557,24 +571,24 @@ PT.BP_B = [PT.Bxc(end); PT.Byc(end)];
 
 % Plot check
 if 0,
-   figure(1000); clf(1000); 
-   subplot(1,2,1);
-   plot(mAAX(1,:),mAAY(1,:),'k.'); hold on;
-   plot(Axc(end-PT.N),Ayc(end-PT.N),'r*');
-   plot(Axc,Ayc,'c.-');
-%    [~,temp_x,temp_y] = Draw_Circle(Axc(end-PT.N),Ayc(end-PT.N),PT.RR,'r');
-%    set(gca,'XLim',[min(temp_x) max(temp_x)]);
-%    set(gca,'YLim',[min(temp_y) max(temp_y)]);
-   axis equal;
-   
-   subplot(1,2,2);
-   plot(mBBX(1,:),mBBY(1,:),'k.'); hold on;
-   plot(Bxc(end-PT.N),Byc(end-PT.N),'r*');
-   plot(Bxc,Byc,'c.-');
-%    [~,temp_x,temp_y] = Draw_Circle(Bxc(end-PT.N),Byc(end-PT.N),PT.RR,'r');
-%    set(gca,'XLim',[min(temp_x) max(temp_x)]);
-%    set(gca,'YLim',[min(temp_y) max(temp_y)]);
-   axis equal;
+    figure(1000); clf(1000);
+    subplot(1,2,1);
+    plot(mAAX(1,:),mAAY(1,:),'k.'); hold on;
+    plot(Axc(end-PT.N),Ayc(end-PT.N),'r*');
+    plot(Axc,Ayc,'c.-');
+    %    [~,temp_x,temp_y] = Draw_Circle(Axc(end-PT.N),Ayc(end-PT.N),PT.RR,'r');
+    %    set(gca,'XLim',[min(temp_x) max(temp_x)]);
+    %    set(gca,'YLim',[min(temp_y) max(temp_y)]);
+    axis equal;
+    
+    subplot(1,2,2);
+    plot(mBBX(1,:),mBBY(1,:),'k.'); hold on;
+    plot(Bxc(end-PT.N),Byc(end-PT.N),'r*');
+    plot(Bxc,Byc,'c.-');
+    %    [~,temp_x,temp_y] = Draw_Circle(Bxc(end-PT.N),Byc(end-PT.N),PT.RR,'r');
+    %    set(gca,'XLim',[min(temp_x) max(temp_x)]);
+    %    set(gca,'YLim',[min(temp_y) max(temp_y)]);
+    axis equal;
 end
 
 % Compute errors
@@ -600,6 +614,7 @@ PT.E_q = [PT.E_q; q];
 PT.E_e = [PT.E_e; e];
 PT.E_eA = [PT.E_eA, eA];
 PT.E_eB = [PT.E_eB, eB];
+
 
 %% function V = LOCAL_ClockGuess(Rx,Ry,x,y,RR)
 function V = LOCAL_ClockGuess(Rx,Ry,x,y,RR)
@@ -640,17 +655,17 @@ Ryy = Ry(good);
 % Check if data exists
 if isempty(Rxx),
     V = [x(end);y(end)];
-    return; 
+    return;
 end
-    
+
 % Fit slope to data
 m = polyfit(Rxx,Ryy,1);
 th_guess = atan2(m(1),1);
 
 % Find optimal theta
 C = [x(end),y(end)];
-options = optimset('maxfunevals',500); % fminsearch options
-th = fminsearch(@LOCAL_FitClock,th_guess,options,Rxx,Ryy,RR,C);
+options = optimset('maxfunevals',500,'MaxIter',500); % fminsearch options
+[th,exitval,exitflag] = fminsearch(@LOCAL_FitClock,th_guess,options,Rxx,Ryy,RR,C);
 
 % Output final V
 V = [0;0];
@@ -659,14 +674,14 @@ V(2) = RR*sin(th) + C(2);
 
 % Plot check
 if 0,
-   figure(1001); clf(1001);
-   plot(Rx,Ry,'k.'); hold on;
-   plot(Rxx,Ryy,'b.');
-   plot(xx,yy,'c.');
-   plot(x,y,'m*-');
-   plot([C(1) V(1)],[C(2) V(2)],'r*-','LineWidth',2);
-   Draw_Circle(C(1),C(2),RR,'r');
-   axis equal;
+    figure(1001); clf(1001);
+    plot(Rx,Ry,'k.'); hold on;
+    plot(Rxx,Ryy,'b.');
+    plot(xx,yy,'c.');
+    plot(x,y,'m*-');
+    plot([C(1) V(1)],[C(2) V(2)],'r*-','LineWidth',2);
+    Draw_Circle(C(1),C(2),RR,'r');
+    axis equal;
 end
 %% function e = LOCAL_FitClock(q,Rx,Ry,R,C)
 function e = LOCAL_FitClock(q,Rx,Ry,R,C)
