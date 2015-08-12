@@ -42,7 +42,7 @@ function [x,y,z,varargout] = Fit_3dBasepoint(AAx,AAy,BBx,BBy,varargin)
 global REF
 
 %% Handle inputs 
-TGL_PltFinal = 0;
+TGL_PltFinal = 1;
 N = 1;
 A_camera = {ones(2,1),zeros(2,1),zeros(5,1),0};
 B_camera = {ones(2,1),zeros(2,1),zeros(5,1),0};
