@@ -7,7 +7,7 @@ minDS = 1;% sets the minimum internode distance.
 minWhiskerSize = 20; % in # of nodes
 N = 20; % I think this is the number of fits to try. More should give a stabler fit.
 numFrames = numel(C);
- tracked_3D = struct([]);
+tracked_3D = struct([]);
 count = 0;
 
 step =10000;% Saves every 10000 frames
@@ -28,12 +28,13 @@ for ii = 1:step:numFrames
     % Parallel for loop which does the actual merging. Gets batches from
     % the current outer loop.
     for i = ii:ii+iter
+        i
         %initialize the merged values in the parfor loop.
         merge_x = [];merge_y = [];merge_z = [];last_merge_x = []; last_merge_y = []; last_merge_z = [];
-
+        
         % if this frame is not flagged for merging, skip it. This should
         % have already checked for empties in both views
-
+        
         if ~mergeFlags(i) || isempty(t(i).x) || isempty(f(i).x)
             tracked_3D(i).x = []; tracked_3D(i).y = []; tracked_3D(i).z = [];
             tracked_3D(i).time = i-1;
@@ -45,11 +46,11 @@ for ii = 1:step:numFrames
         close all
         DS = minDS;
         
-
+        
         % Initial merge.
         [merge_x,merge_y,merge_z]= Merge3D_JAEv1(f(i).x,f(i).y,t(i).x,t(i).y,i,calib,'wm_opts',{'DS',DS,'N',N});
-
-
+        
+        
         % The while loop steps DS down until whisker stops increasing by 5 nodes in
         % node size
         %
@@ -86,10 +87,8 @@ for ii = 1:step:numFrames
         tracked_3D(i).time = i-1;tracked_3D(i).frontTime = f(i).time;tracked_3D(i).topTime = t(i).time;
         
     end
-    if mod(count,10)==0
-        iCount = iCount+1;
-        save([tracked_3D_fileName(1:end-4) '_iter_' num2str(iCount) ],'tracked_3D')
-    end
+    save([tracked_3D_fileName(1:end-4) '_iter_' num2str(iCount) ],'tracked_3D')
+    
     
 end
 timer = toc;
