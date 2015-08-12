@@ -1,6 +1,12 @@
-function [x,y,z,summary_PT] = Merge3D(xf,yf,xt,yt,count,calib,varargin)
+function [x,y,z,summary_PT,exits] = Merge3D(xf,yf,xt,yt,count,calib,varargin)
 % disp('3D_Merging.m')
 global summary_PT
+if ~isa(xf,'double')
+    xf = double(xf);
+    yf = double(yf);
+    xt = double(xt);
+    yt = double(yt);
+end
 
 warning off
 %% [x,y,z] = Merge3D(xf,yf,xt,yt,{'param_name',param})
@@ -110,21 +116,23 @@ end
 %% Fit 3D Worm
 %% Ellis control clause
 if abs(length(xf)-length(xt)) < 200  & ~noFit
-    TGL_plotFull =1;
+    TGL_plotFull =0;
     [x,y,z,PT] = Fit_3dWorm(xf,yf,xt,yt, ...
         'BP',[bp_x,bp_y,bp_z], ...
         'A_proj',{fc_left,cc_left,kc_left,alpha_c_left}, ...
         'B_proj',{fc_right,cc_right,kc_right,alpha_c_right}, ...
         'A2B_transform',{om,T}, ...
         'Plot_Final',TGL_plotFull,wm_opts{:});
+    exits = [PT.exitval PT.exitflag];
 else
     PT=[];
+    exits = [NaN NaN];
     x=0;
     y=0;
     z=0;
 end
 
 
-drawnow
+%drawnow
 warning on
 summary_PT{count} = PT;
