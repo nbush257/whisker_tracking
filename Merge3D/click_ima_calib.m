@@ -262,26 +262,26 @@ dypos = mean([grid_pts(:,ind_orig) grid_pts(:,ind_orig-n_sq_x-1)]');
 
 x_box_kk = [grid_pts(1,:)-(wintx+.5);grid_pts(1,:)+(wintx+.5);grid_pts(1,:)+(wintx+.5);grid_pts(1,:)-(wintx+.5);grid_pts(1,:)-(wintx+.5)];
 y_box_kk = [grid_pts(2,:)-(winty+.5);grid_pts(2,:)-(winty+.5);grid_pts(2,:)+(winty+.5);grid_pts(2,:)+(winty+.5);grid_pts(2,:)-(winty+.5)];
-
-
-figure(3);
-image(I); colormap(map); hold on;
-plot(grid_pts(1,:)+1,grid_pts(2,:)+1,'r+');
-plot(x_box_kk+1,y_box_kk+1,'-b');
-plot(grid_pts(1,ind_corners)+1,grid_pts(2,ind_corners)+1,'mo');
-plot(xorig+1,yorig+1,'*m');
-h = text(xorig+delta*vO(1),yorig+delta*vO(2),'O');
-set(h,'Color','m','FontSize',14);
-h2 = text(dxpos(1)+delta*vX(1),dxpos(2)+delta*vX(2),'dX');
-set(h2,'Color','g','FontSize',14);
-h3 = text(dypos(1)+delta*vY(1),dypos(2)+delta*vY(2),'dY');
-set(h3,'Color','g','FontSize',14);
-xlabel('Xc (in camera frame)');
-ylabel('Yc (in camera frame)');
-title('Extracted corners');
-zoom on;
-drawnow;
-hold off;
+% 
+% 
+% figure(3);
+% image(I); colormap(map); hold on;
+% plot(grid_pts(1,:)+1,grid_pts(2,:)+1,'r+');
+% plot(x_box_kk+1,y_box_kk+1,'-b');
+% plot(grid_pts(1,ind_corners)+1,grid_pts(2,ind_corners)+1,'mo');
+% plot(xorig+1,yorig+1,'*m');
+% h = text(xorig+delta*vO(1),yorig+delta*vO(2),'O');
+% set(h,'Color','m','FontSize',14);
+% h2 = text(dxpos(1)+delta*vX(1),dxpos(2)+delta*vX(2),'dX');
+% set(h2,'Color','g','FontSize',14);
+% h3 = text(dypos(1)+delta*vY(1),dypos(2)+delta*vY(2),'dY');
+% set(h3,'Color','g','FontSize',14);
+% xlabel('Xc (in camera frame)');
+% ylabel('Yc (in camera frame)');
+% title('Extracted corners');
+% zoom on;
+% drawnow;
+% hold off;
 
 
 Xi = reshape(([0:n_sq_x]*dX)'*ones(1,n_sq_y+1),Np,1)';
