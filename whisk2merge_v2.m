@@ -1,10 +1,10 @@
 %% load in data
 clear
 ca
-load('rat2015_15_JUN11_VG_C2_t01_Front_traced.mat')
+load('rat2015_15_JUN11_VG_D4_t01_Front_tracked.mat')
 frontM = allM;
 frontW = allW;
-load('rat2015_15_JUN11_VG_C2_t01_Top_traced.mat')
+load('rat2015_15_JUN11_VG_D4_t01_Top_tracked.mat')
 topM = allM;
 topW = allW;
 clear m w
@@ -13,16 +13,18 @@ topMRaw = topM;
 frontMRaw = frontM;
 frontWRaw = frontW;
 %% Trim to the basepoint
-topW = trackBP('rat2015_15_JUN11_VG_C2_t01_Top_F040001F060000.avi',topW);
-frontW = trackBP('rat2015_15_JUN11_VG_C2_t01_Front_F040001F060000.avi',frontW);
+topW = trackBP('rat2015_15_JUN11_VG_D4_t01_Top_F000001F020000.avi',topW);
+frontW = trackBP('rat2015_15_JUN11_VG_D4_t01_Front_F000001F020000.avi',frontW);
 
+% % 
+%  topW = fill2Dgap(topW);
+%  frontW = fill2Dgap(frontW);
+% % 
+% % 
+%  topW = rmOutlierPts(topW);
+%  frontW = rmOutlierPts(frontW);
 
-topW = rmOutlierPts(topW);
-frontW = rmOutlierPts(frontW);
-
-topW = fill2Dgap(topW);
-frontW = fill2Dgap(frontW);
-
+ %% sort whisker
 
 %% view to verify the basepoint tracking
 
@@ -58,8 +60,8 @@ clear sample
 %         topW(ii).y(toRM) = [];
 %     end
 % end
-
-
+pause
+ca
 %% get TH
 
 

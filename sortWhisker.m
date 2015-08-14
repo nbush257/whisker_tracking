@@ -1,27 +1,10 @@
-function [x,y] = sortWhisker(x,y,useX,basepointSmaller)
-% function [x,y] = sortWhisker(x,y,useX,basepointSmaller)
-
-if useX
-    if basepointSmaller
-    [x,indexes] = sort(x(:),1,'ascend');
-    else
-    [x,indexes] = sort(x(:),1,'descend');    
+function wStruct = sortWhisker(wStruct)
+for ii = 1:length(wStruct)
+    if isempty(wStruct(ii).x)
+        continue
     end
-    y = y(indexes);
-else
-    if basepointSmaller
-    [y,indexes] = sort(y(:),1,'ascend');
-    else
-    [y,indexes] = sort(y(:),1,'descend');
-    end
-    x = x(indexes);
+    [~,i] = sort(wStruct(ii).x);
+    wStruct(ii).x = wStruct(ii).x(i);
+    wStruct(ii).y = wStruct(ii).y(i);
 end
-
-
-% JAE 141213
-if size(y,1) == 1
-    y=y';
-end
-
-end % EOF
 

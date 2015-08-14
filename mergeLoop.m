@@ -5,6 +5,13 @@
 minDS = .8;% sets the minimum internode distance.
 minWhiskerSize = 20; % in # of nodes
 N = 20; % I think this is the number of fits to try. More should give a stabler fit.
+
+if length(f)~=length(t)
+    error('Different length structs')
+end
+
+
+
 tracked_3D = struct([]);
 count = 0;
 

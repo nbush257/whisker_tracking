@@ -1,16 +1,19 @@
 %% This function finds frames that are missing tracking, has you manually choose the whisker, and combines them into one mat file.
-
+warning('This function needs to be imporved so yuo dont have to sit through every fucking frame')
 clear all
 close all
-DM = dir('*Front*whisker.measurements');
-DW = dir('*Front*_whisker.whiskers');
-DV = dir('*Front*.avi')
+DM = dir('*Top*_whisker.measurements');
+DW = dir('*Top*.whiskers');
+DV = dir('*Top*.avi')
+darkPeriod = 3400
 
 for ii = 1:length(DW)
     rm(ii)= any(regexp(DW(ii).name,'manip'));
-    rm2(ii) = any(regexp(DW(ii).name,'_whisker'));
+    rm2(ii) = any(regexp(DW(ii).name,'test'));
 end
+rm = rm|rm2
 DW = DW(~rm);
+
 
 
 if length(DM)~=length(DW)
@@ -19,7 +22,7 @@ end
 previousLastTime = 0;
 allW = [];
 allM = [];
-for ii = 1:length(DM)
+for ii = 10
     close all
     choice = [];
     noWhisker = [];
@@ -33,13 +36,15 @@ for ii = 1:length(DM)
     
     wID = [[w.id];[w.time]];
     m = m(~rmID);
-    w = w(~ismember(wID',toRMID','rows'));
+    if ~isempty(toRMID)
+        w = w(~ismember(wID',toRMID','rows'));
+    end
     wID = [[w.id];[w.time]];
     
     keepM = m([m.label]==0);
     
     ID = [[keepM.wid];[keepM.fid]];
-    numFrames = max([m.fid])+1;
+    numFrames = 10946%max([m.fid])+1;
     
     
     keepW = w(ismember(wID',ID','rows'));
@@ -72,12 +77,18 @@ for ii = 1:length(DM)
     
     keepM = m([m.label]==0);
     
+        
+    
     ID = [[keepM.wid];[keepM.fid]];
     wID = [[w.id];[w.time]];
     
     keepW = w(ismember(wID',ID','rows'));
     %%
-    missing = setdiff([0:max([m.fid])],[keepM.fid]);
+    missing = setdiff([0:numFrames-1],[keepM.fid]);
+    if ii == 1
+        noWhisker = missing(missing<darkPeriod);
+        missing(missing<darkPeriod) = [];
+    end
     for jj = 1:length(missing)
         if ~any([m.fid]==missing(jj))
             noWhisker = [noWhisker missing(jj)];
@@ -85,6 +96,7 @@ for ii = 1:length(DM)
         end
         
         traceTime =find([w.time]==missing(jj));
+        
         if jj>1 & ~isempty(choice) % check last choice point to see if it falls close to another trace
             closestPt = [];
             for kk = 1:length(traceTime)
@@ -185,7 +197,7 @@ for ii = 1:length(DM)
     
     
     keepM = m([m.label]==0);
-    if length(keepM)~=max([m.fid])+1
+    if length(keepM)~=numFrames
         error('Number of tracked whiskers does not equal number of frames')
     end
     
@@ -197,23 +209,23 @@ for ii = 1:length(DM)
     [~,I] = sort([keepW.time]);
     keepW = keepW(I);
     [~,I] = sort([keepM.fid]);
-     keepM = keepM(I);
-%     for jj = 1:length(noWhisker)
-%         names = fieldnames(m);
-%         timer = strcmp(names,'fid');
-%         names = names(~timer);
-%         for kk = 1:length(names)
-%             keepM(noWhisker(jj)).(names{kk}) = [];
-%         end
-%         
-%         names = fieldnames(w);
-%         timer = strcmp(names,'time');
-%         names = names(~timer);
-%         
-%         for kk = 1:length(names)
-%             keepW(noWhisker(jj)).(names{kk}) = [];
-%         end
-%     end
+    keepM = keepM(I);
+    %     for jj = 1:length(noWhisker)
+    %         names = fieldnames(m);
+    %         timer = strcmp(names,'fid');
+    %         names = names(~timer);
+    %         for kk = 1:length(names)
+    %             keepM(noWhisker(jj)).(names{kk}) = [];
+    %         end
+    %
+    %         names = fieldnames(w);
+    %         timer = strcmp(names,'time');
+    %         names = names(~timer);
+    %
+    %         for kk = 1:length(names)
+    %             keepW(noWhisker(jj)).(names{kk}) = [];
+    %         end
+    %     end
     
     
     if any(diff([keepW.time])~=1) | any(diff([keepM.fid])~=1)
