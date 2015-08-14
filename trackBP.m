@@ -34,17 +34,17 @@ end
 % check for video file format
 if strcmp(vidFileName(end-2:end),'avi')
     v = VideoReader(vidFileName);
-    I = read(v,startFrame+5000);
+    I = read(v,startFrame);
 elseif strcmp(vidFileName(end-2:end),'seq')
     v = seqIo(vidFileName,'r');
-    v.seek(startFrame-1+5000);
+    v.seek(startFrame-1);
     I = v.getframe();
 else
     error('Incompatible video format. Must be an .AVI or .SEQ')
 end
 
 %% User input Basepoint
-%I = read(v,5000);
+I = read(v,5000);
 imshow(I);
 
 zoom on; title('zoom to the basepoint');pause;
