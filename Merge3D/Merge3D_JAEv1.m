@@ -89,7 +89,7 @@ T = calib{10};
 %   You need to be sure that the xf,yf vectors correspond to the same view
 %   as REF.bp_Ap, and xt,yt to REF_bp_Bp
 BP_er_thresh_low = 2;
-BP_er_thresh_high = 100;
+BP_er_thresh_high = 50;
 noFit= 0;
 comments = {'We re-fitting that basepoint for you, right now!','Your basepoint is a little off, let me get that for you...','Basepoints are for the birds...and rats...and yours is off.  Fixing!','BP FIX MODE!!!','BP FIX, FTW!!'};
 if er > BP_er_thresh_low && er < BP_er_thresh_high
@@ -117,7 +117,7 @@ end
 %% Ellis control clause
 
 if abs(length(xf)-length(xt)) < 200  & ~noFit
-    TGL_plotFull =0;
+    TGL_plotFull =1;
     [x,y,z,PT] = Fit_3dWorm(xf,yf,xt,yt, ...
         'BP',[bp_x,bp_y,bp_z], ...
         'A_proj',{fc_left,cc_left,kc_left,alpha_c_left}, ...
@@ -134,6 +134,6 @@ else
 end
 
 
-%drawnow
+drawnow
 warning on
 summary_PT{count} = PT;
