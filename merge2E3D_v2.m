@@ -1,4 +1,6 @@
 % merge to E3D
+clear fM tM
+plotTGL = 0;
 %% Load in tracked_3D
 %% Load in manipulators
 tmw = LoadWhiskers('rat2015_15_JUN11_VG_B1_t01_Top.whiskers');
@@ -10,11 +12,43 @@ fmm = LoadMeasurements('rat2015_15_JUN11_VG_B1_t01_Front.measurements');
 % smoothed = kalman_whisker(tracked_3D,.1);
 
 %%
+
 numFrames = max([fmm.fid]);
+fM(numFrames) = fmm(end);
+tM(numFrames) = tmm(end);
+
+keepF = fmm([fmm.label]==0);
+ID = [[keepF.fid];[keepF.wid]]';
+traceID = [[fmw.time];[fmw.id]]';
+traceIDX = ismember(traceID,ID,'rows');
+fW = fmw(traceIDX);
+clear tempfW
+tempfW(numFrames) = fW(end);
+tempfW([fW.time]+1) = fW;
+fW = tempfW;
+clear tempfW;
+
+
+keepT = tmm([tmm.label]==0);
+ID = [[keepT.fid];[keepT.wid]]';
+traceID = [[tmw.time];[tmw.id]]';
+traceIDX = ismember(traceID,ID,'rows');
+tW = tmw(traceIDX);
+
+clear temptW;
+temptW(numFrames) = tW(end);
+temptW([tW.time]+1) = tW;
+tW = temptW;
+clear temptW
+
+
 useFront = logical(zeros(numFrames,1));
 fFrames = [fmm.fid];
 fFrames([fmm.label]~=0)=[];
 useFront(fFrames) = 1;
+fM([fmm.fid]+1) = fmm;
+tM([tmm.fid]+1) = tmm;
+
 
 
 useTop = logical(zeros(numFrames,1));
@@ -30,61 +64,72 @@ end
 noMan = ~useFront & ~useTop;
 % C(noMan)=0;
 %%
-for ii = 1:numFrames
+CP = nan(numFrames,2);
+CPidx = nan(numFrames,1);
+parfor ii = 1:numFrames
+   
     %     if ~C(ii)
     %         continue
     %     end
-    if isempty(smoothed(ii).x)
+    if isempty(smoothed(ii).x) | length(smoothed(ii).x)<2
         continue
     end
     if useFront(ii)
-        ID = fmm([fmm.label]==0 & [fmm.fid]==ii).wid;
-        man = fmw([fmw.time]==ii & [fmw.id]==ID);
+        man = fW(ii);
         mx = man.x;
         my = man.y;
         if range(mx)>3
             p = polyfit(mx,my,1);
-            px = [0:.3:640];
+            px = [0:1:640];
             py = polyval(p,px);
             rm = py>640 | py<1;
             py(rm) = [];
             px(rm) = [];
         else
             p = polyfit(my,mx,1);
-            py = [0:.3:640];
-            px = polyval(p,px);
-            rm = py>640 | py<1;
+            py = [0:1:640];
+            px = polyval(p,py);
+            rm = px>640 | px<1;
             py(rm) = [];
             px(rm) = [];
         end
         [wskrFront,~] = BackProject3D(smoothed(ii),calib(5:8),calib(1:4),calib(9:10));
-        [~,d] = dsearchn([px' py'],wskrFront);
-        CPidx = find(d==min(d));
+        [CPx,CPy,tempCPidx,~] = intersections(wskrFront(:,1),wskrFront(:,2),px',py');
+        if ~isempty(CPx)
+%             CP(ii,:) = [CPx CPy];
+            CPidx(ii) = round(tempCPidx);
+        end
+        
+        
         
         
     elseif useTop(ii)
-        ID = tmm.wid([tmm.label]==0 && [tmm.fid]==ii);
-        man = tmw([tmw.time]==ii && [tmm.id]==ID);
+        man = tW(ii);
         mx = man.x;
         my = man.y;
         if range(mx)>3
             p = polyfit(mx,my,1);
-            px = [0:.3:640];
+            px = [0:1:640];
             py = polyval(p,px);
-            rm = py>480 | py<1;
+            rm = py>640 | py<1;
             py(rm) = [];
             px(rm) = [];
         else
             p = polyfit(my,mx,1);
-            py = [0:.3:640];
-            px = polyval(p,px);
-            rm = py>480 | py<1;
+            py = [0:1:640];
+            px = polyval(p,py);
+            rm = px>640 | px<1;
             py(rm) = [];
             px(rm) = [];
         end
         [~,wskrTop] = BackProject3D(smoothed(ii),calib(5:8),calib(1:4),calib(9:10));
-        [~,d] = dsearchn([px' py'],wskrTop);
-        CPidx = find(min(d));
+        [CPx,CPy,tempCPidx,~] = intersections(wskrTop(:,1),wskrTop(:,2),px',py');
+        if ~isempty(CPx)
+%             
+%             CP(ii,:) = [CPx CPy];
+            CPidx(ii) = round(tempCPidx);
+        end
+        
     end
     if plotTGL
         clf
@@ -95,10 +140,10 @@ for ii = 1:numFrames
         end
         if useFront(ii)
             plot(wskrFront(:,1),wskrFront(:,2),'o')
-            plot(wskrFront(CPidx,1),wskrFront(CPidx,2),'r*')
+            plot(CPx,CPy,'r*')
         elseif useTop(ii)
             plot(wskrTop(:,1),wskrTop(:,2),'o')
-            plot(wskrTop(CPidx,1),wskrTop(CPidx,2),'r*')
+            plot(CPx,CPy,'r*')
             
         end
         drawnow
