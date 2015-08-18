@@ -1,9 +1,14 @@
 % Spatially Smooth the whisker along the length.
 
 function smoothed = kalman_whisker(tracked_3D,varIn)
+smoothed = tracked_3D;
 global r
 r = varIn;
-for ii = 1:length(tracked_3D)
+parfor ii = 1:length(tracked_3D)
+    if isempty(tracked_3D(ii).x)
+        continue
+    end
+    
     pos = [tracked_3D(ii).x;tracked_3D(ii).y;tracked_3D(ii).z];
 
     [x,y,z] = applyKalman(pos);
