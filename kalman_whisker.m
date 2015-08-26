@@ -4,18 +4,21 @@ function smoothed = kalman_whisker(tracked_3D,varIn)
 smoothed = tracked_3D;
 global r
 r = varIn;
-parfor ii = 1:length(tracked_3D)
-    if isempty(tracked_3D(ii).x)
+h = waitbar(0,'Applying Kalman Filter to Whisker')
+for ii = 1:length(tracked_3D)
+    if isempty(tracked_3D(ii).x) || length(tracked_3D(ii).x)<2
         continue
     end
+    waitbar(ii/length(tracked_3D),h)
     
     pos = [tracked_3D(ii).x;tracked_3D(ii).y;tracked_3D(ii).z];
-
+    
     [x,y,z] = applyKalman(pos);
     smoothed(ii).x = x;
     smoothed(ii).y = y;
     smoothed(ii).z = z;
-    end
+end
+delete(h)
 end
 
 

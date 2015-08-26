@@ -1,5 +1,5 @@
 function wstruct_3D = interp_3D_wstruct(wstruct_3D);
-num_interp_nodes = 200;
+num_interp_nodes = 100;
 
 
 for count = 1:length(wstruct_3D)
