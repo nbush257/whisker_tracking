@@ -66,8 +66,9 @@ noMan = ~useFront & ~useTop;
 %%
 CP = nan(numFrames,2);
 CPidx = nan(numFrames,1);
-parfor ii = 1:numFrames
-   
+h = waitbar(0,'Finding CP')
+for ii = 1:numFrames
+   waitbar(ii/numFrames,h)
     %     if ~C(ii)
     %         continue
     %     end
