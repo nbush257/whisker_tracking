@@ -1,15 +1,24 @@
 % merge to E3D
 clear fM tM
+gcp;
+outName = 'rat2015_15_JUN11_VG_D1_t01_toE3D.mat';
 plotTGL = 0;
+plotTGL_sanity = 0;
+fprintf('Loading data...\n')
 %% Load in tracked_3D
+%load('rat2015_15_JUN11_VG_B2_t01_Calib_stereo.mat')
+load('rat2015_15_JUN11_VG_D1_t01_tracked3D_iter_21.mat')
+load('rat2015_15_JUN11_VG_D1_t01_toMerge.mat','C','calib')
+
 %% Load in manipulators
-tmw = LoadWhiskers('rat2015_15_JUN11_VG_B1_t01_Top.whiskers');
-fmw = LoadWhiskers('rat2015_15_JUN11_VG_B1_t01_Front.whiskers');
-tmm = LoadMeasurements('rat2015_15_JUN11_VG_B1_t01_Top.measurements');
-fmm = LoadMeasurements('rat2015_15_JUN11_VG_B1_t01_Front.measurements');
+tmw = LoadWhiskers('F:\raw\2015_15\rat2015_15_JUN11_VG_D1_t01_Top_manip.whiskers');
+fmw = LoadWhiskers('F:\raw\2015_15\rat2015_15_JUN11_VG_D1_t01_Front_manip.whiskers');
+tmm = LoadMeasurements('F:\raw\2015_15\rat2015_15_JUN11_VG_D1_t01_Top_manip.measurements');
+fmm = LoadMeasurements('F:\raw\2015_15\rat2015_15_JUN11_VG_D1_t01_Front_manip.measurements');
 
 %% Smooth the whiskers
-% smoothed = kalman_whisker(tracked_3D,.1);
+fprintf('Smoothing Whisker...\n')
+smoothed = kalman_whisker(tracked_3D,.005);
 
 %%
 
@@ -62,16 +71,33 @@ if any(useFront & useTop)
 end
 
 noMan = ~useFront & ~useTop;
-% C(noMan)=0;
+C(noMan)=0;
+%% interpolate
+
+for ii = 1:length(smoothed)
+    if ~C(ii)
+        continue
+    end
+    if length(smoothed(ii).x)<10
+        smoothed(ii).x = [];
+        smoothed(ii).y = [];
+        smoothed(ii).z = [];
+    elseif nn(smoothed(ii).x)==0
+        smoothed(ii) = interp_3D_wstruct(smoothed(ii));
+    end
+end
+        
 %%
-CP = nan(numFrames,2);
+CP = nan(numFrames,3);
 CPidx = nan(numFrames,1);
+
 h = waitbar(0,'Finding CP')
 for ii = 1:numFrames
    waitbar(ii/numFrames,h)
     %     if ~C(ii)
     %         continue
     %     end
+
     if isempty(smoothed(ii).x) | length(smoothed(ii).x)<2
         continue
     end
@@ -95,15 +121,12 @@ for ii = 1:numFrames
             px(rm) = [];
         end
         [wskrFront,~] = BackProject3D(smoothed(ii),calib(5:8),calib(1:4),calib(9:10));
-        [CPx,CPy,tempCPidx,~] = intersections(wskrFront(:,1),wskrFront(:,2),px',py');
-        if ~isempty(CPx)
-%             CP(ii,:) = [CPx CPy];
-            CPidx(ii) = round(tempCPidx);
+        if length(px)~=length(py) | length(px)<2
+            ii
+            continue
         end
-        
-        
-        
-        
+        [CPx,CPy,tempCPidx,~] = intersections(wskrFront(:,1),wskrFront(:,2),px',py');
+       
     elseif useTop(ii)
         man = tW(ii);
         mx = man.x;
@@ -124,12 +147,13 @@ for ii = 1:numFrames
             px(rm) = [];
         end
         [~,wskrTop] = BackProject3D(smoothed(ii),calib(5:8),calib(1:4),calib(9:10));
-        [CPx,CPy,tempCPidx,~] = intersections(wskrTop(:,1),wskrTop(:,2),px',py');
-        if ~isempty(CPx)
-%             
-%             CP(ii,:) = [CPx CPy];
-            CPidx(ii) = round(tempCPidx);
+        
+        if length(px)~=length(py) | length(px)<2
+            ii
+            continue
         end
+        [CPx,CPy,tempCPidx,~] = intersections(wskrTop(:,1),wskrTop(:,2),px',py');
+       
         
     end
     if plotTGL
@@ -150,4 +174,57 @@ for ii = 1:numFrames
         drawnow
         
     end
+    if ~isempty(tempCPidx)
+        
+        if length(tempCPidx)>1
+            tempCPidx = tempCPidx(1);
+        end
+        if round(tempCPidx)>length(smoothed(ii).x)
+            tempCPidx = tempCidx-1;
+        end
+        
+        CP(ii,:) = [smoothed(ii).x(round(tempCPidx)) smoothed(ii).y(round(tempCPidx)) smoothed(ii).z(round(tempCPidx))];
+    end
 end
+xw3d = {smoothed.x};
+yw3d = {smoothed.y};
+zw3d = {smoothed.z};
+C = logical(C);
+REF = [];
+while isempty(REF)
+    R = input('Which Frame to use as reference?');
+    if length(xw3d{R})>2
+        REF = ones(size(C))*R;
+    end
+end
+
+if plotTGL_sanity
+    s = randsample(find(C),500);
+    fig
+    ho
+    
+    for ii = 1:length(s)
+        plot3(smoothed(s(ii)).x,smoothed(s(ii)).y,smoothed(s(ii)).z,'b.');
+        plot3(CP(s(ii),1),CP(s(ii),2),CP(s(ii),3),'r*')
+    end
+end
+
+newC = C;
+for ii = 1:length(C)
+    if C(ii)
+        if any(isnan(xw3d{ii}))
+            newC(ii) = 0;
+        end
+        if length(xw3d{ii})<21
+            newC(ii) = 0;
+        end
+        if any(isnan(CP(ii,:)))
+            newC(ii) = 0;
+        end
+    end
+end
+lostContacts = sum(C~=newC)
+pause
+save(outName,'xw3d','yw3d','zw3d','C','CP','REF');
+
+
