@@ -1,20 +1,20 @@
 % merge to E3D
 clear fM tM
 gcp;
-outName = 'rat2015_15_JUN11_VG_D1_t01_toE3D.mat';
+outName = 'rat2015_15_JUN11_VG_C2_t01_toE3D_2.mat';
 plotTGL = 0;
 plotTGL_sanity = 0;
 fprintf('Loading data...\n')
 %% Load in tracked_3D
 %load('rat2015_15_JUN11_VG_B2_t01_Calib_stereo.mat')
-load('rat2015_15_JUN11_VG_D1_t01_tracked3D_iter_21.mat')
-load('rat2015_15_JUN11_VG_D1_t01_toMerge.mat','C','calib')
+load('rat2015_15_JUN11_VG_C2_t01_tracked3D_iter_22.mat')
+load('rat2015_15_JUN11_VG_C2_t01_toMerge.mat','C','calib')
 
 %% Load in manipulators
-tmw = LoadWhiskers('F:\raw\2015_15\rat2015_15_JUN11_VG_D1_t01_Top_manip.whiskers');
-fmw = LoadWhiskers('F:\raw\2015_15\rat2015_15_JUN11_VG_D1_t01_Front_manip.whiskers');
-tmm = LoadMeasurements('F:\raw\2015_15\rat2015_15_JUN11_VG_D1_t01_Top_manip.measurements');
-fmm = LoadMeasurements('F:\raw\2015_15\rat2015_15_JUN11_VG_D1_t01_Front_manip.measurements');
+tmw = LoadWhiskers('G:\raw\2015_15\rat2015_15_JUN11_VG_C2_t01_Top_manip.whiskers');
+fmw = LoadWhiskers('G:\raw\2015_15\rat2015_15_JUN11_VG_C2_t01_Front_manip.whiskers');
+tmm = LoadMeasurements('G:\raw\2015_15\rat2015_15_JUN11_VG_C2_t01_Top_manip.measurements');
+fmm = LoadMeasurements('G:\raw\2015_15\rat2015_15_JUN11_VG_C2_t01_Front_manip.measurements');
 
 %% Smooth the whiskers
 fprintf('Smoothing Whisker...\n')
@@ -86,106 +86,11 @@ for ii = 1:length(smoothed)
         smoothed(ii) = interp_3D_wstruct(smoothed(ii));
     end
 end
-        
+
+%% 
+CP = get3DCP_V3(smoothed,fW,tW,C,useFront,useTop,calib);
+
 %%
-CP = nan(numFrames,3);
-CPidx = nan(numFrames,1);
-
-h = waitbar(0,'Finding CP')
-for ii = 1:numFrames
-   waitbar(ii/numFrames,h)
-    %     if ~C(ii)
-    %         continue
-    %     end
-
-    if isempty(smoothed(ii).x) | length(smoothed(ii).x)<2
-        continue
-    end
-    if useFront(ii)
-        man = fW(ii);
-        mx = man.x;
-        my = man.y;
-        if range(mx)>3
-            p = polyfit(mx,my,1);
-            px = [0:1:640];
-            py = polyval(p,px);
-            rm = py>640 | py<1;
-            py(rm) = [];
-            px(rm) = [];
-        else
-            p = polyfit(my,mx,1);
-            py = [0:1:640];
-            px = polyval(p,py);
-            rm = px>640 | px<1;
-            py(rm) = [];
-            px(rm) = [];
-        end
-        [wskrFront,~] = BackProject3D(smoothed(ii),calib(5:8),calib(1:4),calib(9:10));
-        if length(px)~=length(py) | length(px)<2
-            ii
-            continue
-        end
-        [CPx,CPy,tempCPidx,~] = intersections(wskrFront(:,1),wskrFront(:,2),px',py');
-       
-    elseif useTop(ii)
-        man = tW(ii);
-        mx = man.x;
-        my = man.y;
-        if range(mx)>3
-            p = polyfit(mx,my,1);
-            px = [0:1:640];
-            py = polyval(p,px);
-            rm = py>640 | py<1;
-            py(rm) = [];
-            px(rm) = [];
-        else
-            p = polyfit(my,mx,1);
-            py = [0:1:640];
-            px = polyval(p,py);
-            rm = px>640 | px<1;
-            py(rm) = [];
-            px(rm) = [];
-        end
-        [~,wskrTop] = BackProject3D(smoothed(ii),calib(5:8),calib(1:4),calib(9:10));
-        
-        if length(px)~=length(py) | length(px)<2
-            ii
-            continue
-        end
-        [CPx,CPy,tempCPidx,~] = intersections(wskrTop(:,1),wskrTop(:,2),px',py');
-       
-        
-    end
-    if plotTGL
-        clf
-        if useFront(ii) | useTop(ii)
-            plot(mx,my,'g.')
-            ho
-            plot(px,py,'go');
-        end
-        if useFront(ii)
-            plot(wskrFront(:,1),wskrFront(:,2),'o')
-            plot(CPx,CPy,'r*')
-        elseif useTop(ii)
-            plot(wskrTop(:,1),wskrTop(:,2),'o')
-            plot(CPx,CPy,'r*')
-            
-        end
-        drawnow
-        
-    end
-    if ~isempty(tempCPidx)
-        
-        if length(tempCPidx)>1
-            tempCPidx = tempCPidx(1);
-        end
-        if round(tempCPidx)>length(smoothed(ii).x)
-            tempCPidx = tempCidx-1;
-        end
-        
-        CP(ii,:) = [smoothed(ii).x(round(tempCPidx)) smoothed(ii).y(round(tempCPidx)) smoothed(ii).z(round(tempCPidx))];
-    end
-end
 xw3d = {smoothed.x};
 yw3d = {smoothed.y};
 zw3d = {smoothed.z};
@@ -225,6 +130,6 @@ for ii = 1:length(C)
 end
 lostContacts = sum(C~=newC)
 pause
-save(outName,'xw3d','yw3d','zw3d','C','CP','REF');
+% save(outName,'xw3d','yw3d','zw3d','C','CP','REF');
 
 
