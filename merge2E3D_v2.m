@@ -17,9 +17,7 @@ tmm = LoadMeasurements('G:\raw\2015_15\rat2015_15_JUN11_VG_C2_t01_Top_manip.meas
 fmm = LoadMeasurements('G:\raw\2015_15\rat2015_15_JUN11_VG_C2_t01_Front_manip.measurements');
 
 %% Smooth the whiskers
-fprintf('Smoothing Whisker...\n')
-smoothed = kalman_whisker(tracked_3D,.005);
-
+smoothed = tracked_3D;
 %%
 
 numFrames = max([fmm.fid]);
@@ -130,6 +128,9 @@ for ii = 1:length(C)
 end
 lostContacts = sum(C~=newC)
 pause
-% save(outName,'xw3d','yw3d','zw3d','C','CP','REF');
+
+fprintf('Smoothing Whisker...\n')
+smoothed = kalman_whisker(tracked_3D,.005);
+ save(outName,'xw3d','yw3d','zw3d','C','CP','REF');
 
 
