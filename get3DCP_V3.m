@@ -49,8 +49,8 @@ parfor ii = 1:length(smoothed)
         if isempty(tempCPidx)
             xyfit = polyfit(smoothed(ii).x,smoothed(ii).y,3);
             xzfit = polyfit(smoothed(ii).x,smoothed(ii).z,3);
-            [CPx,CPy,tempCPidx,smoothed(ii)] = LOCAL_extend_one_Seg(smoothed(ii),xyfit,xzfit,px,py,calib(5:8),calib(1:4),calib(9:10),1);
-            
+            [CPx,CPy,tempCPidx,tempSmoothed] = LOCAL_extend_one_Seg(smoothed(ii),xyfit,xzfit,px,py,calib(5:8),calib(1:4),calib(9:10),1);
+            smoothed(ii) = tempSmoothed;
         end
         
         
@@ -87,8 +87,8 @@ parfor ii = 1:length(smoothed)
             
             xyfit = polyfit(smoothed(ii).x,smoothed(ii).y,3);
             xzfit = polyfit(smoothed(ii).x,smoothed(ii).z,3);
-            [CPx,CPy,tempCPidx,smoothed(ii)] = LOCAL_extend_one_Seg(smoothed(ii),xyfit,xzfit,whfitA,whfitB,px,py,calib(5:8),calib(1:4),calib(9:10),0);
-            
+            [CPx,CPy,tempCPidx,tempSmoothed] = LOCAL_extend_one_Seg(smoothed(ii),xyfit,xzfit,px,py,calib(5:8),calib(1:4),calib(9:10),0);
+            smoothed(ii) = tempSmoothed;
         end
         
     else
