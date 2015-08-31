@@ -10,12 +10,12 @@ warning('off','all')
 misLength = CPidx;
 n = CPidx;
 noFrontOrTop =CPidx;
-parfor ii = 1:length(smoothed)
+parfor ii = 1:length(smoothed)-1
     warning('off','all')
     if ~C(ii)
         continue
     end
-    if isempty(smoothed(ii).x) | length(smoothed(ii).x)<2
+    if isempty(smoothed(ii).x) | length(smoothed(ii).x)<10
         continue
     end
     %        waitbar(ii/numFrames,h)
@@ -156,8 +156,12 @@ else
         wskr3D.y = [wskr3D.y;polyval(whfitA,wskr3D.x(end))];
         wskr3D.z = [wskr3D.z;polyval(whfitB,wskr3D.x(end))];
     end
+    try
     [CPx,CPy,tempCPidx,wskr3D] = LOCAL_extend_one_Seg(wskr3D,whfitA,whfitB,px,py,A_camera,B_camera,A2B_transform,useFront);
-    
+    catch
+        fprintf('Probable recursion error. If this happens a lot we have a serious problem\n')
+        return
+    end
 end
 
 
