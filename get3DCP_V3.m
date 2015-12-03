@@ -10,7 +10,7 @@ warning('off','all')
 misLength = CPidx;
 n = CPidx;
 noFrontOrTop =CPidx;
-for ii = 1:length(smoothed)-1
+parfor ii = 1:length(smoothed)-1
     warning('off','all')
     if ~C(ii)
         continue
@@ -48,12 +48,23 @@ for ii = 1:length(smoothed)-1
         end
         [CPx,CPy,tempCPidx,~] = intersections(wskrFront(:,1),wskrFront(:,2),px',py');
         tempSmoothed = smoothed(ii);
+        counter =0;
         while isempty(tempCPidx) | tempCPidx>=length(tempSmoothed.x)+10
+            counter = counter+1;
             plotTGL =1;
             xyfit = polyfit(smoothed(ii).x,smoothed(ii).y,3);
             xzfit = polyfit(smoothed(ii).x,smoothed(ii).z,3);
             [CPx,CPy,tempCPidx,tempSmoothed] = LOCAL_extend_one_Seg(smoothed(ii),xyfit,xzfit,px,py,calib(5:8),calib(1:4),calib(9:10),0);
             smoothed(ii) = tempSmoothed;
+            if counter>100
+                        [wskrTop,wskrFront] = BackProject3D(smoothed(ii),calib(5:8),calib(1:4),calib(9:10));  
+                        figure(123)
+                plot(wskrFront(:,1),wskrFront(:,2),'.')
+                ho
+                plot(px,py,'o')
+                break
+            end
+                
         end
         
         
@@ -85,12 +96,22 @@ for ii = 1:length(smoothed)-1
         end
         [CPx,CPy,tempCPidx,~] = intersections(wskrTop(:,1),wskrTop(:,2),px',py');
         tempSmoothed = smoothed(ii);
+        counter = 0;
         while isempty(tempCPidx) | tempCPidx>=length(tempSmoothed.x)+10
+            counter = counter+1;
             plotTGL = 1;
             xyfit = polyfit(smoothed(ii).x,smoothed(ii).y,3);
             xzfit = polyfit(smoothed(ii).x,smoothed(ii).z,3);
             [CPx,CPy,tempCPidx,tempSmoothed] = LOCAL_extend_one_Seg(smoothed(ii),xyfit,xzfit,px,py,calib(5:8),calib(1:4),calib(9:10),0);
             smoothed(ii) = tempSmoothed;
+            if counter>100
+                        [wskrTop,wskrFront] = BackProject3D(smoothed(ii),calib(5:8),calib(1:4),calib(9:10));  
+                        figure(123)
+                plot(wskrTop(:,1),wskrTop(:,2),'.')
+                ho
+                plot(px,py,'o')
+                break
+            end
         end
         
     else
