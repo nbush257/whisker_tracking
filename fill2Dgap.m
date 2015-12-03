@@ -1,4 +1,11 @@
 function outStruct = fill2Dgap(structIn)
+%% function outStruct = fill2Dgap(structIn)
+% This is meant to fill in holes in the whisker, although it is not
+% commented and therefore is probably in bad shape. Sanity checks and
+% refactorization are suggested
+
+warning('This code is poorly commented, sanity checks are suggested')
+
 PlotFlag = 0;
 for ii = 1:length(structIn)
     if isempty(structIn(ii).x);continue;end

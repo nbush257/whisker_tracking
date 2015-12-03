@@ -1,4 +1,5 @@
 function CP = get3DCP_V3(smoothed,fW,tW,C,useFront,useTop,calib)
+error('This is the current contact point estimation, but it is poorly commented. Sanity checks and refactorization are suggested')
 plotTGL = 0;
 
 CP = nan(length(smoothed),3);
@@ -18,7 +19,6 @@ parfor ii = 1:length(smoothed)-1
     if isempty(smoothed(ii).x) | length(smoothed(ii).x)<10
         continue
     end
-    plotTGL = 0;
     %        waitbar(ii/numFrames,h)
     
     if useFront(ii)
@@ -40,21 +40,24 @@ parfor ii = 1:length(smoothed)-1
             py(rm) = [];
             px(rm) = [];
         end
-        [wskrTop,wskrFront] = BackProject3D(smoothed(ii),calib(5:8),calib(1:4),calib(9:10));       
+        [wskrFront,~] = BackProject3D(smoothed(ii),calib(5:8),calib(1:4),calib(9:10));
         if length(px)~=length(py) | length(px)<2
             ii
             misLength(ii) = 1;
             continue
         end
         [CPx,CPy,tempCPidx,~] = intersections(wskrFront(:,1),wskrFront(:,2),px',py');
+
         tempSmoothed = smoothed(ii);
         counter =0;
         while isempty(tempCPidx) | tempCPidx>=length(tempSmoothed.x)+10
             counter = counter+1;
             plotTGL =1;
+
+
             xyfit = polyfit(smoothed(ii).x,smoothed(ii).y,3);
             xzfit = polyfit(smoothed(ii).x,smoothed(ii).z,3);
-            [CPx,CPy,tempCPidx,tempSmoothed] = LOCAL_extend_one_Seg(smoothed(ii),xyfit,xzfit,px,py,calib(5:8),calib(1:4),calib(9:10),0);
+            [CPx,CPy,tempCPidx,tempSmoothed] = LOCAL_extend_one_Seg(smoothed(ii),xyfit,xzfit,px,py,calib(5:8),calib(1:4),calib(9:10),1);
             smoothed(ii) = tempSmoothed;
             if counter>100
                         [wskrTop,wskrFront] = BackProject3D(smoothed(ii),calib(5:8),calib(1:4),calib(9:10));  
@@ -89,17 +92,20 @@ parfor ii = 1:length(smoothed)-1
             py(rm) = [];
             px(rm) = [];
         end
-        [wskrTop,wskrFront] = BackProject3D(smoothed(ii),calib(5:8),calib(1:4),calib(9:10));        
+        [~,wskrTop] = BackProject3D(smoothed(ii),calib(5:8),calib(1:4),calib(9:10));
+        
         if length(px)~=length(py) | length(px)<2
             misLength(ii) = 1;
             continue
         end
         [CPx,CPy,tempCPidx,~] = intersections(wskrTop(:,1),wskrTop(:,2),px',py');
+<<<<<<< HEAD
         tempSmoothed = smoothed(ii);
         counter = 0;
         while isempty(tempCPidx) | tempCPidx>=length(tempSmoothed.x)+10
             counter = counter+1;
             plotTGL = 1;
+
             xyfit = polyfit(smoothed(ii).x,smoothed(ii).y,3);
             xzfit = polyfit(smoothed(ii).x,smoothed(ii).z,3);
             [CPx,CPy,tempCPidx,tempSmoothed] = LOCAL_extend_one_Seg(smoothed(ii),xyfit,xzfit,px,py,calib(5:8),calib(1:4),calib(9:10),0);
@@ -157,23 +163,35 @@ end
 
 
 function [CPx,CPy,tempCPidx,wskr3D] = LOCAL_extend_one_Seg(wskr3D,whfitA,whfitB,px,py,A_camera,B_camera,A2B_transform,useFront)
-
-nodespacing = median(diff(wskr3D.x));
-if size (wskr3D.x,1) == 1
-    wskr3D.x = [wskr3D.x,wskr3D.x(end)+nodespacing];
-    wskr3D.y = [wskr3D.y,polyval(whfitA,wskr3D.x(end))];
-    wskr3D.z = [wskr3D.z,polyval(whfitB,wskr3D.x(end))];
-else
-    wskr3D.x = [wskr3D.x;wskr3D.x(end)+nodespacing];
-    wskr3D.y = [wskr3D.y;polyval(whfitA,wskr3D.x(end))];
-    wskr3D.z = [wskr3D.z;polyval(whfitB,wskr3D.x(end))];
-end
 if useFront
-    [~,wskr] = BackProject3D(wskr3D,A_camera,B_camera,A2B_transform);
-else
     [wskr,~] = BackProject3D(wskr3D,A_camera,B_camera,A2B_transform);
+else
+    [~,wskr] = BackProject3D(wskr3D,A_camera,B_camera,A2B_transform);
 end
+
 [CPx,CPy,tempCPidx,~] = intersections(wskr(:,1),wskr(:,2),px,py);
+
+if tempCPidx+10<length(wskr(:,1))
+    return
+    
+else
+    nodespacing = median(diff(wskr3D.x));
+    if size (wskr3D.x,1) == 1
+        wskr3D.x = [wskr3D.x,wskr3D.x(end)+nodespacing];
+        wskr3D.y = [wskr3D.y,polyval(whfitA,wskr3D.x(end))];
+        wskr3D.z = [wskr3D.z,polyval(whfitB,wskr3D.x(end))];
+    else
+        wskr3D.x = [wskr3D.x;wskr3D.x(end)+nodespacing];
+        wskr3D.y = [wskr3D.y;polyval(whfitA,wskr3D.x(end))];
+        wskr3D.z = [wskr3D.z;polyval(whfitB,wskr3D.x(end))];
+    end
+    try
+    [CPx,CPy,tempCPidx,wskr3D] = LOCAL_extend_one_Seg(wskr3D,whfitA,whfitB,px,py,A_camera,B_camera,A2B_transform,useFront);
+    catch
+        fprintf('Probable recursion error. If this happens a lot we have a serious problem\n')
+        return
+    end
+end
 
 
 end % function LOCAL_extend_one_Seg

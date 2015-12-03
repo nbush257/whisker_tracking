@@ -12,6 +12,9 @@ function videoDataPreprocessing()
 % Written:  Nick Bush 2015_04_22
 % 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+step = 20000; % number of frames to save to each avi
+% Get the files to convert
+
 
 
 

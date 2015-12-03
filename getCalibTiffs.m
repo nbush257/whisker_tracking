@@ -1,4 +1,5 @@
 % get calibration tiffs
+% use this script to write a set of caliration images to tiffs.
 cd L:\raw\2015_06
 topVidName = 'rat2105_06_0226_FEB26_vg_B2_calib_pre_top.seq'
 frontVidName = 'rat2105_06_0226_FEB26_vg_B2_calib_pre_Front.seq'
