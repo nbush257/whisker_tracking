@@ -1,4 +1,6 @@
 %% load in data
+error('This is old code to do preprocessing for merging, but it is not commented well, and should be refactored to be cleaner')
+% Nick Bush 2015_11_23
 clear
 ca
 load('rat2015_15_JUN11_VG_D4_t01_Front_tracked.mat')

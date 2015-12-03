@@ -18,7 +18,7 @@ fmm = LoadMeasurements('G:\raw\2015_15\rat2015_15_JUN11_VG_C2_t01_Front_manip.me
 
 %% Smooth the whiskers
 smoothed = tracked_3D;
-%%
+%% getting 2D whiskers and manipulators? Why don't we just load these in from the data sent to the merge?
 
 numFrames = max([fmm.fid]);
 fM(numFrames) = fmm(end);

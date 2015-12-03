@@ -22,6 +22,7 @@ function [wStruct,emptyWhiskers] = trackBP(vidFileName,wStruct,varargin)
 
 
 %% Input handling
+error('This processing step should be reworked. NEB 2015_11_23')
 % check for start frame
 if length(varargin) == 1
     startFrame = varargin{1};
