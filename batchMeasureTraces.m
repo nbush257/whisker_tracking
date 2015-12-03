@@ -1,14 +1,14 @@
 
-d = dir('*.whiskers');
-bp(1) = 90;
-bp(2) = 332;
-fol =122;
+d = dir('*E3*.whiskers');
+bp(1) = 224;
+bp(2) = 229;
+fol =260;
 direction = 'v';
-for ii = 1:length(d)
-    copyfile(d(ii).name,[d(ii).name(1:end-9) '_whisker.whiskers'])
+for ii = 1
+%     copyfile(d(ii).name,[d(ii).name(1:end-9) '.whiskers'])
     if ii == 1
         
-        measurementsFileName = [d(ii).name(1:end-9) '_whisker.measurements'];
+        measurementsFileName = [d(ii).name(1:end-9) '.measurements'];
         measureStr = sprintf('measure --face %i %i %s %s %s',bp(1),bp(2),direction,d(ii).name,measurementsFileName)
         system(measureStr)
         
@@ -19,8 +19,9 @@ for ii = 1:length(d)
         system(reclassifyStr)
     end
 end
+pause(10)
 parfor ii = 2:length(d)
-    measurementsFileName = [d(ii).name(1:end-9) '_whisker.measurements'];
+    measurementsFileName = [d(ii).name(1:end-9) '.measurements'];
     measureStr = sprintf('measure --face %i %i %s %s %s',bp(1),bp(2),direction,d(ii).name,measurementsFileName)
     system(measureStr)
     

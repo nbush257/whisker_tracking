@@ -10,7 +10,7 @@ function videoDataPreprocessing()
 % -------------------------
 % Nick Bush 2015_04_22
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-step = 30000; % number of frames to save to each avi
+step = 20000; % number of frames to save to each avi
 % Get the files to convert
 
 seqPath = uigetdir('C:/','Choose a path to backup all seqs.');
@@ -18,10 +18,10 @@ aviPath = uigetdir('C:/','Choose a path to save all avis.');
 whiskerPath = uigetdir('C:/','Choose a path to save all .whiskers.');
 
 % Data management post acquisition
-% 
-% dRaw = dir('D:\*.seq');
-% eRaw = dir('E:\*.seq');
-% fRaw = dir('F:\*.seq');
+
+dRaw = dir('D:\*.seq');
+eRaw = dir('E:\*.seq');
+fRaw = dir('F:\*.seq');
 % 
 % for ii = 1:length(dRaw)
 %     fprintf('Copying %s to %s \n',['D:\' dRaw(ii).name],[seqPath '\' dRaw(ii).name])
@@ -72,7 +72,8 @@ parfor ii = 1:numSeqs
         
         fileOutName = sprintf([d(ii).name(1:end-4) '_F%06iF%06i.avi'],firstFrame,lastFrame);
         outName = [aviPath '\' fileOutName];
-        w = VideoWriter(outName,'Grayscale AVI');
+        w = VideoWriter(outName,'Motion JPEG AVI');
+        w.Quality = 95;
         w.open;
         %% write each frame to the avi.
         % I don't think this can be a parallel loop because frame order
@@ -83,14 +84,14 @@ parfor ii = 1:numSeqs
             waitbar(progress,waiter)
             v.seek(kk-1);
             I = v.getframe();
-            I = adapthisteq(I);
+%             I = imadjust(I);
             writeVideo(w,I);
         end % End frame writing
         w.close;
         close all force
     end % End clip Writing
 end % End full .SEQ loop
-cd C:\Users\guru\Documents\proc\whisker_tracking
+cd C:\Users\guru\Documents\proc\whiskerTracking
 
 avis = dir([aviPath '\*.avi']);
 ii=1;
@@ -98,11 +99,11 @@ ii=1;
 wName = [whiskerPath '\' avis(ii).name(1:end-4) '.whiskers'];
 fprintf('tracing whiskers on %s',wName)
 system(['trace ' aviPath '\' avis(ii).name ' ' wName ' &']);
-
-parfor ii = 2:length(avis)
+pause(60)
+parfor ii = 1:length(avis)
     wName = [whiskerPath '\' avis(ii).name(1:end-4) '.whiskers'];
     fprintf('tracing whiskers on %s',wName)
-    system(['trace ' aviPath '\' avis(ii).name ' ' wName ]);
+    system(['trace ' aviPath '\' avis(ii).name ' ' wName]);
 end
 
 
