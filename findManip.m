@@ -1,5 +1,7 @@
 function manipOut = findManip(vidFileName,manipPresence,varargin)
 %%%% WARNING! LIABLE TO TRACK THE WHISKER %%%%%%%
+error('Old Hough code to track the manipulator. All current code as of November 2015 uses ''whisk'' tracked manipulator. \nKept for posterity')
+% Mitra,Nick Bush 2015
 
 ca
 %%

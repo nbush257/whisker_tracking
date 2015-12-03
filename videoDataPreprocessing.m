@@ -10,7 +10,7 @@ function videoDataPreprocessing()
 % -------------------------
 % Nick Bush 2015_04_22
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-step = 30000; % number of frames to save to each avi
+step = 230000; % number of frames to save to each avi
 % Get the files to convert
 
 seqPath = uigetdir('C:/','Choose a path to backup all seqs.');

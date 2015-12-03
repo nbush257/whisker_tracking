@@ -1,4 +1,5 @@
 function CP = get3DCP_V3(smoothed,fW,tW,C,useFront,useTop,calib)
+error('This is the current contact point estimation, but it is poorly commented. Sanity checks and refactorization are suggested')
 plotTGL = 0;
 
 CP = nan(length(smoothed),3);
