@@ -4,13 +4,13 @@ function videoDataPreprocessing()
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Run this file at the end of the day after recording whisker videos. This
 % will copy all the seqs on D:\, E:\ and F:\ into a chosen path. Then chops
-% them up into avis of a certain size [Default = 20000 frames]. Then traces the avi 
+% them up into avis of a certain size [Default = 20000 frames]. Then traces the avi
 % files and saves the .whiskers files. It then tryies to find the whisker
 % using measure and reclassify (via batchMeasureTraces).
 % -------------------------
 % UPDATED:  Nick Bush 2015_12_03
 % Written:  Nick Bush 2015_04_22
-% 
+%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 step = 20000; % number of frames to save to each avi
 % Get the files to convert
@@ -27,17 +27,47 @@ trackTGL = input('Do you want to track the whisker?');
 
 step = 20000; % number of frames to save to each avi
 % Get the files to convert
-if copyTGL | convertTGL
-    seqPath = uigetdir('C:/','Choose a path to backup all seqs.');
-end
+seqPath = uigetdir('C:/','Choose a path to backup all seqs.');
+
 if convertTGL | trackTGL
     aviPath = uigetdir('C:/','Choose a path to save all avis.');
 end
 if trackTGL
     whiskerPath = uigetdir('C:/','Choose a path to save all .whiskers.');
 end
+%% Get bp and fol
+if trackTGL
+    d = dir([seqPath '\*.seq']);
+    % remove calibration seqs from consideration
+    idx = [];
+    for ii = 1:length(d)
+        if strfind(d(ii).name,'calib')
+            idx = [idx ii];
+        end
+    end
+    d(idx) = [];
+    numSeqs = length(d);
+    
+    bp = nan(numSeqs,2);
+    fol = nan(numSeqs,1);
+    for jj = 1:numSeqs
+        
+        V = seqIo([seqPath '\' d(jj).name],'r');
+        V.seek(10000);
+        img = V.getframe();
+        imshow(img);ho
+        title('Click on the center of the pad')
+        bp(jj,:) = ginput(1);
+        plotv(bp(jj,:),'g*');
+        title('Click on the rightmost line that limits the follicle position')
+        [fol(jj),~] = ginput(1);
+        clf
+    end
+    ca
+end
 
-% Data management post acquisition
+
+%% Copy files to External
 if copyTGL
     dRaw = dir('D:\*.seq');
     eRaw = dir('E:\*.seq');
@@ -71,7 +101,7 @@ if convertTGL
     d(idx) = [];
     numSeqs = length(d);
     
-    
+    mkdir LQ
     parfor ii = 1:numSeqs
         %% Iterate through all the .SEQs in the directory
         % get the info for the current .SEQ
@@ -93,8 +123,9 @@ if convertTGL
             
             fileOutName = sprintf([d(ii).name(1:end-4) '_F%06iF%06i.avi'],firstFrame,lastFrame);
             outName = [aviPath '\' fileOutName];
+            wd = pwd;
             w = VideoWriter(outName,'Motion JPEG AVI');
-            w_lq = VideoWriter([outName(1:end-4) '_LQ.avi'],'Motion JPEG AVI');
+            w_lq = VideoWriter([wd '\LQ\' outName(1:end-4) '_LQ.avi'],'Motion JPEG AVI');
             w.Quality = 95;
             w_lq.Quality = 65;
             w.open;
@@ -106,7 +137,7 @@ if convertTGL
             for kk = firstFrame:lastFrame
                 v.seek(kk-1);
                 I = v.getframe();
-%                 I = imadjust(I);
+                %                 I = imadjust(I);
                 writeVideo(w,I);
                 writeVideo(w_lq,I);
             end % End frame writing
@@ -128,21 +159,7 @@ end
 
 if trackTGL
     %% Choose the basepoints and follicle
-    bp = nan(length(TAGu),2);
-    fol = nan(length(TAGu),1);
-    for ii = 1:length(TAGu)
-        
-        V = VideoReader(avis(first(ii)).name);
-        img = read(V,10000);
-        imshow(img);ho
-        title('Click on the center of the pad')
-        bp(ii,:) = ginput(1);
-        plotv(bp(ii,:),'g*');
-        title('Click on the rightmost line that limits the follicle position')
-        [fol(ii),~] = ginput(1);
-        clf
-    end
-    ca
+    
     
     
     %% Track
