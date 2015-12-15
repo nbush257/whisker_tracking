@@ -1,6 +1,6 @@
-error(' I think there are some very serious bugs in this code. Please refactor\nIt looks like this code assumes that the whiskers files for the manip and whisker are the same')
+% error(' I think there are some very serious bugs in this code. Please refactor\nIt looks like this code assumes that the whiskers files for the manip and whisker are the same')
 
-wPath ='D:\data\2015_08\analyzed\C2_top\';
+wPath ='D:\2015_28\test';
 manipMeasurePath = dir([wPath '*manip*']);
 tracesPath = dir([wPath '*.whiskers']);
 whiskerMeasurePath = dir([wPath '*whiskers.measurements*']);
