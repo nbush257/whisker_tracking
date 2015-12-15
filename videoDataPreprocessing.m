@@ -49,7 +49,7 @@ if trackTGL
     fol = nan(numSeqs,1);
     for jj = 1:numSeqs
         
-
+        
         V = seqIo([seqPath '\' d(jj).name],'r');
         V.seek(10000);
         img = V.getframe();
@@ -121,12 +121,8 @@ if convertTGL
             fileOutName = sprintf([d(ii).name(1:end-4) '_F%06iF%06i.avi'],firstFrame,lastFrame);
             outName = [aviPath '\' fileOutName];
             wd = pwd;
-            w = VideoWriter(outName,'Motion JPEG AVI');
-            w_lq = VideoWriter([wd '\LQ\' outName(1:end-4) '_LQ.avi'],'Motion JPEG AVI');
-            w.Quality = 95;
-            w_lq.Quality = 65;
+            w = VideoWriter(outName,'Grayscale AVI');
             w.open;
-            w_lq.open;
             %% write each frame to the avi.
             % I don't think this can be a parallel loop because frame order
             % matters
@@ -136,14 +132,22 @@ if convertTGL
                 I = v.getframe();
                 %                 I = imadjust(I);
                 writeVideo(w,I);
-                writeVideo(w_lq,I);
             end % End frame writing
             w.close;
-            w_lq.close;
             close all force
         end % End clip Writing
     end % End full .SEQ loop
 end
+%% Run ffmppeg compression
+if convertTGL
+    avis = dir([aviPath '\*.avi']);
+    cd(aviPath)
+    for ii = 1:length(avis)
+        ffString = sprintf(['ffmpeg -i ' avis(ii).name ' -c:v h263p -b:v 10000000 ' [avis(ii).name(1:end-4) '.mp4']]);
+        system(ffString)
+    end
+end
+
 %% Extract unique tags (i.e. from same expt regardless of frame number)
 avis = dir([aviPath '\*.avi']);
 aviNames = {avis.name};
