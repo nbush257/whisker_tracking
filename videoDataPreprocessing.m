@@ -138,15 +138,6 @@ if convertTGL
         end % End clip Writing
     end % End full .SEQ loop
 end
-%% Run ffmppeg compression
-if convertTGL
-    avis = dir([aviPath '\*.avi']);
-    cd(aviPath)
-    for ii = 1:length(avis)
-        ffString = sprintf(['ffmpeg -i ' avis(ii).name ' -c:v h263p -b:v 10000000 ' [avis(ii).name(1:end-4) '.mp4']]);
-        system(ffString)
-    end
-end
 
 %% Extract unique tags (i.e. from same expt regardless of frame number)
 avis = dir([aviPath '\*.avi']);
