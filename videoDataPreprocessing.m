@@ -144,24 +144,15 @@ if convertTGL
     avis = dir([aviPath '\*.avi']);
     cd(aviPath)
     for ii = 1:length(avis)
-        ffString = sprintf(['ffmpeg -i ' avis(ii).name ' -c:v h263p -b:v 10000000 -y ' [avis(ii).name(1:end-4) '_c.avi']]);
+        outName  = [avis(ii).name(1:end-4) '_c.avi'];
+        ffString = sprintf(['ffmpeg -i ' avis(ii).name ' -c:v  wmv2 -q 2  ' outName]);
         system(ffString)
-        
+        delete(avis(ii).name)        
     end
-    allAvis = dir('*.avi');allAvis = {allAvis.name};
-    m_old = regexp(allAvis,'\d.avi');m_old=~cellfun(@isempty,m_old);
-    m_new = regexp(allAvis,'_c.avi');m_new=~cellfun(@isempty,m_new);
-    
-    
-    for ii =1:length(m_old)
-        if m_old(ii)
-            delete(allAvis{ii})
-        end
-    end
-    for ii =1:length(m_old)
-        if m_new(ii)
-            java.io.File(allAvis{ii}).renameTo(java.io.File(allAvis{ii}([1:end-6 end-3:end])));
-        end
+    newAvis = dir('*.avi');
+    for ii = 1:length(newAvis)
+        newOutname = newAvis(ii).name([1:end-6 end-3:end]);
+        java.io.File(newAvis(ii).name).renameTo(java.io.File(newOutname));
     end
     
     
