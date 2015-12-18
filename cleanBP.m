@@ -7,8 +7,8 @@ function [BPout,wStructOut] = cleanBP(wStruct,r)
 %   3) Kalman Filtering
 %  INPUTS:
 %   wStruct:        a 2D whisker structure
-%   r [optional]:   a variance to smooth at with the kalman filter.
-%                   Defaults to the mean variance across both x and y of BP
+%   r [optional]:   a 1x2 variance to smooth at with the kalman filter.
+%                   Defaults to the variance of the BP
 %  OUTPUTS:
 %   BPout:          the Nx2 cleaned basepoint vector
 %   wStructOut:     a whisker structure with the basepoint replaced by the
@@ -60,9 +60,9 @@ H = [1     0     0     0     0     0;
 
 % Variance in the measurements.
 if nargin ~=2
-    r = mean(var(pos'));
+    r = var(pos');
 end
-R = diag([r r]);
+R = diag([r(1) r(2)]);
 
 % Transition matrix for the continous-time system.
 F = [0 0 1 0 0 0;
