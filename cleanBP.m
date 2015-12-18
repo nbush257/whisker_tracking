@@ -5,7 +5,7 @@ function [BPout,wStructOut] = cleanBP(wStruct,r)
 %   1) Median Filtering with length 5 window size
 %   2) Outlier deletion
 %   3) Kalman Filtering
-%  INPUTS: 
+%  INPUTS:
 %   wStruct:        a 2D whisker structure
 %   r [optional]:   a variance to smooth at with the kalman filter.
 %                   Defaults to the mean variance across both x and y of BP
@@ -56,10 +56,12 @@ state = [pos;vel;acc];
 
 % Measurement model.
 H = [1     0     0     0     0     0;
-     0     1     0     0     0     0];
+    0     1     0     0     0     0];
 
 % Variance in the measurements.
-r = mean(var(pos'));
+if nargin ~=2
+    r = mean(var(pos'));
+end
 R = diag([r r]);
 
 % Transition matrix for the continous-time system.
