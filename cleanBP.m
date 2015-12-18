@@ -1,4 +1,21 @@
-function [BPout,wStructOut] = cleanBP(wStruct,r);
+function [BPout,wStructOut] = cleanBP(wStruct,r)
+%% function [BPout,wStructOut] = cleanBP(wStruct,[r])
+% =====================================================
+% Takes a 2D whisker struct and performs:
+%   1) Median Filtering with length 5 window size
+%   2) Outlier deletion
+%   3) Kalman Filtering
+%  INPUTS: 
+%   wStruct:        a 2D whisker structure
+%   r [optional]:   a variance to smooth at with the kalman filter.
+%                   Defaults to the mean variance across both x and y of BP
+%  OUTPUTS:
+%   BPout:          the Nx2 cleaned basepoint vector
+%   wStructOut:     a whisker structure with the basepoint replaced by the
+%                   smoothed basepoint
+% =====================================================
+% Nick Bush 12/18/2015
+%%
 % preallocate the Basepoint matrix (Nx2)
 BP = nan(length(wStruct),2);
 % Extract the Basepoint from the structure
@@ -42,6 +59,7 @@ H = [1     0     0     0     0     0;
      0     1     0     0     0     0];
 
 % Variance in the measurements.
+r = mean(var(pos'));
 R = diag([r r]);
 
 % Transition matrix for the continous-time system.
