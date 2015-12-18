@@ -17,6 +17,7 @@ tmm = LoadMeasurements('F:\raw\2015_15\rat2015_15_JUN11_VG_D4_t01_Top_manip.meas
 fmm = LoadMeasurements('F:\raw\2015_15\rat2015_15_JUN11_VG_D4_t01_Front_manip.measurements');
 
 %% Smooth the whiskers
+[~,tracked3D] = clean3D_BP(tracked_3D);
 smoothed = tracked_3D;
 %% getting 2D whiskers and manipulators? Why don't we just load these in from the data sent to the merge?
 
@@ -72,6 +73,10 @@ noMan = ~useFront & ~useTop;
 C(noMan)=0;
 %% 
 CP = get3DCP_V3(smoothed,fW,tW,C,useFront,useTop,calib);
+plot(CP);hold on
+CP = cleanCP(CP);
+plot(CP);
+drawnow;pause
 %% interpolate
 
 for ii = 1:length(smoothed)
@@ -131,9 +136,9 @@ for ii = 1:length(C)
 end
 lostContacts = sum(C~=newC)
 pause
-
-fprintf('Smoothing Whisker...\n')
-smoothed = kalman_whisker(tracked_3D,.005);
+% 
+% fprintf('Smoothing Whisker...\n')
+% smoothed = kalman_whisker(tracked_3D,.005);
  save(outName,'xw3d','yw3d','zw3d','C','CP','REF');
 
 
