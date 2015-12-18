@@ -1,24 +1,47 @@
-function CPout = cleanCP(CP,C)
+function CPout = cleanCP(CP)
 %% function CPout = cleanCP(CP)
-CPf = medfilt1(CP,5);
-r = nanvar(CPf);
 
+% =====================================================
+% Takes a 3D Contact Point Time series (Nx3) and performs:
+%   1) Median Filtering with length 5 window size
+%   2) Kalman Filtering
+%  INPUTS:
+%   CP:             an N x 3 matrix of the contact point (x,y,z)
+%  OUTPUTS:
+%   CPout:          the N x 3 cleaned cpntact point matrix
+% =====================================================
+% Nick Bush 12/18/2015
+
+% Median filter 
+CPf = medfilt1(CP,5);
+% calculate the measurement variance
+r = nanvar(CPf);
+% Interpolate over small NaN gaps
 for ii = 1:3
     CPf(:,ii) =InterpolateOverNans(CPf(:,ii),10);
 end
+
+% Can only apply kalman filter to data no interrupted by nans, so find out
+% where there contact periods start. Theoretically you could use the C
+% logical but sometimes there are NaNs in there.
 
 cpt = all(~isnan(CPf'))'; % first find where it is not a NaN
 ccomp = [0; cpt; 0]; % add these for easier diffing (and force first frame to be a start)
 difc = diff(ccomp);
 cStart = find(difc == 1);  % mark where all whisks START
 cEnd = find(difc == -1) - 1; 
+
+% preallocate the CP output
 CPout = nan(size(CPf));
 
+% loop over all the contact periods
 for ii = 1:length(cStart)
+    % If the contact period is less than 3 bins long, skip it.
     if (cEnd(ii)-cStart(ii))<3
         continue
     end
     
+    % apply the kalman filter
     [x,y,z] = applyKalman(CPf(cStart(ii):cEnd(ii),:),r);
     CPout(cStart(ii):cEnd(ii),:) = [x' y' z'];
 end
@@ -106,5 +129,6 @@ end
         z = SM(3,:);
     end %EOLF
 
+% remove zeros where NaNs should be
 CPout(all(CPout'==0),:) = NaN;
 end
