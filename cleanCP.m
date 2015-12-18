@@ -4,7 +4,8 @@ function CPout = cleanCP(CP)
 % =====================================================
 % Takes a 3D Contact Point Time series (Nx3) and performs:
 %   1) Median Filtering with length 5 window size
-%   2) Kalman Filtering
+%   2) delete outliers
+%   3) Kalman Filtering
 %  INPUTS:
 %   CP:             an N x 3 matrix of the contact point (x,y,z)
 %  OUTPUTS:
@@ -12,13 +13,18 @@ function CPout = cleanCP(CP)
 % =====================================================
 % Nick Bush 12/18/2015
 
-% Median filter 
+% Median filter
 CPf = medfilt1(CP,5);
 % calculate the measurement variance
 r = nanvar(CPf);
 % Interpolate over small NaN gaps
 for ii = 1:3
     CPf(:,ii) =InterpolateOverNans(CPf(:,ii),10);
+end
+
+% delete outliers
+for ii = 1:3
+    CPf(:,ii) = deleteoutliers(CPf(:,ii),.00001,1);
 end
 
 % Can only apply kalman filter to data no interrupted by nans, so find out
@@ -29,7 +35,7 @@ cpt = all(~isnan(CPf'))'; % first find where it is not a NaN
 ccomp = [0; cpt; 0]; % add these for easier diffing (and force first frame to be a start)
 difc = diff(ccomp);
 cStart = find(difc == 1);  % mark where all whisks START
-cEnd = find(difc == -1) - 1; 
+cEnd = find(difc == -1) - 1;
 
 % preallocate the CP output
 CPout = nan(size(CPf));

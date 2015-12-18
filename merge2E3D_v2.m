@@ -72,8 +72,9 @@ end
 noMan = ~useFront & ~useTop;
 C(noMan)=0;
 %% 
+figure
 CP = get3DCP_V3(smoothed,fW,tW,C,useFront,useTop,calib);
-plot(CP);hold on
+plot(CP,':');hold on
 CP = cleanCP(CP);
 plot(CP);
 drawnow;pause
