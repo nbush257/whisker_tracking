@@ -27,16 +27,45 @@ lDir = [length(mMeasureDir) length(wTraceDir) length(mTraceDir) length(wMeasureD
 
 % Throw an error if the number of files are not consistent across
 % measurements and whiskers files or across manipulators and whiskers
-if length(unique(lDir))~=1
-    error('Inconsistent number of files available')
-end
+% if length(unique(lDir))~=1
+%     error('Inconsistent number of files available')
+% end
     
 %% init global reference structures
-% maybe refactor to init to a length the size of the video
-allWhisker = struct([]);
-allManip = struct([]);
-allWMeasure = struct([]);
-allMMeasure = struct([]);
+% trying to init so that the global struct is the size of the video.
+
+wTraces = LoadWhiskers([wPathName wTraceDir(1).name]);
+mTraces = LoadWhiskers([wPathName mTraceDir(1).name]);
+mMeasure = LoadMeasurements([wPathName mMeasureDir(1).name]);
+wMeasure = LoadMeasurements([wPathName wMeasureDir(1).name]);
+
+
+allWhisker(1) = wTraces(1);
+allManip(1) = mTraces(1);
+allWMeasure(1) = wMeasure(1);
+allMMeasure(1) = mMeasure(1);
+
+% get length of video from filename
+[v1,v2] = regexp(wTraceDir(end).name,'F\d{6}'); globalLastFrame = num2str(wTraceDir(end).name(v1(2)+1:v2(end)));
+
+temp_fNames = fieldnames(allWhisker);
+allWhisker(globalLastFrame) = wTraces(end);
+allManip(globalLastFrame) = mTraces(end);
+allWMeasure(globalLastFrame) = wMeasure(end);
+allMMeasure(globalLastFrame) = mMeasure(end);
+
+for ii = 1:length(temp_fNames)
+    allWhisker(globalLastFrame).(temp_fNames{ii}) = [];
+    allManip(globalLastFrame).(temp_fNames{ii}) = [];
+end
+
+temp_fNames = fieldnames(allWMeasure);
+for ii = 1:length(temp_fNames)
+    allWMeasure(globalLastFrame).(temp_fNames{ii}) = [];
+    allMMeasure(globalLastFrame).(temp_fNames{ii}) = [];
+end
+
+
 %% Main Loop that grabs the information from each file and puts it in a global reference
 for ii = 1:length(wMeasureDir)
     % load in all the data
