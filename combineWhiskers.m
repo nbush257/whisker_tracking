@@ -47,7 +47,7 @@ allMMeasure(1) = mMeasure(1);
 
 % get length of video from filename
 [v1,v2] = regexp(wTraceDir(end).name,'F\d{6}'); globalLastFrame = num2str(wTraceDir(end).name(v1(2)+1:v2(end)));
-
+%% BUG HERE!
 temp_fNames = fieldnames(allWhisker);
 allWhisker(globalLastFrame) = wTraces(end);
 allManip(globalLastFrame) = mTraces(end);
