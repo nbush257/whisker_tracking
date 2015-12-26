@@ -46,7 +46,7 @@ allWMeasure(1) = wMeasure(1);
 allMMeasure(1) = mMeasure(1);
 
 % get length of video from filename
-[v1,v2] = regexp(wTraceDir(end).name,'F\d{6}'); globalLastFrame = num2str(wTraceDir(end).name(v1(2)+1:v2(end)));
+[v1,v2] = regexp(wTraceDir(end).name,'F\d{6}'); globalLastFrame = str2num(wTraceDir(end).name(v1(2)+1:v2(end)));
 %% BUG HERE!
 temp_fNames = fieldnames(allWhisker);
 allWhisker(globalLastFrame) = wTraces(end);
@@ -194,9 +194,9 @@ for ii = 1:length(wMeasureDir)
     end
     % concatenate global structure with the local structure.
     fprintf('\n')
-    allMMeasure = [allMMeasure;mM];
-    allWMeasure = [allWMeasure;wM];
-    allWhisker = [allWhisker;wT];
-    allManip = [allManip;mT];
+    allMMeasure(frames(1):frames(2)) = mM;
+    allWMeasure(frames(1):frames(2)) = wM;
+    allWhisker(frames(1):frames(2)) = wT;
+    allManip(frames(1):frames(2)) = mT;
 end
 
