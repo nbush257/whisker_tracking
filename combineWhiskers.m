@@ -82,6 +82,7 @@ for ii = 1:length(wMeasureDir)
     
     % extract labelled whisker trace such that the structure is of equal length
     % to the video
+    clear wT    
     whisker = struct([]);
         % Look at only the traces labeled 0
     tempW = wMeasure([wMeasure.label]==0);
@@ -110,6 +111,7 @@ for ii = 1:length(wMeasureDir)
         % labeled whisker
     fNames = fieldnames(wT); 
     for jj = 1:length(fNames)
+        wT(1).(fNames{jj}) = [];
         wT(end).(fNames{jj}) = [];
     end
     
@@ -120,6 +122,7 @@ for ii = 1:length(wMeasureDir)
     
     % extrace labelled maniplutor trace such that the structure is of equal
     % length to the video
+    clear mT
     manip = struct([]);
         % Look at only the traces labeled 0
     tempM = mMeasure([mMeasure.label]==0);
@@ -148,7 +151,8 @@ for ii = 1:length(wMeasureDir)
         % make the last entry empty as it is not the same as the last
         % labeled manipulator
     for jj = 1:length(fieldnames(mT))
-        mT(end).(fNames{jj})=[];
+        mT(1).(fNames{jj}) = [];
+        mT(end).(fNames{jj}) = [];
     end
     % set mT eqaul to the labeled manipulators ST the entry number equals the
     % local timestamp (1 indexed)
@@ -158,6 +162,7 @@ for ii = 1:length(wMeasureDir)
     % Extract whisker measurement such that it is of equal length to the
     % video.
         % subset of whisker measurements with labeled whisker
+    clear wM
     temp_wM = wMeasure([wMeasure.label]==0);
         % init measurement-like struct ST it is of equal length to the
         % video clip
@@ -167,6 +172,7 @@ for ii = 1:length(wMeasureDir)
         % frame
     fNames = fieldnames(wM);
     for jj = 1:length(fNames)
+        wM(1).(fNames{jj}) = [];
         wM(end).(fNames{jj}) = [];
     end
         % set wM eqaul to the labeled whisker ST the entry number equals the
@@ -176,6 +182,7 @@ for ii = 1:length(wMeasureDir)
     % Extract manip measurement such that it is of equal length to the
     % video
         % subset of manip measurements with labeled whisker
+    clear mM
     temp_mM = mMeasure([mMeasure.label]==0);
         % init measurement-like struct ST it is of equal length to the
         % video clip
@@ -185,6 +192,7 @@ for ii = 1:length(wMeasureDir)
         % frame
     fNames = fieldnames(mM);
     for jj = 1:length(fNames)
+        mM(1).(fNames{jj}) = [];
         mM(end).(fNames{jj}) = [];
     end
         % set mT eqaul to the labeled manipulators ST the entry number equals the
@@ -192,12 +200,12 @@ for ii = 1:length(wMeasureDir)
     mM([temp_mM.fid]+1) = temp_mM;
     
     
-% replace time stamp with global timestamp
+% replace time stamp with global timestamp (zero indexed)
     for jj = 1:frames(2)-frames(1)+1
-        wT(jj).time = double(wT(jj).time)+frames(1);
-        mT(jj).time = double(mT(jj).time)+frames(1);
-        wM(jj).fid = double(wM(jj).fid)+frames(1);
-        mM(jj).fid = double(mM(jj).fid)+frames(1);
+        wT(jj).time = double(wT(jj).time)+frames(1)-1;
+        mT(jj).time = double(mT(jj).time)+frames(1)-1;
+        wM(jj).fid = double(wM(jj).fid)+frames(1)-1;
+        mM(jj).fid = double(mM(jj).fid)+frames(1)-1;
         
     end
     % concatenate global structure with the local structure.
@@ -207,4 +215,16 @@ for ii = 1:length(wMeasureDir)
     allWhisker(frames(1):frames(2)) = wT;
     allManip(frames(1):frames(2)) = mT;
 end
+%% fill in empty structs with sequential time stamps
+emptyWhisker = cellfun(@isempty,{allWhisker.time});
+emptyManip = cellfun(@isempty,{allManip.time});
+for ii = find(emptyWhisker)
+    allWhisker(ii).time = ii-1;
+    allWMeasure(ii).fid = ii-1;
+end
+for ii = find(emptyManip)
+    allManip(ii).time = ii-1;
+    allMMeasure(ii).fid = ii-1;
+end
+
 
