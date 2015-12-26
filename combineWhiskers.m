@@ -1,6 +1,4 @@
-function combineWhiskers()
-
-
+function [allWhisker,allManip,allWMeasure,allMMeasure] = combineWhiskers()
 %% Get all clips from a particular trial
 
 % Use uigetdir to choose the trial you wnat to use
@@ -27,9 +25,9 @@ lDir = [length(mMeasureDir) length(wTraceDir) length(mTraceDir) length(wMeasureD
 
 % Throw an error if the number of files are not consistent across
 % measurements and whiskers files or across manipulators and whiskers
-% if length(unique(lDir))~=1
-%     error('Inconsistent number of files available')
-% end
+if length(unique(lDir))~=1
+    error('Inconsistent number of files available')
+end
     
 %% init global reference structures
 % trying to init so that the global struct is the size of the video.
@@ -47,7 +45,7 @@ allMMeasure(1) = mMeasure(1);
 
 % get length of video from filename
 [v1,v2] = regexp(wTraceDir(end).name,'F\d{6}'); globalLastFrame = str2num(wTraceDir(end).name(v1(2)+1:v2(end)));
-%% BUG HERE!
+%% Init full lengthstruct
 temp_fNames = fieldnames(allWhisker);
 allWhisker(globalLastFrame) = wTraces(end);
 allManip(globalLastFrame) = mTraces(end);
@@ -70,10 +68,10 @@ end
 for ii = 1:length(wMeasureDir)
     % load in all the data
     fprintf('\nLoading whisker \t %i \tof \t %i \n',ii,length(wMeasureDir))
-    wTraces = LoadWhiskers([wPath wTraceDir(ii).name]);
-    mTraces = LoadWhiskers([wPath mTraceDir(ii).name]);
-    mMeasure = LoadMeasurements([wPath mMeasureDir(ii).name]);
-    wMeasure = LoadMeasurements([wPath wMeasureDir(ii).name]);
+    wTraces = LoadWhiskers([wPathName wTraceDir(ii).name]);
+    mTraces = LoadWhiskers([wPathName mTraceDir(ii).name]);
+    mMeasure = LoadMeasurements([wPathName mMeasureDir(ii).name]);
+    wMeasure = LoadMeasurements([wPathName wMeasureDir(ii).name]);
     
     % extract global frame numbers from filename
     frameString = regexp(wMeasureDir(ii).name,'F\d{6}','match');
@@ -87,6 +85,12 @@ for ii = 1:length(wMeasureDir)
     whisker = struct([]);
         % Look at only the traces labeled 0
     tempW = wMeasure([wMeasure.label]==0);
+        % short circuit if there is no labeled whisker (This shouldn't
+        % happen often
+    if isempty(tempW)
+        warning(['No labeled whisker found; skipping file ' wTraceDir(ii).name])
+        continue
+    end
         % Make a N x 2 matrix of frame time (local) and whisker id from the
         % measurement file.
     ID = [[tempW.fid];[tempW.wid]]';
@@ -119,6 +123,13 @@ for ii = 1:length(wMeasureDir)
     manip = struct([]);
         % Look at only the traces labeled 0
     tempM = mMeasure([mMeasure.label]==0);
+    
+        % short circuit if there is no labeled manipulator
+    if isempty(tempM)
+        warning(['No labeled manipulator found; skipping file ' mTraceDir(ii).name])
+        continue
+    end
+    
         % Make a N x 2 matrix of frame time (local) and manipulator id from the
         % measurement file.
     ID = [[tempM.fid];[tempM.wid]]';
@@ -183,13 +194,10 @@ for ii = 1:length(wMeasureDir)
     
 % replace time stamp with global timestamp
     for jj = 1:frames(2)-frames(1)+1
-        if ismember(jj,thundreds)
-            fprintf('.')
-        end       
         wT(jj).time = double(wT(jj).time)+frames(1);
         mT(jj).time = double(mT(jj).time)+frames(1);
-        wM(jj).time = double(wM(jj).fid)+frames(1);
-        mM(jj).time = double(mM(jj).fid)+frames(1);
+        wM(jj).fid = double(wM(jj).fid)+frames(1);
+        mM(jj).fid = double(mM(jj).fid)+frames(1);
         
     end
     % concatenate global structure with the local structure.
