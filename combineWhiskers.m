@@ -226,5 +226,13 @@ for ii = find(emptyManip)
     allManip(ii).time = ii-1;
     allMMeasure(ii).fid = ii-1;
 end
+%% fill in empty fields with NaN
+fieldN = {'face_x','face_y','length','score','angle','curvature','follicle_x','follicle_y','tip_x','tip_y'};
+for ii = 1:length(fieldN)
+    emptyLogical = cellfun(@isempty,{allWMeasure.(fieldN{ii})});
+    for jj = find(emptyLogical)
+        allWMeasure(jj).(fieldN{ii}) = NaN;
+    end
+end
 
 
