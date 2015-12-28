@@ -1,50 +1,53 @@
+function whisk2merge_v2()
+frontVidName = '';
+topVidName = '';
+frontTracked = '.mat'
+topTracked = '.mat'
 %% load in data
-error('This is old code to do preprocessing for merging, but it is not commented well, and should be refactored to be cleaner')
+error('This is code is being refactored')
 % Nick Bush 2015_11_23
-clear
-ca
-load('rat2015_15_JUN11_VG_D4_t01_Front_tracked.mat')
-frontM = allM;
-frontW = allW;
-load('rat2015_15_JUN11_VG_D4_t01_Top_tracked.mat')
-topM = allM;
-topW = allW;
-clear m w
-topWRaw = topW;
-topMRaw = topM;
-frontMRaw = frontM;
-frontWRaw = frontW;
+% load front data
+load(frontTracked)
+fw = w;
+fwM = wM;
+fm = m;
+fmM = mM;
+clear w wM m mM
+% load top data
+load(topTracked)
+tw = w;
+twM = wM;
+tm = m;
+tmM = mM;
+clear m w mM wM
 %% Trim to the basepoint
-topW = trackBP('rat2015_15_JUN11_VG_D4_t01_Top_F000001F020000.avi',topW);
-frontW = trackBP('rat2015_15_JUN11_VG_D4_t01_Front_F000001F020000.avi',frontW);
+tw = trackBP(tVidName,tw);
+fw = trackBP(fVidName,fw);
+%% Smooth basepoint
+fw = cleanBP(fw);
+tw = cleanBP(tw);
 
-% % 
-%  topW = fill2Dgap(topW);
-%  frontW = fill2Dgap(frontW);
-% % 
-% % 
-%  topW = rmOutlierPts(topW);
-%  frontW = rmOutlierPts(frontW);
-
- %% sort whisker
+%% Smooth whisker shape
+tw = smooth2D_whisker(tw);
+fw = smooth2D_whisker(fw);
 
 %% view to verify the basepoint tracking
 
-sample = randi(length(topW),length(topW),1);
+sample = randi(length(tw),length(tw),1);
 for ii = 1:800
     subplot(121)
-    if isempty(frontW(sample(ii)).x) ||  isempty(topW(sample(ii)).x)
+    if isempty(fw(sample(ii)).x) ||  isempty(tw(sample(ii)).x)
         continue
     end
     
-    plot(frontW(sample(ii)).x,frontW(sample(ii)).y,'k')
+    plot(fw(sample(ii)).x,fw(sample(ii)).y,'k')
     ho
-    plot(frontW(sample(ii)).x(1),frontW(sample(ii)).y(1),'r*')
+    plot(fw(sample(ii)).x(1),fw(sample(ii)).y(1),'r*')
     
     subplot(122)
-    plot(topW(sample(ii)).x,topW(sample(ii)).y,'k')
+    plot(tw(sample(ii)).x,tw(sample(ii)).y,'k')
     ho
-    plot(topW(sample(ii)).x(1),topW(sample(ii)).y(1),'r*')
+    plot(tw(sample(ii)).x(1),tw(sample(ii)).y(1),'r*')
 end
 clear sample
 % zoom on;pause;
@@ -67,28 +70,28 @@ ca
 %% get TH
 
 
-TH_linear_top = nan(length(topW),1);
-TH_linear_front = nan(length(topW),1);
+TH_linear_top = nan(length(tw),1);
+TH_linear_front = nan(length(tw),1);
 tic
-for ii = 1:length(topW)
+for ii = 1:length(tw)
     x1 = [];y1 = [];ye = []; xe = [];
-    if ~isempty(topW(ii).x)
-                l = length(topW(ii).x);
+    if ~isempty(tw(ii).x)
+                l = length(tw(ii).x);
 
-        x1 = topW(ii).x(ceil(l/1.5));
-        y1 = topW(ii).y(ceil(l/1.5));
-        ye = topW(ii).y(ceil(l/1.2));
-        xe = topW(ii).x(ceil(l/1.2));
+        x1 = tw(ii).x(ceil(l/1.5));
+        y1 = tw(ii).y(ceil(l/1.5));
+        ye = tw(ii).y(ceil(l/1.2));
+        xe = tw(ii).x(ceil(l/1.2));
         TH_linear_top(ii) = atan2(ye-y1,xe-x1)*180/pi;
     end
     x1 = [];y1 = [];ye = []; xe = [];
-    if ~isempty(frontW(ii).x)
-                l = length(frontW(ii).x);
+    if ~isempty(fw(ii).x)
+                l = length(fw(ii).x);
 
-        x1 = frontW(ii).x(ceil(l/1.5));
-        y1 = frontW(ii).y(ceil(l/1.5));
-        ye = frontW(ii).y(ceil(l/1.2));
-        xe = frontW(ii).x(ceil(l/1.2));
+        x1 = fw(ii).x(ceil(l/1.5));
+        y1 = fw(ii).y(ceil(l/1.5));
+        ye = fw(ii).y(ceil(l/1.2));
+        xe = fw(ii).x(ceil(l/1.2));
         TH_linear_front(ii) = atan2(ye-y1,xe-x1)*180/pi;
     end
     
