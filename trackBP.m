@@ -22,7 +22,7 @@ function [wStruct,emptyWhiskers] = trackBP(vidFileName,wStruct,varargin)
 
 
 %% Input handling
-error('This processing step should be reworked. NEB 2015_11_23')
+% error('This processing step should be reworked. NEB 2015_11_23')
 % check for start frame
 if length(varargin) == 1
     startFrame = varargin{1};
@@ -49,7 +49,7 @@ I = read(v,5000);
 imshow(I);
 
 zoom on; title('zoom to the basepoint');pause;
-title('click to the right of a cutoff point')
+title('Click such that points to the left of the click are removed.')
 [fol,~] = ginput(1);
 title('click on the basepoint')
 bp(1,:) = ginput(1);
