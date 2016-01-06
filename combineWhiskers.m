@@ -1,7 +1,10 @@
 function [allWhisker,allManip,allWMeasure,allMMeasure] = combineWhiskers(doManip)
 %% Get all clips from a particular trial
 if nargin==0
-    doManip=1;
+    doManip=1; %default to doing manipulator
+else
+    allManip = [];
+    allMMeasure = [];
 end
 % Use uigetdir to choose the trial you wnat to use
 % For the whisker
