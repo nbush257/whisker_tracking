@@ -50,6 +50,8 @@ imshow(I);
 
 title('Click three times to outline the bp region')
 [~,xi,yi] = roipoly(I);
+ca
+pause(.01)
 %% Trim the tracked whisker in each frame to the basepoint.
 % Sequentially finds the nearest tracked whisker node to the most recent
 % basepoint.
