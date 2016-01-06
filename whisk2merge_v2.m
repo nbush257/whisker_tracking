@@ -108,7 +108,7 @@ TH_front = double(TH_front);
 
 
 
-%% Still needs work!!!
+%% Get auto contact estimation
 k = [];
 k2 = [];
 k(:,1) = LULU([twM.curvature],3);
@@ -160,7 +160,8 @@ for ii = 1:size(toFlip(:,1))
 end
 ca
 k3 = sum(zscore(k2),2);
-[p,l,w] = findpeaks(k3,'minpeakprominence',std(k3)/2);
+k3 = sqrt(k2(:,1).^2 + k2(:,2).^2);
+[p,l,w] = findpeaks(k3,'minpeakprominence',std(k3)/3,'minpeakwidth',4);
 
 cStart = round(l-w);cEnd = round(l+w);
 cStart(cStart<1) = 1;
@@ -169,10 +170,45 @@ C = logical(zeros(length(k2),1));
 for ii = 1:length(cStart)
     C(cStart(ii):cEnd(ii)) = 1;
 end
-plot(find(C),k3(C))
+plot(find(C),k3(C),'.')
 ho
 plot(find(~C),k3(~C),'.')
 
+%% manually fix contacts
+starts = 1;
+winsize = 5000;
+stops = winsize+starts;
+longfig
+while starts<length(C)
+    x = 0;
+    if stops>length(C)
+        stops = length(C);
+    end
+    while ~isempty(x)
+        clf
+    plot(scale(k3(starts:stops)),'k');ln2;
+        shadeVector(C(starts:stops))
+        
+        [x,~,but] = ginput(2);
+        x = sort(x);
+        x(x<1)=1;
+        x = round(x);
+        x = x+starts;
+        if but ==1
+            C(x(1):x(2)) = 1;
+        elseif but==3
+            C(x(1):x(2)) = 0;
+        end
+    end
+    hold off
+    starts = stops;
+    stops = starts+winsize;
+end
+ca
+plot(C)
+ho
+plot(scale(k3))
+%% Output
 
 
 
