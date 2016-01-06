@@ -48,21 +48,18 @@ end
 I = read(v,5000);
 imshow(I);
 
-zoom on; title('zoom to the basepoint');pause;
-title('Click such that points to the left of the click are removed.')
-[fol,~] = ginput(1);
-title('click on the basepoint')
-bp(1,:) = ginput(1);
-
+title('Click three times to outline the bp region')
+[~,xi,yi] = roipoly(I);
 %% Trim the tracked whisker in each frame to the basepoint.
 % Sequentially finds the nearest tracked whisker node to the most recent
 % basepoint.
 repCount = [];
 emptyWhiskers = [];
 for ii = 1:length(wStruct)
-    leftOfBP = wStruct(ii).x<fol;
-    wStruct(ii).x(leftOfBP) = [];
-    wStruct(ii).y(leftOfBP) = [];
+    
+    toRM = inpolygon(wStruct(ii).x,wStruct(ii).y,xi,yi);
+    wStruct(ii).x = wStruct(ii).x(~toRM);
+    wStruct(ii).y = wStruct(ii).y(~toRM);
 end
 
 % 
