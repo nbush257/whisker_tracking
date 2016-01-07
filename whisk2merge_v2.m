@@ -114,52 +114,13 @@ k2 = [];
 k(:,1) = LULU([twM.curvature],3);
 k(:,2) = LULU([fwM.curvature],3);
 k(isnan(k)) = 0;
-k2(1,:) = smoothts(k(:,1)','g',length(k(:,1)),10);
-k2(2,:) = smoothts(k(:,2)','g',length(k(:,1)),10);
+k2(1,:) = smoothts(k(:,1)','g',length(k(:,1)),20);
+k2(2,:) = smoothts(k(:,2)','g',length(k(:,1)),0);
 k2 = k2';
 
-plot(k(:,1))
-ho
-toFlip = [];
-ret = 1;
-while ~isempty(ret)
-    title('Zoom then enter');zoom on; pause
-    [x,~,ret] = ginput(2);
-    if ~isempty(ret)
-        
-        fill([x(1) x(1) x(2) x(2)],[min(k(:,1)) max(k(:,1)) max(k(:,1)) min(k(:,1))],'k','facealpha',.2)
-        toFlip = [toFlip;x']
-    end
-end
+k2 = abs(zscore(k2));
 
-k2 =[];
-toFlip = round(toFlip);
-ca
-k2 = k(:,1);
-for ii = 1:size(toFlip(:,1))
-    k2(toFlip(ii,1):toFlip(ii,2),1) = -k2(toFlip(ii,1):toFlip(ii,2),1)+k2(toFlip(ii,1),1);
-end
-
-plot(k(:,2))
-ho
-toFlip = [];
-ret = 1;
-while ~isempty(ret)
-    title('Zoom then enter');zoom on; pause
-    [x,~,ret] = ginput(2);
-    if ~isempty(ret)
-        fill([x(1) x(1) x(2) x(2)],[min(k(:,1)) max(k(:,1)) max(k(:,1)) min(k(:,1))],'k','facealpha',.2)
-        
-        toFlip = [toFlip;x'];
-    end
-end
-toFlip = round(toFlip);
-k2(:,2) = k(:,2);
-for ii = 1:size(toFlip(:,1))
-    k2(toFlip(ii,1):toFlip(ii,2),2) = -k2(toFlip(ii,1):toFlip(ii,2),2)+k2(toFlip(ii,1),2);
-end
-ca
-k3 = sum(zscore(k2),2);
+k3 = sum(k2,2);
 k3 = sqrt(k2(:,1).^2 + k2(:,2).^2);
 [p,l,w] = findpeaks(k3,'minpeakprominence',std(k3)/3,'minpeakwidth',4);
 
