@@ -115,7 +115,7 @@ k(:,1) = LULU([twM.curvature],3);
 k(:,2) = LULU([fwM.curvature],3);
 k(isnan(k)) = 0;
 k2(1,:) = smoothts(k(:,1)','g',length(k(:,1)),20);
-k2(2,:) = smoothts(k(:,2)','g',length(k(:,1)),0);
+k2(2,:) = smoothts(k(:,2)','g',length(k(:,1)),20);
 k2 = k2';
 
 k2 = abs(zscore(k2));
