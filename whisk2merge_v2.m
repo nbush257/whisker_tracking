@@ -1,6 +1,9 @@
 function whisk2merge_v2()
-frontVidName = '';
-topVidName = '';
+fVidName = 'E:\raw\2015_15\rat2015_15_JUN11_VG_C2_t01_Front.avi';
+tVidName = 'E:\raw\2015_15\rat2015_15_JUN11_VG_C2_t01_Top.avi';
+tVid = VideoReader(tVidName);
+fVid = VideoReader(fVidName);
+
 frontTracked = '.mat'
 topTracked = '.mat'
 %% load in data
@@ -21,8 +24,11 @@ tm = m;
 tmM = mM;
 clear m w mM wM
 %% Trim to the basepoint
-tw = trackBP(tVidName,tw);
-fw = trackBP(fVidName,fw);
+tws = BP_lineMatch(tw,tVid);
+fws = BP_lineMatch(fw,fVid);
+% 
+% tw = trackBP(tVidName,tw);
+% fw = trackBP(fVidName,fw);
 ca
 %% Smooth basepoint
 [fBP,fws] = cleanBP(fw);
@@ -48,7 +54,7 @@ subplot(122)
 v = VideoReader(tVidName);
 imshow(read(v,5000));hold on
 
-for ii = 1:100
+for ii = 1:500
     subplot(121)
     if isempty(fws(sample(ii)).x) ||  isempty(tw(sample(ii)).x)
         continue
@@ -58,7 +64,7 @@ for ii = 1:100
     ho
     plot(fws(sample(ii)).x(1),fws(sample(ii)).y(1),'r*')
     ho
-    %     plot(fw(sample(ii)).x,fw(sample(ii)).y,'b')
+%         plot(fw(sample(ii)).x,fw(sample(ii)).y,'b')
     
     title('Front')
     subplot(122)
