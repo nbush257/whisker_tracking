@@ -4,7 +4,7 @@ function [allWhisker,allManip,allWMeasure,allMMeasure] = combineWhiskers(wFileNa
 
 %% input handling
 
-wPathName = pwd;
+wPathName = [pwd '\'];
 if nargin <= 2
     saveTGL = 0;% default to not saving
 end
