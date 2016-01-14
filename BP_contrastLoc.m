@@ -1,7 +1,8 @@
-vidFile = 'D:\data\2015_09\tracking\rat2015_09_APR_23_VG_C1_t01_Top_F020001F040000.avi';
+vidFile = 'L:\avis\2015_28\rat2015_28_SEP_16_VG_D0_t01_Top_F020001F040000.avi';
 wT = ;
 
-v= VideoRreader(vidFile);
+v= VideoReader(vidFile);
+tic;
 for ii = 1:v.NumberOfFrames
     cla
 xIdx = round(wT(ii).x+1);
@@ -13,12 +14,13 @@ dsz = abs(dsz);
 imshow(I)
 hold on
 plot(xIdx,yIdx,'.')
-idx = find(abs(dsz)<1.5,1,'first');
+idx = find(abs(dsz)<2,1,'first');
 xIdx2 = xIdx(idx:end);
 yIdx2 = yIdx(idx:end);
 
-plot(xIdx2,yIdx2,'o')
-pause(.1)
+% plot(xIdx2,yIdx2,'o')
+
 
 end
+toc
 
