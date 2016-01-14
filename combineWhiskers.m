@@ -1,11 +1,13 @@
 function [allWhisker,allManip,allWMeasure,allMMeasure] = combineWhiskers(doManip)
+%%function [allWhisker,allManip,allWMeasure,allMMeasure] = combineWhiskers([filename,doManip,saveTGL])
 %% Get all clips from a particular trial
 if nargin==0
     doManip=0; %default to not doing manipulator
-else
-    allManip = [];
-    allMMeasure = [];
 end
+
+saveTGL = input('Save the file? (1/0)');
+allManip = [];
+allMMeasure = [];
 % Use uigetdir to choose the trial you wnat to use
 % For the whisker
 [wFileName,wPathName] = uigetfile('*.whiskers','Select one file of the whisker that you want to combine');
@@ -266,5 +268,8 @@ for ii = 1:length(fieldN)
         allWMeasure(jj).(fieldN{ii}) = NaN;
     end
 end
-
-
+%% Save output
+if saveTGL
+    writeName = [wFileName(1:Tag_start) 'whisker'];
+    save(writeName,'all*');
+end
