@@ -9,5 +9,6 @@ for ii = 1:length(wStruct)
         continue
     end
     smoothed(ii).x = wStruct(ii).x;
-    smoothed(ii).y = smooth(wStruct(ii).x,wStruct(ii).y,.2,'rloess');
+    smoothed(ii).y = smooth(wStruct(ii).x,wStruct(ii).y,.2,'loess');
 end
+close all force
