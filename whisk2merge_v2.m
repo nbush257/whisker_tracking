@@ -1,5 +1,6 @@
-function [tws,fws,C] = whisk2merge_v2(tw,twM,fw,fwM,tVidName,fVidName)
-%% function whisk2merge_v2(tw,twM,fw,fwM,tVidName,fVidName)
+function [tws,fws,C] = whisk2merge_v2(tw,twM,fw,fwM,tVidName,fVidName,outfilename)
+%% function [tws,fws,C] = whisk2merge_v2(tw,twM,fw,fwM,tVidName,fVidName,outfilename)
+
 
 % fVidName = 'E:\raw\2015_15\rat2015_15_JUN11_VG_C2_t01_Front.avi';
 % tVidName = 'E:\raw\2015_15\rat2015_15_JUN11_VG_C2_t01_Top.avi';
@@ -33,6 +34,7 @@ fVid = VideoReader(fVidName);
 %% Trim to the basepoint
 tws = BP_lineMatch(tw,tVid);
 fws = BP_lineMatch(fw,fVid);
+save(outfilename,'tws','fws');
 % 
 % tw = trackBP(tVidName,tw);
 % fw = trackBP(fVidName,fw);
@@ -40,6 +42,8 @@ ca
 %% Smooth basepoint
 [fBP,fws] = cleanBP(fws);
 [tBP,tws] = cleanBP(tws);
+save(outfilename,'tws','fws');
+
 
 %% Smooth whisker shape
 % this step takes forever
@@ -49,6 +53,8 @@ toc
 tic
 fws = smooth2D_whisker(fws);
 toc
+save(outfilename,'tws','fws');
+
 %% view to verify the basepoint tracking
 
 sample = randi(length(tws),length(tws),1);
@@ -179,6 +185,8 @@ ca
 plot(C)
 ho
 plot(scale(k3))
+save(outfilename,'tws','fws','C');
+
 %% Output
 
 
