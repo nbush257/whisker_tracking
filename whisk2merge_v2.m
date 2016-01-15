@@ -27,7 +27,7 @@ function [tws,fws,C] = whisk2merge_v2(tw,twM,fw,fwM,tVidName,fVidName,outfilenam
 % tmM = mM;
 % clear m w mM wM
 ca
-parpool;
+gcp;
 tVid = VideoReader(tVidName);
 fVid = VideoReader(fVidName);
 
@@ -42,18 +42,20 @@ ca
 %% Smooth basepoint
 [fBP,fws] = cleanBP(fws);
 [tBP,tws] = cleanBP(tws);
-save(outfilename,'tws','fws');
+save(outfilename,'tws','fws','fwM','twM');
 
 
 %% Smooth whisker shape
 % this step takes forever
+fprintf('Smoothing the top whisker...\n')
 tic
 tws = smooth2D_whisker(tws(1:10));
 toc
+fprintf('Smoothing the front whisker...\n')
 tic
 fws = smooth2D_whisker(fws);
 toc
-save(outfilename,'tws','fws');
+save(outfilename,'tws','fws','fwM','twM');
 
 %% view to verify the basepoint tracking
 
@@ -185,7 +187,7 @@ ca
 plot(C)
 ho
 plot(scale(k3))
-save(outfilename,'tws','fws','C');
+save(outfilename,'tws','fws','fwM','twM','C');
 
 %% Output
 
