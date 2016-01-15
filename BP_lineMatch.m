@@ -15,27 +15,29 @@ isTop = input('Is Top?(1/0)');
 title('Click 3 points to determine track of BP (clik left to right or top to bottom)')
 zoom on; pause;
 a = ginput(3);
-a = sortrows(a);
 if isTop
-p = polyfit(a(:,2),a(:,1),2);
-c = polyval(p,a(1,2):.1:a(3,2));
-plot(c,a(1,2):.1:a(3,2))
-d = a(1,2):.1:a(3,2);
+    p = polyfit(a(:,2),a(:,1),2);
+    c = polyval(p,a(1,2):.1:a(3,2));
+    plot(c,a(1,2):.1:a(3,2))
+    d = a(1,2):.1:a(3,2);
 else
-p = polyfit(a(:,1),a(:,2),2);
-d = polyval(p,a(1,1):.1:a(3,1));
-plot(a(1,1):.1:a(3,1),d)
-c = a(1,1):.1:a(3,1);
-end
+    a = sortrows(a);
     
+    p = polyfit(a(:,1),a(:,2),2);
+    d = polyval(p,a(1,1):.1:a(3,1));
+    plot(a(1,1):.1:a(3,1),d)
+    c = a(1,1):.1:a(3,1);
+end
+
 if isrow(d); d = d'; end
 if isrow(c);c = c'; end
 pause
 ca
 % h = waitbar(0,'Lots of dsearchs can take a while')
 tic
+
 parfor ii = 1:length(w)
-%     waitbar(ii/length(w),h)
+    %     waitbar(ii/length(w),h)
     if ~isempty(w(ii).x)
         
         
