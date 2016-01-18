@@ -9,6 +9,6 @@ parfor ii = 1:length(wStruct)
         continue
     end
     smoothed(ii).x = wStruct(ii).x;
-    smoothed(ii).y = smooth(wStruct(ii).x,wStruct(ii).y,.2,'loess');
+    smoothed(ii).y = smooth(wStruct(ii).x,wStruct(ii).y,'loess');
 end
 % close all force
