@@ -8,7 +8,11 @@ if nargin < 3
     plotTGL=0;
 end
 wOut = w;
-I = read(v,5000);
+if isnumeric(v)
+    I = v;
+else
+    I = read(v,5000);
+end
 imshow(I)
 ho
 isTop = input('Is Top?(1/0)');
