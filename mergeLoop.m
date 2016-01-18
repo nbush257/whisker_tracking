@@ -3,21 +3,21 @@
 % DATA!!!
 % 3D Merge Whisker % Might want to try to make the seed whisker variable.
 
-minDS = 1;% sets the minimum internode distance.
+minDS = .8;% sets the minimum internode distance.
 minWhiskerSize = 20; % in # of nodes
 N = 20; % I think this is the number of fits to try. More should give a stabler fit.
 if length(f)~=length(t)
     error('Different length structs')
 end
-numFrames = length(f);
 
+numFrames = length(f);
 tracked_3D = struct([]);
 count = 0;
 
 step =10000;% Saves every 10000 frames
-tracked_3D_fileName = 'rat2015_15_JUN11_VG_B1_t01_tracked_3D.mat';
+tracked_3D_fileName = 'rat2015_15_JUN11_VG_D0_t01_tracked3D.mat';
 
-numFrames = numel(C);
+
 % Outer loop is big serial chunks that saves every [step] frames
 for ii = 1:step:numFrames
     count = count+1;
@@ -31,8 +31,8 @@ for ii = 1:step:numFrames
     
     % Parallel for loop which does the actual merging. Gets batches from
     % the current outer loop.
-    for i = ii:ii+iter
-        i
+    parfor i = ii:ii+iter
+        
         %initialize the merged values in the parfor loop.
         merge_x = [];merge_y = [];merge_z = [];last_merge_x = []; last_merge_y = []; last_merge_z = [];
         
@@ -91,9 +91,8 @@ for ii = 1:step:numFrames
         tracked_3D(i).time = i-1;tracked_3D(i).frontTime = f(i).time;tracked_3D(i).topTime = t(i).time;
         
     end
-    save([tracked_3D_fileName(1:end-4) '_iter_' num2str(iCount) ],'tracked_3D')
+    save([tracked_3D_fileName(1:end-4) '_iter_' num2str(count) ],'tracked_3D')
     
     
 end
-timer = toc;
-fprintf('It took %.1f seconds to merge %i frames \n',timer,length(tracked_3D));
+
