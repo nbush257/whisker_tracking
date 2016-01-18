@@ -49,7 +49,7 @@ save(outfilename,'tws','fws','fwM','twM');
 % this step takes forever
 fprintf('Smoothing the top whisker...\n')
 tic
-tws = smooth2D_whisker(tws(1:10));
+tws = smooth2D_whisker(tws);
 toc
 fprintf('Smoothing the front whisker...\n')
 tic
