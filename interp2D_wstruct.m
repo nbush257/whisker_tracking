@@ -1,12 +1,13 @@
 %interp 2D whisker
 function [wstruct] = interp2D_wstruct(wstruct,varargin)
 
-%function [wstruct] = interp2D_wstruct(wstruct,varargin)
+%function [wstruct] = interp2D_wstruct(wstruct,[numNodes])
+% interpolates the 2d whisker to a desired number of node
+N = 1000;
 
 if ~isempty(varargin)
     N = varargin{1};
 end
-N = 1000;
 
 parfor ii = 1:length(wstruct)
     

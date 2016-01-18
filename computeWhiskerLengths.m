@@ -1,5 +1,0 @@
-function [whiskerData] = computeWhiskerLengths
-
-
-
-end

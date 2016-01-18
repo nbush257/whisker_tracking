@@ -22,6 +22,7 @@ function [wStruct,emptyWhiskers] = trackBP(vidFileName,wStruct,varargin)
 
 
 %% Input handling
+% error('This processing step should be reworked. NEB 2015_11_23')
 % check for start frame
 if length(varargin) == 1
     startFrame = varargin{1};
@@ -34,34 +35,33 @@ end
 % check for video file format
 if strcmp(vidFileName(end-2:end),'avi')
     v = VideoReader(vidFileName);
-    I = read(v,startFrame+5000);
+    I = read(v,startFrame);
 elseif strcmp(vidFileName(end-2:end),'seq')
     v = seqIo(vidFileName,'r');
-    v.seek(startFrame-1+5000);
+    v.seek(startFrame-1);
     I = v.getframe();
 else
     error('Incompatible video format. Must be an .AVI or .SEQ')
 end
 
 %% User input Basepoint
-%I = read(v,5000);
+I = read(v,5000);
 imshow(I);
 
-zoom on; title('zoom to the basepoint');pause;
-title('click to the right of a cutoff point')
-[fol,~] = ginput(1);
-title('click on the basepoint')
-bp(1,:) = ginput(1);
-
+title('Click three times to outline the bp region')
+[~,xi,yi] = roipoly(I);
+ca
+pause(.01)
 %% Trim the tracked whisker in each frame to the basepoint.
 % Sequentially finds the nearest tracked whisker node to the most recent
 % basepoint.
 repCount = [];
 emptyWhiskers = [];
 for ii = 1:length(wStruct)
-    leftOfBP = wStruct(ii).x<fol;
-    wStruct(ii).x(leftOfBP) = [];
-    wStruct(ii).y(leftOfBP) = [];
+    
+    toRM = inpolygon(wStruct(ii).x,wStruct(ii).y,xi,yi);
+    wStruct(ii).x = wStruct(ii).x(~toRM);
+    wStruct(ii).y = wStruct(ii).y(~toRM);
 end
 
 % 

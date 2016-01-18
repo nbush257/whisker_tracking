@@ -5,9 +5,9 @@
 %timestamps. 
 
 % Auto histeqs the frame.
-function seq2avi(varargin)
+function seq2avi()
 %function seq2avi([startFrame],[endFrame])
-
+% 
 % get the seq
 [fileName,pathName]=uigetfile('*.seq');
 fullName= [pathName fileName];
@@ -21,30 +21,33 @@ endFrame = vInfo.numFrames;
 
 % chek if there is an input, if one argument, start at that frame, if two
 % arguments grab all the frames between the arguments(inclusive)
-
-if length(varargin) == 1
-    startFrame = varargin{1};
-elseif length(varargin) == 2;
-    startFrame = varargin{1};
-    endFrame = varargin{2};
-end
+% 
+% if length(varargin) == 1
+%     startFrame = varargin{1};
+% elseif length(varargin) == 2;
+%     startFrame = varargin{1};
+%     endFrame = varargin{2};
+% end
 
 %prep the output filename
-stripSuffix = fullName(1:end-3);
-outFilename = [pathName fileName(1:end-4) '_' num2str(startFrame) '_' num2str(endFrame) '.avi'];
+
+outFilename = [fullName(1:end-4) '.avi'];
 
 
 w = VideoWriter(outFilename,'Motion JPEG AVI');
+w.Quality = 80;
 open(w);
 
 h = waitbar(0,'converting')
-for i = startFrame:endFrame
-    waitbar((i-startFrame)/(endFrame-startFrame))
+for i = 1:vInfo.numFrames
+    waitbar(i/vInfo.numFrames)
     v.seek(i-1);
     img = v.getframe();
-    img = histeq(img);
+%     img = imgradient(img);
+%     img = uint8(img);
+%     img = imcomplement(img);
     writeVideo(w,img);
 end
-close(h)
+delete(h)
 close(w)
     

@@ -1,8 +1,9 @@
 % get calibration tiffs
-cd L:\raw\2015_06
-topVidName = 'rat2105_06_0226_FEB26_vg_B2_calib_pre_top.seq'
-frontVidName = 'rat2105_06_0226_FEB26_vg_B2_calib_pre_Front.seq'
-frames2grab = [4840 5102 5348 5594 6493 7119 8204 8494 9438 9939 9998 11109 11736 13296 13912 14090 14350 14370 14885 ];
+% use this script to write a set of caliration images to tiffs.
+cd L:\raw\2015_28
+topVidName = 'rat2015_28_SEP_16_VG_E4_t01_Top_calib.seq'
+frontVidName = 'rat2015_28_SEP_16_VG_E4_t01_Front_calib.seq'
+frames2grab = frames;
 top = seqIo(topVidName,'r');
 front = seqIo(frontVidName,'r');
 
@@ -17,7 +18,9 @@ for i = frames2grab
     top.seek(i-1);
     front.seek(i-1);
     fI = front.getframe();
+%     fI = adapthisteq(fI);
     tI = top.getframe();
+%     tI = adapthisteq(tI);
     cd(topTifDir)
     imwrite(tI,['top' int2str(count) '.tif'],'tif')
     cd ..
