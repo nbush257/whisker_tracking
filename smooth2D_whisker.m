@@ -8,7 +8,7 @@ parfor ii = 1:length(wStruct)
     if isempty(wStruct(ii).x)
         continue
     end
-    smoothed(ii).x = wStruct(ii).x;
-    smoothed(ii).y = smooth(wStruct(ii).x,wStruct(ii).y,'loess');
+    smoothed(ii).x = wStruct(ii).x(1):wStruct(ii).x(end);
+    smoothed(ii).y = smooth(wStruct(ii).x,wStruct(ii).y,'lowess',15);
 end
 % close all force
