@@ -16,4 +16,4 @@
 % om = rodrigues(stereoParams.RotationOfCamera2);
 % T = stereoParams.TranslationOfCamera2';
 
-calib = {fc_left,cc_left,kc_left,alpha_c_left,fc_right,cc_right,kc_right,alpha};
+calibInfo = {fc_left,cc_left,kc_left,alpha_c_left,fc_right,cc_right,kc_right,alpha};
