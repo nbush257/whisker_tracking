@@ -59,20 +59,15 @@ def getBckgd(image):
     plt.close('all')
     return bckMean
 
-def manipExtract(image,thetaInit,last_y0 =[],last_y1 = [],lastDist = []):
+def manipExtract(image,thetaInit):
     if np.issubdtype(image.dtype,'bool'):
         edge = image
     else:
         edge = canny(image)
 
-    h,theta,d = hough_line(edge,theta = np.arange(thetaInit-.1,thetaInit+1,.01))
-    # plt.imshow(image,cmap = 'gray')
     rows, cols = image.shape
-    idx = 0
-    y0 = last_y0
-    y1 = last_y1
-    
-    # distOut = np.array([])
+
+    h,theta,d = hough_line(edge,theta = np.arange(thetaInit-.1,thetaInit+1,.01))
     _, angle, dist= hough_line_peaks(h, theta, d,min_distance=1,num_peaks=1)
     y0 = (dist - 0 * np.cos(angle)) / np.sin(angle)
     y1 = (dist - cols * np.cos(angle)) / np.sin(angle)
@@ -199,7 +194,7 @@ for ii in xrange(n-idx):
     image = fid.get_frame(idx)
     BW = getBW(y0,y1,image)
     T = BW<(b-50)
-    y0,y1,th,d = manipExtract(T,th,y0,y1,lastDist = d0)
+    y0,y1,th,d = manipExtract(T,th)
     
     # exception handling
     if (len(d)==0):
