@@ -3,7 +3,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from skimage.transform import (hough_line, hough_line_peaks,probabilistic_hough_line)
 from skimage.filter import canny
-from skimage.draw import circle
+from skimage.draw import circle,polygon
 from matplotlib.widgets import Button
 import scipy.io.matlab as sio 
 from os.path import isfile
@@ -70,7 +70,7 @@ def manipExtract(image,thetaInit,method = 'standard'):
         edge = canny(image)
 
     rows, cols = image.shape
-    h,theta,d = hough_line(edge,theta = np.arange(thetaInit-.1,thetaInit+.1,.02))
+    h,theta,d = hough_line(edge,theta = np.arange(thetaInit-.2,thetaInit+.2,.03))
     _, angle, dist= hough_line_peaks(h, theta, d,min_distance=1,num_peaks=1)
     y0 = (dist - 0 * np.cos(angle)) / np.sin(angle)
     y1 = (dist - cols * np.cos(angle)) / np.sin(angle)
@@ -101,17 +101,23 @@ def sanityCheck(y0,y1,image,frameNum = 0):
     plt.draw()
     lines.pop(0).remove()
 
-def frameSeek(fid,n):
+def frameSeek(fid,n,Y0 = [],Y1 = []):
     cont = False
-
     image = fid.get_frame(n)
+    rows,cols = image.shape
+
     im = plt.imshow(image,cmap = 'gray')
+    plt.axis([0,cols,0,rows])
+    plt.gca().invert_yaxis()
+    if len(Y0) >0 and len(Y1) >0:
+        plt.plot((0,cols),(Y0[n],Y1[n]),'-r')
     plt.title('Frame: %i' % n)
     plt.draw()
 
     while not cont:
         
         uIn = raw_input('\nAdvance/Rewind how many frames? Default = +100. 0 exits: ')
+        stdout.flush()
         if len(uIn) == 0:
             uIn = 100
             n+=uIn
@@ -124,16 +130,51 @@ def frameSeek(fid,n):
         plt.cla()
         image = fid.get_frame(n)
         plt.imshow(image,cmap = 'gray')
+        plt.axis([0,cols,0,rows])
+        plt.gca().invert_yaxis()   
+        plt.plot((0,cols),(Y0[n],Y1[n]),'-r')
+
         plt.title('Frame: %i' % n)
         plt.draw()
 
     return n
 
+def getMask(image):
+    rows,cols = image.shape
+    plt.imshow(image,cmap = 'gray')
+    plt.title('Outline the Mask')
+
+    ii = 0 
+    pts = np.asarray(plt.ginput(1))[0]
+    plt.plot(pts[0],pts[1],'r*')
+    plt.draw()
+    cont = True
+    while cont:
+        ii +=1
+        pt = np.asarray(plt.ginput(1))
+        if len(pt) == 0:
+            cont = False
+        else:
+            pt = pt[0]
+            pts = np.vstack([pts,pt])
+            plt.plot(pt[0],pt[1],'r*')
+            plt.draw()  
+    rr,cc = polygon(pts[:,1],pts[:,0],(rows,cols))
+    mask = np.zeros_like(image,dtype = 'bool')
+    mask[rr,cc] = 1
+    return mask
+
+
+
+
 
 #=============================================#   
+# First Tracking #
+# need to write another script that takes into account previously 
+# tracked frames from the other view.
 
 fname = 'N:\\3dTesting\\rat2015_15_JUN11_VG_B1_t01_Front.seq'
-outFName = 'testManipTrack.mat'
+outFName = fname[:-4] + '_manip.mat'
 
 fid = pims.open(fname)
 
@@ -158,36 +199,52 @@ Y1[:] = np.nan
 Th = np.empty(nFrames,dtype = 'float32')
 Th[:] = np.nan
 
+mask = []
 # if the output file is found, check to load it in and start where you left off
 # otherwise start from the beginning
 
 if isfile(outFName):
-    loadTGL = raw_input('Load in previously computed manipulatr? (y/n)')
-    if loadTGL == 'y':
+    loadTGL = raw_input('Load in previously computed manipulator? ([y]/n)')
+    overwriteTGL = raw_input('Overwrite old tracking? ([y],n)')
+    if loadTGL == 'n':
+        idx = frameSeek(fid,0)
+    else:
         fOld = sio.loadmat(outFName)
         D = fOld['D'][0]
         Th = fOld['Th'][0]
         Y0 = fOld['Y0'][0]
         Y1 = fOld['Y1'][0]
-
+        mask = fOld['mask'][0]
         idx = int(np.where(np.isfinite(D))[0][-1])
         print 'loaded data in. Index is at Frame %i\n' % idx
-    else:
-        idx = frameSeek(fid,0)
-else:
+        idx = frameSeek(fid,idx,Y0,Y1)
+
+    if overwriteTGL == 'n':
+        suffix = 1
+        while isfile(outFName):
+            suffix+=1
+            outFName = outFName[:-4] + '(%i).mat' % suffix
+else:    
     idx = frameSeek(fid,0)
 
 
-
+# Get your image
 image = fid.get_frame(idx)
 
+# if there is not a precomputed mask, get one now
+if len(mask)==0:
+    mask = getMask(image)
+
+# get the background intensity    
 b = getBckgd(image)
+
+# do initial tracking of manipulator
 y0,y1,th,d,stopTrack= manualTrack(image,b,plotTGL = 0)
 
 
 d0 = d
 plt.close('all')
-disp = plt.figure()
+plt.figure()
 plt.imshow(image,cmap = 'gray')
 plt.draw()
 print '\nTracking manipulator\n\n ==================\n'
@@ -195,23 +252,25 @@ print '\nTracking manipulator\n\n ==================\n'
 for ii in xrange(n-idx):
     manTrack = False
     image = fid.get_frame(idx)
+    image[~mask] = 255
     BW = getBW(y0,y1,image)
     T = BW<(b-50)
+
     y0,y1,th,d = manipExtract(T,th)
     
     # exception handling
     if (len(d)==0):
-        print 'No edge detected, retrack' 
+        print '\nNo edge detected, retrack' 
         manTrack = True
         y0,y1,th,d,stopTrack= manualTrack(image,b,plotTGL = 0)
         
-    elif(np.mean(abs(d0-d))> 20):
-        print 'Large distance detected, Retrack' 
+    elif(np.mean(abs(d0-d))> 35):
+        print '\nLarge distance detected, Retrack' 
         manTrack = True
         y0,y1,th,d,stopTrack= manualTrack(image,b,plotTGL = 0)
 
     while stopTrack:
-        idx = frameSeek(fid,idx)
+        idx = frameSeek(fid,idx,Y0,Y1)
         image = fid.get_frame(idx)
         manTrack = True
         y0,y1,th,d,stopTrack= manualTrack(image,b,plotTGL = 0)
@@ -225,12 +284,13 @@ for ii in xrange(n-idx):
     # running average of last 5 theta and d:
 
     diffTh = np.mean(np.abs(np.diff(Th[idx-20:idx+1])))
+
     diffD = np.mean(np.abs(np.diff(D[idx-20:idx+1])))
     # stdTh = np.std(Th[-5:])
     # stdD = np.std(D[-5:])    
     
     # if the angle doesn't change much
-    if diffTh<10^-8:# this might need to be tweaked
+    if diffTh<10^-5:# this might need to be tweaked
         manTrack = True
         ## rebuild this so it looks at a 5 frame window into the past and says, hey, the last 5 are almost identical.
         print 'identical lines detected. Retrack' 
@@ -244,9 +304,10 @@ for ii in xrange(n-idx):
         idx+=1
 
     # if the line is at an edge
-    if diffD<2 and (np.mean(D[idx-20:idx+1]) > 636 or np.mean(D[idx-20:idx+1]) < 5):
-        idx-=30
-        idx = frameSeek(fid,idx)
+    if diffD<2 and (np.mean(D[idx-20:idx+1]) > 637 or np.mean(D[idx-20:idx+1]) < 3):
+        print 'Close to edge'
+        idx-=20
+        idx = frameSeek(fid,idx,Y0,Y1)
         image = fid.get_frame(idx)
         manTrack = True
         y0,y1,th,d,stopTrack= manualTrack(image,b,plotTGL = 0)
@@ -264,7 +325,7 @@ for ii in xrange(n-idx):
 
     if (idx % 1000 ==0):
         plt.close('all')
-        sio.savemat(outFName,{'D':D,'Y0':Y0,'Th':Th,'Y1':Y1})
+        sio.savemat(outFName,{'D':D,'Y0':Y0,'Th':Th,'Y1':Y1,'mask':mask})
 
     idx+=1
 
