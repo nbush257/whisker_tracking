@@ -7,6 +7,7 @@ from skimage.draw import circle
 from matplotlib.widgets import Button
 import scipy.io.matlab as sio 
 from os.path import isfile
+from sys import stdout
 
 
 def manualTrack(image,bckMean,plotTGL = 0):
@@ -112,7 +113,7 @@ def frameSeek(fid,n):
 
     while not cont:
         
-        uIn = raw_input('Advance/Rewind how many frames? Default = +100. 0 exits: ')
+        uIn = raw_input('\nAdvance/Rewind how many frames? Default = +100. 0 exits: ')
         if len(uIn) == 0:
             uIn = 100
             n+=uIn
@@ -165,9 +166,14 @@ Th[:] = np.nan
 if isfile(outFName):
     loadTGL = raw_input('Load in previously computed manipulatr? (y/n)')
     if loadTGL == 'y':
-        sio.loadmat(outFName)
-        idx = np.where(np.isfinite(D)[-1])
-        print 'loaded data in. Index is at Frame %i' % idx
+        fOld = sio.loadmat(outFName)
+        D = fOld['D'][0]
+        Th = fOld['Th'][0]
+        Y0 = fOld['Y0'][0]
+        Y1 = fOld['Y1'][0]
+
+        idx = int(np.where(np.isfinite(D))[0][-1])
+        print 'loaded data in. Index is at Frame %i\n' % idx
     else:
         idx = frameSeek(fid,0)
 else:
@@ -186,7 +192,7 @@ plt.close('all')
 disp = plt.figure()
 plt.imshow(image,cmap = 'gray')
 plt.draw()
-print 'Tracking manipulator'
+print '\nTracking manipulator\n\n ==================\n'
 
 for ii in xrange(n-idx):
     manTrack = False
@@ -252,7 +258,9 @@ for ii in xrange(n-idx):
    
 
     if (idx % 100 == 0):
-        print idx
+        stdout.write('\rFrame %i of %i' % (idx,nFrames))
+        stdout.flush()
+
     if (idx % 100 == 0) or manTrack or (idx % 1000 == 1):
     	sanityCheck(y0,y1,image,idx)
 
