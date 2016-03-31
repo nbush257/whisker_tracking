@@ -6,6 +6,7 @@ from skimage.filter import canny
 from skimage.draw import circle
 from matplotlib.widgets import Button
 import scipy.io.matlab as sio 
+from os.path import isfile
 
 
 def manualTrack(image,bckMean,plotTGL = 0):
@@ -82,31 +83,12 @@ def getBW(y0,y1,image):
     from skimage.morphology import dilation,disk
     from time import time
     rows, cols = image.shape
-    '''
-        t1 = time()
-        rr,cc = polygon(np.array([y0[0],y0[1],y1[0],y1[1]]),np.array([0,0,cols,cols]),(rows,cols))
-
-        imROI = np.zeros_like(image,dtype = 'bool')
-        imROI[rr,cc]= 1
-
-        selem = disk(8)
-        BW = dilation(imROI,selem)
-        BW = BW.astype('bool')
-
-        imROI2 = 255*np.ones_like(image)
-        imROI2[BW]=image[BW]
-        t2 = time()
-        print "%.5f" % (t2-t1)
-     '''
-    #faster version?
-#   t1 = time()
     rr,cc = polygon(np.array([y0[0],y0[0],y1[0],y1[0]]),np.array([0,0,cols-15,cols+15]),(rows,cols))
     BW = np.zeros_like(image,dtype = 'bool')
     BW[rr,cc]= 1
     imROI = 255*np.ones_like(image)
     imROI[BW] = image[BW]
-#   t2 = time()
-#   print "%.5f" % (t2-t1)
+
     return imROI
 
 def sanityCheck(y0,y1,image,frameNum = 0):
@@ -152,6 +134,7 @@ def frameSeek(fid,n):
 #=============================================#   
 
 fname = 'N:\\3dTesting\\rat2015_15_JUN11_VG_B1_t01_Front.seq'
+outFName = 'testManipTrack.mat'
 
 fid = pims.open(fname)
 
@@ -161,7 +144,35 @@ ht = fid.height
 wd = fid.width
 print 'ht: %i \nwd: %i \nNumber of Frames: %i' % (ht,wd,nFrames)
 
-idx = frameSeek(fid,0)
+
+# init output vars
+n = nFrames
+D = np.empty(nFrames,dtype = 'float32')
+D[:] = np.nan
+
+Y0 = np.empty(nFrames,dtype = 'float32')
+Y0[:] = np.nan
+
+Y1 = np.empty(nFrames,dtype = 'float32')
+Y1[:] = np.nan
+
+Th = np.empty(nFrames,dtype = 'float32')
+Th[:] = np.nan
+
+# if the output file is found, check to load it in and start where you left off
+# otherwise start from the beginning
+
+if isfile(outFName):
+    loadTGL = raw_input('Load in previously computed manipulatr? (y/n)')
+    if loadTGL == 'y':
+        sio.loadmat(outFName)
+        idx = np.where(np.isfinite(D)[-1])
+        print 'loaded data in. Index is at Frame %i' % idx
+    else:
+        idx = frameSeek(fid,0)
+else:
+    idx = frameSeek(fid,0)
+
 
 
 image = fid.get_frame(idx)
@@ -170,14 +181,7 @@ b = getBckgd(image)
 y0,y1,th,d,stopTrack= manualTrack(image,b,plotTGL = 0)
 
 
-
-n = nFrames
-D = np.zeros(nFrames)
-Y0 = np.zeros(nFrames)
-Y1 = np.zeros(nFrames)
-Th = np.zeros(nFrames)
 d0 = d
-
 plt.close('all')
 disp = plt.figure()
 plt.imshow(image,cmap = 'gray')
@@ -254,7 +258,7 @@ for ii in xrange(n-idx):
 
     if (idx % 1000 ==0):
         plt.close('all')
-        sio.savemat('testManipTrack.mat',{'D':D,'Y0':Y0,'Th':Th,'Y1':Y1})
+        sio.savemat(outFName,{'D':D,'Y0':Y0,'Th':Th,'Y1':Y1})
 
     idx+=1
 
