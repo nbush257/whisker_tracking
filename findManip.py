@@ -177,6 +177,7 @@ Y0 = np.zeros(nFrames)
 Y1 = np.zeros(nFrames)
 Th = np.zeros(nFrames)
 d0 = d
+
 plt.close('all')
 disp = plt.figure()
 plt.imshow(image,cmap = 'gray')
@@ -184,7 +185,7 @@ plt.draw()
 print 'Tracking manipulator'
 
 for ii in xrange(n-idx):
-
+    manTrack = False
     image = fid.get_frame(idx)
     BW = getBW(y0,y1,image)
     T = BW<(b-50)
@@ -193,36 +194,56 @@ for ii in xrange(n-idx):
     # exception handling
     if (len(d)==0):
         print 'No edge detected, retrack' 
+        manTrack = True
         y0,y1,th,d,stopTrack= manualTrack(image,b,plotTGL = 0)
         
-    elif(np.mean(abs(d0-d))> 10):
+    elif(np.mean(abs(d0-d))> 20):
         print 'Large distance detected, Retrack' 
+        manTrack = True
         y0,y1,th,d,stopTrack= manualTrack(image,b,plotTGL = 0)
-    elif y0==Y0[idx-1] or y1 == Y1[idx]:
 
-        ## rebuild this so it looks at a 5 frame window into the past and says, hey, the last 5 are almost identical.
-        print 'identical lines detected. Retrack' 
-        y0,y1,th,d,stopTrack= manualTrack(image,b,plotTGL = 0)
     while stopTrack:
         idx = frameSeek(fid,idx)
         image = fid.get_frame(idx)
+        manTrack = True
         y0,y1,th,d,stopTrack= manualTrack(image,b,plotTGL = 0)
 
-
-        
-
-    # output handling
     d0 = d
     D[idx] = d
     Y0[idx] = y0
     Y1[idx] = y1
     Th[idx] = th
 
+    # running average of last 5 theta and d:
+
+    diffTh = np.mean(np.abs(np.diff(Th[idx-20:idx+1])))
+    diffD = np.mean(np.abs(np.diff(D[idx-20:idx+1])))
+    # stdTh = np.std(Th[-5:])
+    # stdD = np.std(D[-5:])    
+    
+    if diffTh<10^-8:# this might need to be tweaked
+        manTrack = True
+        ## rebuild this so it looks at a 5 frame window into the past and says, hey, the last 5 are almost identical.
+        print 'identical lines detected. Retrack' 
+        idx -=5
+        image = fid.get_frame(idx)
+        y0,y1,th,d,stopTrack= manualTrack(image,b,plotTGL = 0)
+        D[idx] = d
+        Y0[idx] = y0
+        Y1[idx] = y1
+        Th[idx] = th
+        idx+=1
+
+    # output handling
+   
+
     if (idx % 100 == 0):
         print idx
+    if (idx % 100 == 0) or manTrack:
     	sanityCheck(y0,y1,image,idx)
 
     if (idx % 1000 ==0):
+        plt.close('all')
         sio.savemat('testManipTrack.mat',{'D':D,'Y0':Y0,'Th':Th,'Y1':Y1})
 
     idx+=1
