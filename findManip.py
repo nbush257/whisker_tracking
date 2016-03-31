@@ -102,6 +102,10 @@ def sanityCheck(y0,y1,image,frameNum = 0):
     lines.pop(0).remove()
 
 def frameSeek(fid,n,Y0 = [],Y1 = []):
+    nFrames = fid.header_dict['allocated_frames']
+    if n>nFrames:
+        n = nFrames
+        break
     cont = False
     image = fid.get_frame(n)
     rows,cols = image.shape
@@ -127,6 +131,9 @@ def frameSeek(fid,n,Y0 = [],Y1 = []):
         if uIn == '0':
             cont = True
 
+        if n>nFrames:
+            n = nFrames
+            break            
         plt.cla()
         image = fid.get_frame(n)
         plt.imshow(image,cmap = 'gray')
@@ -186,7 +193,6 @@ print 'ht: %i \nwd: %i \nNumber of Frames: %i' % (ht,wd,nFrames)
 
 
 # init output vars
-n = nFrames
 D = np.empty(nFrames,dtype = 'float32')
 D[:] = np.nan
 
@@ -249,7 +255,7 @@ plt.imshow(image,cmap = 'gray')
 plt.draw()
 print '\nTracking manipulator\n\n ==================\n'
 
-for ii in xrange(n-idx):
+while idx<nFrames:
     manTrack = False
     image = fid.get_frame(idx)
     image[~mask] = 255
@@ -328,7 +334,7 @@ for ii in xrange(n-idx):
         sio.savemat(outFName,{'D':D,'Y0':Y0,'Th':Th,'Y1':Y1,'mask':mask})
 
     idx+=1
-
+sio.savemat(outFName,{'D':D,'Y0':Y0,'Th':Th,'Y1':Y1,'mask':mask,'b':b})
 t2 = time.time()
 print 'It took %f seconds' % (t2-t1)
 
