@@ -28,6 +28,10 @@ def manualTrack(image,bckMean,plotTGL = 0):
         plt.show()
 
         roiRow,roiCol = circle(manip[0,1],manip[0,0],30)
+        # make sure the roi is not too big
+        roiRow[roiRow>=rows] = rows-1
+        roiCol[roiCol>=cols] = cols-1
+        #
         imROI = 255*np.ones_like(image)
         imROI[roiRow,roiCol]=image[roiRow,roiCol]
         BW = imROI<(bckMean-50)
@@ -59,15 +63,14 @@ def getBckgd(image):
     plt.close('all')
     return bckMean
 
-def manipExtract(image,thetaInit):
+def manipExtract(image,thetaInit,method = 'standard'):
     if np.issubdtype(image.dtype,'bool'):
         edge = image
     else:
         edge = canny(image)
 
     rows, cols = image.shape
-
-    h,theta,d = hough_line(edge,theta = np.arange(thetaInit-.1,thetaInit+1,.01))
+    h,theta,d = hough_line(edge,theta = np.arange(thetaInit-.1,thetaInit+.1,.02))
     _, angle, dist= hough_line_peaks(h, theta, d,min_distance=1,num_peaks=1)
     y0 = (dist - 0 * np.cos(angle)) / np.sin(angle)
     y1 = (dist - cols * np.cos(angle)) / np.sin(angle)
