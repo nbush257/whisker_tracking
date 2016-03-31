@@ -221,6 +221,7 @@ for ii in xrange(n-idx):
     # stdTh = np.std(Th[-5:])
     # stdD = np.std(D[-5:])    
     
+    # if the angle doesn't change much
     if diffTh<10^-8:# this might need to be tweaked
         manTrack = True
         ## rebuild this so it looks at a 5 frame window into the past and says, hey, the last 5 are almost identical.
@@ -234,12 +235,21 @@ for ii in xrange(n-idx):
         Th[idx] = th
         idx+=1
 
+    # if the line is at an edge
+    if diffD<2 and (np.mean(D[idx-20:idx+1]) > 636 or np.mean(D[idx-20:idx+1]) < 5):
+        idx-=30
+        idx = frameSeek(fid,idx)
+        image = fid.get_frame(idx)
+        manTrack = True
+        y0,y1,th,d,stopTrack= manualTrack(image,b,plotTGL = 0)
+
+
     # output handling
    
 
     if (idx % 100 == 0):
         print idx
-    if (idx % 100 == 0) or manTrack:
+    if (idx % 100 == 0) or manTrack or (idx % 1000 == 1):
     	sanityCheck(y0,y1,image,idx)
 
     if (idx % 1000 ==0):
