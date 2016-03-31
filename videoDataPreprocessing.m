@@ -30,7 +30,7 @@ if convertTGL | trackTGL
     aviPath = uigetdir('C:/','Choose a path to save all avis.');
 end
 if trackTGL
-    whiskerPath = uigetdir('C:/','Choose a path to save all .whiskers.');
+    whiskerPath = uigetdir(aviPath,'Choose a path to save all .whiskers.');
 end
 %% Get bp and fol
 if trackTGL
@@ -130,7 +130,7 @@ if convertTGL
             for kk = firstFrame:lastFrame
                 v.seek(kk-1);
                 I = v.getframe();
-                %                 I = imadjust(I);
+                I = imadjust(I);
                 writeVideo(w,I);
             end % End frame writing
             w.close;
