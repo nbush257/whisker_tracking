@@ -337,3 +337,206 @@ def trackFirstView(fname):
     # save at the end of the tracking
 
     sio.savemat(outFName, {'D': D, 'Y0': Y0, 'Th': Th, 'Y1': Y1, 'mask': mask, 'b': b})
+
+
+def trackSecondView(fname, otherView):
+    ''' Follows a similar flow as trackFirstView, but takes in a mat file
+    of the previously tracked manipulator to find where we need to track in a
+    second view. Should be much faster.
+
+    fname: a '.seq' that we want to track the manipulator in
+
+    otherView: a '.mat' with the other view's tracking.
+
+    '''
+
+    # Set outPut
+    outFName = fname[:-4] + '_manip.mat'
+    # First check if the names make sense
+    # Check new filename for front and top
+    uIn = 'y'
+    if fname.find('Front') > 0:
+        currentView = 'Front'
+        currentBase = fname[:fname.find('Front')]
+    elif fname.find('Top') > 0:
+        currentView = 'Top'
+        currentBase = fname[:fname.find('Top')]
+    else:
+        uIn = raw_input('It looks like this file is the wrong type. Continue anyhow? (y,[n])')
+
+    if uIn != 'y':
+        return
+    # Check old filename for front and top
+    if otherView.find('Front') > 0:
+        lastView = 'Front'
+        lastBase = otherView[:otherView.find('Front')]
+
+    elif otherView.find('Top') > 0:
+        lastView = 'Top'
+        lastBase = otherView[:otherView.find('Top')]
+    else:
+        uIn = raw_input('It looks like this file is the wrong type. Continue anyhow? (y,[n])')
+
+    if uIn != 'y':
+        return
+
+    # check for consistency between basenames if front and top were found
+    if (uIn != 'y') and (currentBase != lastBase) and (currentView != lastView):
+        uIn = raw_input('\nBase file names do not match:\n\n%s\n%s \n continue(y/[n])\n' % (currentBase, lastBase))
+
+    if uIn != 'y':
+        return
+
+    # Load data files
+    fid = pims.open(fname)
+    fPreviousTrack = sio.loadmat(otherView, squeeze_me=True,variable_names='D')
+    tracked = np.isfinite(fPreviousTrack['D'])
+
+    # Init Vars
+
+    nFrames = fid.header_dict['allocated_frames']
+    ht = fid.height
+    wd = fid.width
+    print 'ht: %i \nwd: %i \nNumber of Frames: %i' % (ht, wd, nFrames)
+    # init output vars
+    D = np.empty(nFrames, dtype='float32')
+    D[:] = np.nan
+
+    Y0 = np.empty(nFrames, dtype='float32')
+    Y0[:] = np.nan
+
+    Y1 = np.empty(nFrames, dtype='float32')
+    Y1[:] = np.nan
+
+    Th = np.empty(nFrames, dtype='float32')
+    Th[:] = np.nan
+
+    mask = []
+
+    if isfile(outFName):
+        loadTGL = raw_input('Load in previously computed manipulator? ([y]/n)')
+        overwriteTGL = raw_input('Overwrite old tracking? ([y],n)')
+        if loadTGL == 'n':
+            idx = frameSeek(fid, 0)
+        else:
+            fOld = sio.loadmat(outFName, squeeze_me=True)
+            D = fOld['D']
+            Th = fOld['Th']
+            Y0 = fOld['Y0']
+            Y1 = fOld['Y1']
+            mask = np.asarray(fOld['mask'], dtype='bool')
+            import pdb; pdb.set_trace()  # breakpoint 87527a4f //
+
+            idx = int(np.where(np.isfinite(D))[0][-1])
+            print 'loaded data in. Index is at Frame %i\n' % idx
+            idx = frameSeek(fid, idx, Y0, Y1)
+
+        if overwriteTGL == 'n':
+            suffix = 0
+            while isfile(outFName):
+                suffix += 1
+                outFName = fname[:-4] + '_manip(%i).mat' % suffix
+    else:
+        idx = frameSeek(fid, 0)
+
+    # Get your image
+    image = fid.get_frame(idx)
+
+    # if there is not a precomputed mask, get one now
+    if len(mask) == 0:
+        mask = getMask(image)
+
+    # get the background intensity
+    b = getBckgd(image)
+
+    # do initial tracking of manipulator
+    y0, y1, th, d, stopTrack = manualTrack(image, b, plotTGL=0)
+
+    while idx < nFrames:
+        if tracked[idx]:
+            continue
+        manTrack = False
+        image = fid.get_frame(idx)
+        image[~mask] = 255
+        BW = getBW(y0, y1, image)
+        T = BW < (b - 50)
+
+        y0, y1, th, d = manipExtract(T, th)
+
+        # exception handling
+        if (len(d) == 0):
+            print '\nNo edge detected, retrack'
+            manTrack = True
+            y0, y1, th, d, stopTrack = manualTrack(image, b, plotTGL=0)
+        elif(np.mean(abs(d0 - d)) > 35):
+            print '\nLarge distance detected, Retrack'
+            manTrack = True
+            y0, y1, th, d, stopTrack = manualTrack(image, b, plotTGL=0)
+
+        while stopTrack:
+            idx = frameSeek(fid, idx, Y0, Y1)
+            if idx >= (nFrames - 1):
+                d = np.NaN
+                y0 = np.NaN
+                y1 = np.NaN
+                th = np.NaN
+                break
+            image = fid.get_frame(idx)
+            manTrack = True
+            y0, y1, th, d, stopTrack = manualTrack(image, b, plotTGL=0)
+
+        d0 = d
+        D[idx] = d
+        Y0[idx] = y0
+        Y1[idx] = y1
+        Th[idx] = th
+
+        # running average of last 5 theta and d:
+
+        diffTh = np.mean(np.abs(np.diff(Th[idx - 20:idx + 1])))
+
+        diffD = np.mean(np.abs(np.diff(D[idx - 20:idx + 1])))
+        # stdTh = np.std(Th[-5:])
+        # stdD = np.std(D[-5:])
+        # if the angle doesn't change much
+        # THIS IS NOT CURRENTLY WORKING WELL!!
+        if diffTh < 10 ^ -5:
+            manTrack = True
+            # rebuild this so it looks at a 5 frame window into the past and says, hey, the last 5 are almost identical.
+            print 'identical lines detected. Retrack'
+            idx -= 5
+            image = fid.get_frame(idx)
+            y0, y1, th, d, stopTrack = manualTrack(image, b, plotTGL=0)
+            D[idx] = d
+            Y0[idx] = y0
+            Y1[idx] = y1
+            Th[idx] = th
+            idx += 1
+
+        # if the line is at an edge
+        if diffD < 2 and (np.mean(D[idx - 20:idx + 1]) > 637 or np.mean(D[idx - 20:idx + 1]) < 3):
+            print 'Close to edge'
+            idx -= 20
+            idx = frameSeek(fid, idx, Y0, Y1)
+            if idx > (nFrames - 1):
+                break
+            else:
+                image = fid.get_frame(idx)
+                manTrack = True
+                y0, y1, th, d, stopTrack = manualTrack(image, b, plotTGL=0)
+
+        # Verbose
+        if (idx % 100 == 0):
+            stdout.write('\rFrame %i of %i' % (idx, nFrames))
+            stdout.flush()
+
+        if (idx % 100 == 0) or manTrack or (idx % 1000 == 1):
+            sanityCheck(y0, y1, image, idx)
+
+        # Refresh and save every 1000 frames
+        if (idx % 1000 == 0):
+            plt.close('all')
+            sio.savemat(outFName, {'D': D, 'Y0': Y0, 'Th': Th, 'Y1': Y1, 'mask': mask, 'b': b})
+
+        idx += 1
+    sio.savemat(outFName, {'D': D, 'Y0': Y0, 'Th': Th, 'Y1': Y1, 'mask': mask, 'b': b})
