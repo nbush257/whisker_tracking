@@ -141,7 +141,8 @@ def frameSeek(fid, n, Y0=[], Y1=[]):
         plt.imshow(image, cmap='gray')
         plt.axis([0, cols, 0, rows])
         plt.gca().invert_yaxis()
-        plt.plot((0, cols), (Y0[n], Y1[n]), '-r')
+        if len(Y0) != 0:
+            plt.plot((0, cols), (Y0[n], Y1[n]), '-r')
 
         plt.title('Frame: %i' % n)
         plt.draw()
@@ -152,6 +153,9 @@ def frameSeek(fid, n, Y0=[], Y1=[]):
 def getMask(image):
     rows, cols = image.shape
     plt.imshow(image, cmap='gray')
+    plt.axis([0, cols, 0, rows])
+    plt.gca().invert_yaxis()
+
     plt.title('Outline the Mask')
 
     ii = 0
@@ -389,7 +393,7 @@ def trackSecondView(fname, otherView):
 
     # Load data files
     fid = pims.open(fname)
-    fPreviousTrack = sio.loadmat(otherView, squeeze_me=True,variable_names='D')
+    fPreviousTrack = sio.loadmat(otherView, squeeze_me=True, variable_names='D')
     tracked = np.isfinite(fPreviousTrack['D'])
 
     # Init Vars
@@ -425,7 +429,6 @@ def trackSecondView(fname, otherView):
             Y0 = fOld['Y0']
             Y1 = fOld['Y1']
             mask = np.asarray(fOld['mask'], dtype='bool')
-            import pdb; pdb.set_trace()  # breakpoint 87527a4f //
 
             idx = int(np.where(np.isfinite(D))[0][-1])
             print 'loaded data in. Index is at Frame %i\n' % idx
@@ -437,12 +440,19 @@ def trackSecondView(fname, otherView):
                 suffix += 1
                 outFName = fname[:-4] + '_manip(%i).mat' % suffix
     else:
-        idx = frameSeek(fid, 0)
+        firstTrackedFrame = np.where(tracked)[0][0]
+        notTracked = np.invert(tracked)
+        notTracked[:firstTrackedFrame] = False
+        idx = np.where(notTracked)[0][0]
+        idx = int(idx)
+        # use the first not tracked frame as the first frame
+        idx = frameSeek(fid, idx)
 
     # Get your image
     image = fid.get_frame(idx)
 
     # if there is not a precomputed mask, get one now
+
     if len(mask) == 0:
         mask = getMask(image)
 
@@ -451,17 +461,22 @@ def trackSecondView(fname, otherView):
 
     # do initial tracking of manipulator
     y0, y1, th, d, stopTrack = manualTrack(image, b, plotTGL=0)
+    d0 = d
 
     while idx < nFrames:
         if tracked[idx]:
-            continue
-        manTrack = False
-        image = fid.get_frame(idx)
-        image[~mask] = 255
-        BW = getBW(y0, y1, image)
-        T = BW < (b - 50)
 
-        y0, y1, th, d = manipExtract(T, th)
+            idx += int(np.where(notTracked[idx:])[0][0])
+            image = fid.get_frame(idx)
+            y0, y1, th, d, stopTrack = manualTrack(image, b, plotTGL=0)
+        else:
+            manTrack = False
+            image = fid.get_frame(idx)
+            image[~mask] = 255
+            BW = getBW(y0, y1, image)
+            T = BW < (b - 50)
+
+            y0, y1, th, d = manipExtract(T, th)
 
         # exception handling
         if (len(d) == 0):
@@ -539,4 +554,5 @@ def trackSecondView(fname, otherView):
             sio.savemat(outFName, {'D': D, 'Y0': Y0, 'Th': Th, 'Y1': Y1, 'mask': mask, 'b': b})
 
         idx += 1
+
     sio.savemat(outFName, {'D': D, 'Y0': Y0, 'Th': Th, 'Y1': Y1, 'mask': mask, 'b': b})
