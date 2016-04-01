@@ -36,7 +36,7 @@ def manualTrack(image, bckMean, plotTGL=0):
         imROI = 255 * np.ones_like(image)
         imROI[roiRow, roiCol] = image[roiRow, roiCol]
         BW = imROI < (bckMean - 50)
-            
+
         h, theta, d = hough_line(BW)
         _, thetaInit, d = hough_line_peaks(h, theta, d, min_distance=1, num_peaks=1)
         y0 = (d - 0 * np.cos(thetaInit)) / np.sin(thetaInit)
@@ -106,8 +106,8 @@ def sanityCheck(y0, y1, image, frameNum=0):
 def frameSeek(fid, n, Y0=[], Y1=[]):
     nFrames = fid.header_dict['allocated_frames']
     if n > nFrames:
-        n = nFrames
-        break
+        n = nFrames - 1
+        print 'Reached the end of the video'
     cont = False
     image = fid.get_frame(n)
     rows, cols = image.shape
@@ -133,7 +133,8 @@ def frameSeek(fid, n, Y0=[], Y1=[]):
             cont = True
 
         if n > nFrames:
-            n = nFrames
+            n = nFrames - 1
+            return n
             break
             plt.cla()
         image = fid.get_frame(n)
@@ -186,7 +187,7 @@ def trackFirstView(fname):
     nFrames = fid.header_dict['allocated_frames']
     ht = fid.height
     wd = fid.width
-    print 'ht: %i \nwd: %i \nNumber of Frames: %i' % (ht,wd,nFrames)
+    print 'ht: %i \nwd: %i \nNumber of Frames: %i' % (ht, wd, nFrames)
     # init output vars
     D = np.empty(nFrames, dtype='float32')
     D[:] = np.nan
@@ -215,16 +216,16 @@ def trackFirstView(fname):
             Th = fOld['Th'][0]
             Y0 = fOld['Y0'][0]
             Y1 = fOld['Y1'][0]
-            mask = fOld['mask'][0]
+            mask = np.asarray(fOld['mask'], dtype='bool')
             idx = int(np.where(np.isfinite(D))[0][-1])
             print 'loaded data in. Index is at Frame %i\n' % idx
             idx = frameSeek(fid, idx, Y0, Y1)
 
         if overwriteTGL == 'n':
-            suffix = 1
+            suffix = 0
             while isfile(outFName):
                 suffix += 1
-                outFName = outFName[:-4] + '(%i).mat' % suffix
+                outFName = fname[:-4] + '_manip(%i).mat' % suffix
     else:
         idx = frameSeek(fid, 0)
 
@@ -269,6 +270,12 @@ def trackFirstView(fname):
 
         while stopTrack:
             idx = frameSeek(fid, idx, Y0, Y1)
+            if idx >= (nFrames - 1):
+                d = np.NaN
+                y0 = np.NaN
+                y1 = np.NaN
+                th = np.NaN
+                break
             image = fid.get_frame(idx)
             manTrack = True
             y0, y1, th, d, stopTrack = manualTrack(image, b, plotTGL=0)
@@ -306,9 +313,12 @@ def trackFirstView(fname):
             print 'Close to edge'
             idx -= 20
             idx = frameSeek(fid, idx, Y0, Y1)
-            image = fid.get_frame(idx)
-            manTrack = True
-            y0, y1, th, d, stopTrack = manualTrack(image, b, plotTGL=0)
+            if idx > (nFrames - 1):
+                break
+            else:
+                image = fid.get_frame(idx)
+                manTrack = True
+                y0, y1, th, d, stopTrack = manualTrack(image, b, plotTGL=0)
 
         # Verbose
         if (idx % 100 == 0):
@@ -322,7 +332,8 @@ def trackFirstView(fname):
         if (idx % 1000 == 0):
             plt.close('all')
             sio.savemat(outFName, {'D': D, 'Y0': Y0, 'Th': Th, 'Y1': Y1, 'mask': mask, 'b': b})
-            idx += 1
+
+        idx += 1
     # save at the end of the tracking
 
     sio.savemat(outFName, {'D': D, 'Y0': Y0, 'Th': Th, 'Y1': Y1, 'mask': mask, 'b': b})
