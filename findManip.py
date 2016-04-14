@@ -41,6 +41,9 @@ def manualTrack(image, bckMean, plotTGL=0):
         _, thetaInit, d = hough_line_peaks(h, theta, d, min_distance=1, num_peaks=1)
         y0 = (d - 0 * np.cos(thetaInit)) / np.sin(thetaInit)
         y1 = (d - cols * np.cos(thetaInit)) / np.sin(thetaInit)
+        if len(y0) ==0:
+            stopTrack = True
+
         if plotTGL:
             plt.imshow(image)
             plt.plot((0, cols), (y0, y1), '-r')
@@ -121,16 +124,22 @@ def frameSeek(fid, n, Y0=[], Y1=[]):
     plt.draw()
 
     while not cont:
-        uIn = raw_input('\nAdvance/Rewind how many frames? Default = +100. 0 exits: ')
-        stdout.flush()
-        if len(uIn) == 0:
-            uIn = 100
-            n += uIn
-        else:
-            n += int(uIn)
+        while True:
+            uIn = raw_input('\nAdvance/Rewind how many frames? Default = +100. 0 exits: ')
+            stdout.flush()
+            try:
+                if len(uIn) == 0:
+                    uIn = 100
+                    n += uIn
+                else:
+                    n += int(uIn)
 
-        if uIn == '0':
-            cont = True
+                if uIn == '0':
+                    cont = True
+                break
+            except:
+                print 'Invalid input try again'
+
 
         if n > nFrames:
             n = nFrames - 1
@@ -220,7 +229,10 @@ def trackFirstView(fname):
             Th = fOld['Th'][0]
             Y0 = fOld['Y0'][0]
             Y1 = fOld['Y1'][0]
-            mask = np.asarray(fOld['mask'], dtype='bool')
+            try:
+                mask = np.asarray(fOld['mask'], dtype='bool')
+            except:
+                mask = []
             idx = int(np.where(np.isfinite(D))[0][-1])
             print 'loaded data in. Index is at Frame %i\n' % idx
             idx = frameSeek(fid, idx, Y0, Y1)
@@ -258,7 +270,7 @@ def trackFirstView(fname):
         image = fid.get_frame(idx)
         image[~mask] = 255
         BW = getBW(y0, y1, image)
-        T = BW < (b - 50)
+        T = BW < (b - 30)
 
         y0, y1, th, d = manipExtract(T, th)
 
@@ -313,7 +325,7 @@ def trackFirstView(fname):
             idx += 1
 
         # if the line is at an edge
-        if diffD < 2 and (np.mean(D[idx - 20:idx + 1]) > 637 or np.mean(D[idx - 20:idx + 1]) < 3):
+        if diffD < 2 and (np.mean(D[idx - 20:idx + 1]) > 638 or np.mean(D[idx - 20:idx + 1]) < 3):
             print 'Close to edge'
             idx -= 20
             idx = frameSeek(fid, idx, Y0, Y1)
