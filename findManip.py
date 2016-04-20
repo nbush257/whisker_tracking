@@ -38,10 +38,13 @@ def manualTrack(image, bckMean, plotTGL=0):
         BW = imROI < (bckMean - 50)
 
         h, theta, d = hough_line(BW)
-        _, thetaInit, d = hough_line_peaks(h, theta, d, min_distance=1, num_peaks=1)
+
+        _, thetaInit, d = hough_line_peaks(
+            h, theta, d, min_distance=1, num_peaks=1)
+
         y0 = (d - 0 * np.cos(thetaInit)) / np.sin(thetaInit)
         y1 = (d - cols * np.cos(thetaInit)) / np.sin(thetaInit)
-        if len(y0) ==0:
+        if len(y0) == 0:
             stopTrack = True
 
         if plotTGL:
@@ -74,7 +77,10 @@ def manipExtract(image, thetaInit, method='standard'):
         edge = canny(image)
 
     rows, cols = image.shape
-    h, theta, d = hough_line(edge, theta=np.arange(thetaInit - .2, thetaInit + .2, .03))
+
+    h, theta, d = hough_line(
+        edge, theta=np.arange(thetaInit - .2, thetaInit + .2, .03))
+
     _, angle, dist = hough_line_peaks(h, theta, d, min_distance=1, num_peaks=1)
     y0 = (dist - 0 * np.cos(angle)) / np.sin(angle)
     y1 = (dist - cols * np.cos(angle)) / np.sin(angle)
@@ -188,6 +194,14 @@ def getMask(image):
     return mask
 
 
+def eraseFuture(Y0, Y1, Th, D, idx):
+    Y0[idx:] = np.NaN
+    Y1[idx:] = np.NaN
+    D[idx:] = np.NaN
+    Th[idx:] = np.NaN
+    return Y0, Y1, Th, D
+
+
 def trackFirstView(fname):
     '''
     First Tracking
@@ -236,6 +250,8 @@ def trackFirstView(fname):
             idx = int(np.where(np.isfinite(D))[0][-1])
             print 'loaded data in. Index is at Frame %i\n' % idx
             idx = frameSeek(fid, idx, Y0, Y1)
+            Y0, Y1, Th, D = eraseFuture(Y0, Y1, Th, D, idx)
+            
 
         if overwriteTGL == 'n':
             suffix = 0
@@ -270,7 +286,7 @@ def trackFirstView(fname):
         image = fid.get_frame(idx)
         image[~mask] = 255
         BW = getBW(y0, y1, image)
-        T = BW < (b - 30)
+        T = BW < (b - 10)
 
         y0, y1, th, d = manipExtract(T, th)
 
@@ -292,6 +308,7 @@ def trackFirstView(fname):
                 y1 = np.NaN
                 th = np.NaN
                 break
+            Y0, Y1, Th, D = eraseFuture(Y0, Y1, Th, D, idx)
             image = fid.get_frame(idx)
             manTrack = True
             y0, y1, th, d, stopTrack = manualTrack(image, b, plotTGL=0)
@@ -329,6 +346,8 @@ def trackFirstView(fname):
             print 'Close to edge'
             idx -= 20
             idx = frameSeek(fid, idx, Y0, Y1)
+            Y0, Y1, Th, D = eraseFuture(Y0, Y1, Th, D, idx)
+
             if idx > (nFrames - 1):
                 break
             else:
@@ -445,6 +464,8 @@ def trackSecondView(fname, otherView):
             idx = int(np.where(np.isfinite(D))[0][-1])
             print 'loaded data in. Index is at Frame %i\n' % idx
             idx = frameSeek(fid, idx, Y0, Y1)
+            Y0, Y1, Th, D = eraseFuture(Y0, Y1, Th, D, idx)
+
 
         if overwriteTGL == 'n':
             suffix = 0
@@ -459,6 +480,8 @@ def trackSecondView(fname, otherView):
         idx = int(idx)
         # use the first not tracked frame as the first frame
         idx = frameSeek(fid, idx)
+        Y0, Y1, Th, D = eraseFuture(Y0, Y1, Th, D, idx)
+
 
     # Get your image
     image = fid.get_frame(idx)
@@ -508,6 +531,8 @@ def trackSecondView(fname, otherView):
                 y1 = np.NaN
                 th = np.NaN
                 break
+            Y0, Y1, Th, D = eraseFuture(Y0, Y1, Th, D, idx)
+
             image = fid.get_frame(idx)
             manTrack = True
             y0, y1, th, d, stopTrack = manualTrack(image, b, plotTGL=0)
@@ -548,6 +573,7 @@ def trackSecondView(fname, otherView):
             if idx > (nFrames - 1):
                 break
             else:
+                Y0, Y1, Th, D = eraseFuture(Y0, Y1, Th, D, idx)
                 image = fid.get_frame(idx)
                 manTrack = True
                 y0, y1, th, d, stopTrack = manualTrack(image, b, plotTGL=0)
