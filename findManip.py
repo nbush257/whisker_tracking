@@ -79,7 +79,7 @@ def manipExtract(image, thetaInit, method='standard'):
     rows, cols = image.shape
 
     h, theta, d = hough_line(
-        edge, theta=np.arange(thetaInit - .2, thetaInit + .2, .03))
+        edge, theta=np.arange(thetaInit - .2, thetaInit + .2, .01))
 
     _, angle, dist = hough_line_peaks(h, theta, d, min_distance=1, num_peaks=1)
     y0 = (dist - 0 * np.cos(angle)) / np.sin(angle)
@@ -286,7 +286,7 @@ def trackFirstView(fname):
         image = fid.get_frame(idx)
         image[~mask] = 255
         BW = getBW(y0, y1, image)
-        T = BW < (b - 10)
+        T = BW < (b - 30)
 
         y0, y1, th, d = manipExtract(T, th)
 
