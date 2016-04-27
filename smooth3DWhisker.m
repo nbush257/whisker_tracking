@@ -19,8 +19,10 @@ parfor ii = 1:length(wIn)
     end
     if isrow(wIn(ii).x)
         try
-            f = fit([wIn(ii).x' wIn(ii).y'],wIn(ii).z','poly22');
-            wOut(ii).z = feval(f,wIn(ii).x,wIn(ii).y)';
+            wOut(ii).y = smooth(wIn(ii).x,wIn(ii).y,'rlowess',.3);
+            wOut(ii).z = smooth(wIn(ii).x,wIn(ii).z,'rlowess',.3);
+%             f = fit([wIn(ii).x' wOut(ii).y],wIn(ii).z','lowess','Robust','LAR');
+%             wOut(ii).z = feval(f,wIn(ii).x,wIn(ii).y)';
         catch
             disp('error')
         end
