@@ -1,4 +1,4 @@
-function [CP,tracked3D] = get3DCP_hough(Y0_f,Y1_f,Y0_t,Y1_t,tracked3D,calibInfo,C)
+function [CP,CPidx,tracked3D] = get3DCP_hough(Y0_f,Y1_f,Y0_t,Y1_t,tracked3D,calibInfo,C)
 %% function CP = get3DCP_hough(Y0,Y1,tracked3D,calibInfo)
 % Calculates the 3D contact point by backprojecting the tracked 3D whisker
 % into 2D and finding the intersection.
@@ -20,8 +20,8 @@ CP = nan(length(tracked3D),3);
 CPidx = nan(length(tracked3D),1);
 l_thresh = 10; % fewest number of points allowed in the whisker for CP calculation
 missingMan = logical(zeros(length(C),1));
-parfor ii = 1:length(tracked3D)
-    warning('off')
+for ii = 1:length(tracked3D)
+    warning('off')    
 
     if ~C(ii)
         continue
@@ -30,17 +30,24 @@ parfor ii = 1:length(tracked3D)
         continue
     end
     
+    if any(isnan(tracked3D(ii).x)) || any(isnan(tracked3D(ii).y))|| any(isnan(tracked3D(ii).z))
+        fprintf('NaNs in frame %i',ii)
+        continue
+    end
+    
+
     if ~isnan(Y0_t(ii))
         px = [0;640];
         py = [Y0_t(ii);Y1_t(ii)];
         [~,wskrTop] = BackProject3D(tracked3D(ii),calibInfo(5:8),calibInfo(1:4),calibInfo(9:10));
-        [x1,y1,idx,~] = intersections(wskrTop(:,1),wskrTop(:,2),px,py);
-        
+        [~,~,idx,~] = intersections(wskrTop(:,1),wskrTop(:,2),px,py);
+        idx(isnan(idx)) = [];
     elseif ~isnan(Y0_f(ii))
         px = [0;640];
         py = [Y0_f(ii);Y1_f(ii)];
         [wskrFront,~] = BackProject3D(tracked3D(ii),calibInfo(5:8),calibInfo(1:4),calibInfo(9:10));
-        [x1,y1,idx,~] = intersections(wskrFront(:,1),wskrFront(:,2),px,py);
+        [~,~,idx,~] = intersections(wskrFront(:,1),wskrFront(:,2),px,py);
+        idx(isnan(idx)) = [];
     else
         missingMan(ii) = 1;
         continue
@@ -51,14 +58,14 @@ parfor ii = 1:length(tracked3D)
     %% EVERYTHING BELOW HERE IS NOT FINISHED
     
     counter =0;
-    while isempty(idx) | (idx+10)>=(length(tracked3D(ii).x))
+    while isempty(idx) || (idx+length(tracked3D(ii).x)*.05)>=(length(tracked3D(ii).x))
         counter = counter+1;
+        num2fit = length(tracked3D(ii).x)*.25;
+        xyfit = polyfit(tracked3D(ii).x(end-num2fit:end),tracked3D(ii).y(end-num2fit:end),3);
+        xzfit = polyfit(tracked3D(ii).x(end-num2fit:end),tracked3D(ii).z(end-num2fit:end),3);
         
-        xyfit = polyfit(tracked3D(ii).x,tracked3D(ii).y,3);
-        xzfit = polyfit(tracked3D(ii).x,tracked3D(ii).z,3);
-        
-        [CPx,CPy,idx,tempTracked] = LOCAL_extend_one_Seg(tracked3D(ii),xyfit,xzfit,px,py,calibInfo(5:8),calibInfo(1:4),calibInfo(9:10),~isnan(Y0_t(ii)));
-        
+        [~,~,idx,tempTracked] = LOCAL_extend_one_Seg(tracked3D(ii),xyfit,xzfit,px,py,calibInfo(5:8),calibInfo(1:4),calibInfo(9:10),isnan(Y0_t(ii)));
+        idx(isnan(idx)) = [];
         if counter>100
             disp('serious problem')
             %                         [wskrTop,wskrFront] = BackProject3D(tracked3D(ii),calibInfo(5:8),calibInfo(1:4),calibInfo(9:10));
@@ -73,8 +80,8 @@ parfor ii = 1:length(tracked3D)
         plotTGL = 0;
         if plotTGL
             close all
-            [wskrTop,wskrFront] = BackProject3D(tracked3D(ii),calibInfo(5:8),calibInfo(1:4),calibInfo(9:10));
-            [wskrTopext,wskrFrontext] = BackProject3D(tempTracked,calibInfo(5:8),calibInfo(1:4),calibInfo(9:10));
+            [wskrFront,wskrTop] = BackProject3D(tracked3D(ii),calibInfo(5:8),calibInfo(1:4),calibInfo(9:10));
+            [wskrFrontext,wskrTopext] = BackProject3D(tempTracked,calibInfo(5:8),calibInfo(1:4),calibInfo(9:10));
             plot(px,py,'r')
             ho
             if ~isnan(Y0_t(ii))
@@ -96,11 +103,15 @@ parfor ii = 1:length(tracked3D)
     end
     CPidx(ii) = idx(1);
     ridx = round(idx(1));
+    if isnan(ridx)
+        fprintf('NaN CP idx at frame %i',ii)
+        continue
+    end
     CP(ii,:) = [tracked3D(ii).x(ridx) tracked3D(ii).y(ridx) tracked3D(ii).z(ridx)]; ;
     
-    %% Update on status
+    %% Verbosity
     if mod(ii,1000) == 0
-        fprintf('Frame: \t%i\n',ii)
+        fprintf('Getting CP on frame: \t%i\n',ii)
     end
     
     
@@ -114,10 +125,10 @@ if useFront
 else
     [~,wskr] = BackProject3D(wskr3D,A_camera,B_camera,A2B_transform);
 end
-
+numExtend = 20;
 [CPx,CPy,tempCPidx,~] = intersections(wskr(:,1),wskr(:,2),px,py);
-
-if (tempCPidx+10)<length(wskr(:,1))
+tempCPidx(isnan(tempCPidx)) = [];
+if (tempCPidx+length(wskr(:,1))*.05)<length(wskr(:,1))
     return
     
 else
@@ -127,9 +138,9 @@ else
         wskr3D.y = [wskr3D.y,polyval(whfitA,wskr3D.x(end))];
         wskr3D.z = [wskr3D.z,polyval(whfitB,wskr3D.x(end))];
     else
-        wskr3D.x = [wskr3D.x;wskr3D.x(end)+nodespacing];
-        wskr3D.y = [wskr3D.y;polyval(whfitA,wskr3D.x(end))];
-        wskr3D.z = [wskr3D.z;polyval(whfitB,wskr3D.x(end))];
+        wskr3D.x = [wskr3D.x;linspace(wskr3D.x(end),wskr3D.x(end)+(nodespacing*numExtend),numExtend)'];
+        wskr3D.y = [wskr3D.y;polyval(whfitA,wskr3D.x(end-numExtend+1:end))];
+        wskr3D.z = [wskr3D.z;polyval(whfitB,wskr3D.x(end-numExtend+1:end))];
     end
     try
         [CPx,CPy,tempCPidx,wskr3D] = LOCAL_extend_one_Seg(wskr3D,whfitA,whfitB,px,py,A_camera,B_camera,A2B_transform,useFront);
