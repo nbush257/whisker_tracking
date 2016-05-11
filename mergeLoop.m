@@ -1,5 +1,6 @@
 % Just merge loop
 
+
 % 3D Merge Whisker % Might want to try to make the seed whisker variable.
 tracked_3D_fileName = 'rat2015_15_JUN11_VG_D4_t01_tracked_3D.mat';
 minDS = .8;% sets the minimum internode distance.
@@ -9,16 +10,12 @@ N = 20; % I think this is the number of fits to try. More should give a stabler 
 if length(f)~=length(t)
     error('Different length structs')
 end
-
-
-
+numFrames = length(f);
 tracked_3D = struct([]);
 count = 0;
 
 step =10000;% Saves every 10000 frames
 
-
-numFrames = length(f);
 
 % Outer loop is big serial chunks that saves every [step] frames
 for ii = 1:step:numFrames
@@ -33,7 +30,10 @@ for ii = 1:step:numFrames
     
     % Parallel for loop which does the actual merging. Gets batches from
     % the current outer loop.
-    for i = ii:ii+iter
+
+    parfor i = ii:ii+iter
+        
+
         %initialize the merged values in the parfor loop.
         merge_x = [];merge_y = [];merge_z = [];last_merge_x = []; last_merge_y = []; last_merge_z = [];
         

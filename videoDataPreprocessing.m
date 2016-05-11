@@ -30,7 +30,7 @@ if convertTGL | trackTGL
     aviPath = uigetdir('C:/','Choose a path to save all avis.');
 end
 if trackTGL
-    whiskerPath = uigetdir('C:/','Choose a path to save all .whiskers.');
+    whiskerPath = uigetdir(aviPath,'Choose a path to save all .whiskers.');
 end
 %% Get bp and fol
 if trackTGL
@@ -130,13 +130,32 @@ if convertTGL
             for kk = firstFrame:lastFrame
                 v.seek(kk-1);
                 I = v.getframe();
-                %                 I = imadjust(I);
+                I = imadjust(I);
                 writeVideo(w,I);
             end % End frame writing
             w.close;
             close all force
         end % End clip Writing
     end % End full .SEQ loop
+end
+
+%% Run ffmppeg compression
+if convertTGL
+    avis = dir([aviPath '\*.avi']);
+    cd(aviPath)
+    for ii = 1:length(avis)
+        outName  = [avis(ii).name(1:end-4) '_c.avi'];
+        ffString = sprintf(['ffmpeg -i ' avis(ii).name ' -c:v  wmv2 -q 2  ' outName]);
+        system(ffString)
+        delete(avis(ii).name)        
+    end
+    newAvis = dir('*.avi');
+    for ii = 1:length(newAvis)
+        newOutname = newAvis(ii).name([1:end-6 end-3:end]);
+        java.io.File(newAvis(ii).name).renameTo(java.io.File(newOutname));
+    end
+    
+    
 end
 
 %% Extract unique tags (i.e. from same expt regardless of frame number)
