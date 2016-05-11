@@ -44,7 +44,7 @@ parfor ii = 1:length(wIn)
             
         case 'spline'
             PP = splinefit(wIn(ii).x,wIn(ii).y,numNodes,'r');
-            xx = min(wIn(ii).x):.1:max(wIn(ii).y);
+            xx = min(wIn(ii).x):.1:(max(wIn(ii).x));
             yy = ppval(PP,xx);
             wOut(ii).x = xx; 
             wOut(ii).y = yy;
