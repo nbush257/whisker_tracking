@@ -1,5 +1,5 @@
-function wOut = smooth3DWhisker(wIn,mode,numNodes,extend)
-%% function wStruct_3DOut = smooth3DWhisker(wStruct_3D,[method],[numNodes],[extend])
+function wOut = smooth3DWhisker(wIn,varargin)
+%% function wStruct_3DOut = smooth3DWhisker(wStruct_3D,[mode],[numNodes],[extend])
 % ========================================
 % takes a 3D whisker structure and smooths it. Should
 % smooth out the basepoint and kinks. Can operate in either splinefit mode
@@ -28,18 +28,14 @@ function wOut = smooth3DWhisker(wIn,mode,numNodes,extend)
 % NB 2016_04_27
 % Issue with row or column vectors. need to rewrite some other code to get
 % the 3d struct back as a  column.
-%% Input handling
-switch nargin
-    case 1
-        mode = 'spline';
-        numNodes = 4;
-        extend = 0.1;
-    case 2
-        numNodes = 4;
-        extend = 0.1;
-    case 3
-        extend = 0.1;
-end
+% %% Input handling
+
+numvargs = length(varargin);
+% set defaults
+optargs = {'spline', 4, 0.1};
+% overwrite user supplied args
+optargs(1:numvargs) = varargin;
+[mode,numNodes,extend] = optargs{:};
 
 wOut = wIn;
 fprintf('Smoothing')
