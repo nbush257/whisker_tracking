@@ -16,9 +16,13 @@ function wOut = smooth3DWhisker(wIn,varargin)
 % =======================================
 % INPUTS:
 %           wIn - a 3D whisker structure.
-%           [mode] - a string either 'spline' or 'linear'
+
+%           [mode] - a string either 'spline' or 'linear'. Default is
+%           'spline'
+
 %           [numNodes] - optional number for spline input. Gets ignored if
 %               mode is linear. Default is 4
+
 %           [extend] - Tells splinefit how much to extend the whisker by
 %               (as a percentage of the x coordinate extent). e.g. .1 extends
 %               the whisker by 10%. Default is 0.1
@@ -28,7 +32,7 @@ function wOut = smooth3DWhisker(wIn,varargin)
 % NB 2016_04_27
 % Issue with row or column vectors. need to rewrite some other code to get
 % the 3d struct back as a  column.
-% %% Input handling
+%% Input handling
 
 numvargs = length(varargin);
 % set defaults
@@ -39,11 +43,13 @@ optargs(1:numvargs) = varargin;
 
 wOut = wIn;
 fprintf('Smoothing')
+%% Loop over frames
 parfor ii = 1:length(wIn)
     % skip empty entries
     if isempty(wIn(ii).x)|| isempty(wIn(ii).y) || isempty(wIn(ii).z)
         continue
     end
+    
     % skip whiskers that are too short
     if length(wIn(ii).x)<10
         continue
@@ -61,8 +67,8 @@ parfor ii = 1:length(wIn)
                 disp('error')
             end
             
-            
-        case 'spline'
+        % implement splinefit smoothing
+        case 'spline'     
             PP = splinefit(wIn(ii).x,wIn(ii).y,numNodes,'r');
             xx = min(wIn(ii).x):.1:(max(wIn(ii).x))+abs(extend*max(wIn(ii).x));
             yy = ppval(PP,xx);
