@@ -1,4 +1,4 @@
-function [CP,CPidx,tracked3D,C] = get3DCP_hough(Y0_f,Y1_f,Y0_t,Y1_t,tracked3D,calibInfo,C)
+function [CP,CPidx,tracked3D,C] = get3DCP_hough(manip,tracked3D,calibInfo,C)
 %% function CP = get3DCP_hough(Y0,Y1,tracked3D,calibInfo)
 % Calculates the 3D contact point by backprojecting the tracked 3D whisker
 % into 2D and finding the intersection. Will change C from 1 to 0 if no
@@ -17,17 +17,24 @@ function [CP,CPidx,tracked3D,C] = get3DCP_hough(Y0_f,Y1_f,Y0_t,Y1_t,tracked3D,ca
 %           CP = [numFrames x 3] matrix of the contact point in tracked 3D
 %           space. Units are in the same units as tracked3D(should be mm)
 % =========================================================================
-%%
-% Initialize variables
+%% Unpack inputs
+Y0_f = manip.Y0_f;
+Y0_t = manip.Y0_t;
+
+Y1_f = manip.Y1_f;
+Y1_t = manip.Y1_t;
+
+%% Initialize variables
 CP = nan(length(tracked3D),3);
 CPidx = nan(length(tracked3D),1);
 l_thresh = 10; % fewest number of points allowed in the whisker for CP calculation
 
-parfor ii = 1:length(tracked3D) % loop over every frame
+%% loop over every frame
+parfor ii = 1:length(tracked3D)
     % Prevent intersections from being annoying
     warning('off')
     
-    % skip frames with no contact, no whisker, short whiskers, or whiskers
+    %% skip frames with no contact, no whisker, short whiskers, or whiskers
     % with nans
     if ~C(ii)
         continue
@@ -40,28 +47,32 @@ parfor ii = 1:length(tracked3D) % loop over every frame
         fprintf('NaNs in frame %i',ii)
         continue
     end
-    
+    %% Backproject
     % backproject the 3D whisker into the appropriate view based on which
     % view the manipulator was tracked in and finds where the whisker intersects the manipulator. 
     % If both views have a tracked manipulator, defaults to top, as that is generally better tracked.
-   
+    
+    % if top is tracked
     if ~isnan(Y0_t(ii))
         px = [0;640];
         py = [Y0_t(ii);Y1_t(ii)];
         [~,wskrTop] = BackProject3D(tracked3D(ii),calibInfo(5:8),calibInfo(1:4),calibInfo(9:10));
         [~,~,idx,~] = intersections(wskrTop(:,1),wskrTop(:,2),px,py);
         idx(isnan(idx)) = [];
+        
+    % else if front is tracked
     elseif ~isnan(Y0_f(ii))
         px = [0;640];
         py = [Y0_f(ii);Y1_f(ii)];
         [wskrFront,~] = BackProject3D(tracked3D(ii),calibInfo(5:8),calibInfo(1:4),calibInfo(9:10));
         [~,~,idx,~] = intersections(wskrFront(:,1),wskrFront(:,2),px,py);
         idx(isnan(idx)) = [];
+    
+    % call contact 0 if no manipulator is tracked in this frame.
     else
-        C(ii) = 0; % call contact 0 if no manipulator is tracked here.
+        C(ii) = 0;
         continue
     end
-    
     
     %% Extend whisker if needed 
     % Run this section if contact was indicated and a manipulator was tracked, but the whisker and manipulator do not intersect
@@ -128,20 +139,32 @@ end
 warning('on')
 end
 
+%% local function to extend the tip if needed
 function [CPx,CPy,tempCPidx,wskr3D] = LOCAL_extend_one_Seg(wskr3D,whfitA,whfitB,px,py,A_camera,B_camera,A2B_transform,useFront)
+
+extPct = .05; % how much to extend the whisker, in percentage of number of nodes
 counter = 1;
 if useFront
     [wskr,~] = BackProject3D(wskr3D,A_camera,B_camera,A2B_transform);
 else
     [~,wskr] = BackProject3D(wskr3D,A_camera,B_camera,A2B_transform);
 end
-numExtend = round(length(wskr(:,1))/20);
+
+numExtend = round(length(wskr(:,1))*extPct);
+
+
 [CPx,CPy,tempCPidx,~] = intersections(wskr(:,1),wskr(:,2),px,py);
+
 tempCPidx(isnan(tempCPidx)) = [];
+
+% cludge if multiple CPs are found
 if ~isempty(tempCPidx)
     tempCPidx = tempCPidx(1);
 end
 
+% while no contact point is found or the length of the whisker is not the
+% required percentage past the CP. Only allows 5 runs of this loop so as to
+% prevent infinite looping.
 while counter <= 5 && (isempty(tempCPidx) || (tempCPidx+length(wskr(:,1))*.05)>length(wskr(:,1)) )
     
     if useFront
@@ -156,6 +179,7 @@ while counter <= 5 && (isempty(tempCPidx) || (tempCPidx+length(wskr(:,1))*.05)>l
     if ~isempty(tempCPidx)
         tempCPidx = tempCPidx(1);
     end
+    
     
     nodespacing = median(diff(wskr3D.x));
     if size (wskr3D.x,1) == 1
