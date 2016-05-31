@@ -28,7 +28,8 @@ Y1_t = manip.Y1_t;
 CP = nan(length(tracked3D),3);
 CPidx = nan(length(tracked3D),1);
 l_thresh = 10; % fewest number of points allowed in the whisker for CP calculation
-
+num_nodes = 5; % nodes used in splinefit
+ext_pct = .1; % length of the whisker that we want to extend beyond the CP.
 %% loop over every frame
 parfor ii = 1:length(tracked3D)
     % Prevent intersections from being annoying
@@ -49,48 +50,57 @@ parfor ii = 1:length(tracked3D)
     end
     %% Backproject
     % backproject the 3D whisker into the appropriate view based on which
-    % view the manipulator was tracked in and finds where the whisker intersects the manipulator. 
+    % view the manipulator was tracked in and finds where the whisker intersects the manipulator.
     % If both views have a tracked manipulator, defaults to top, as that is generally better tracked.
     
     % if top is tracked
     if ~isnan(Y0_t(ii))
+        useTop = 1;
+        useFront = 0;
         px = [0;640];
         py = [Y0_t(ii);Y1_t(ii)];
         [~,wskrTop] = BackProject3D(tracked3D(ii),calibInfo(5:8),calibInfo(1:4),calibInfo(9:10));
         [~,~,idx,~] = intersections(wskrTop(:,1),wskrTop(:,2),px,py);
         idx(isnan(idx)) = [];
         
-    % else if front is tracked
+        % else if front is tracked
     elseif ~isnan(Y0_f(ii))
+        
+        useTop = 0;
+        useFront = 1;
+        
         px = [0;640];
         py = [Y0_f(ii);Y1_f(ii)];
         [wskrFront,~] = BackProject3D(tracked3D(ii),calibInfo(5:8),calibInfo(1:4),calibInfo(9:10));
         [~,~,idx,~] = intersections(wskrFront(:,1),wskrFront(:,2),px,py);
         idx(isnan(idx)) = [];
-    
-    % call contact 0 if no manipulator is tracked in this frame.
+        
+        % call contact 0 if no manipulator is tracked in this frame.
     else
         C(ii) = 0;
         continue
     end
     
-    %% Extend whisker if needed 
+    %% Extend whisker if needed
     % Run this section if contact was indicated and a manipulator was tracked, but the whisker and manipulator do not intersect
     
-    if isempty(idx) || (idx(1)+length(tracked3D(ii).x)*.05)>=(length(tracked3D(ii).x))
+    if isempty(idx) || (idx(1)+length(tracked3D(ii).x)*ext_pct)>=(length(tracked3D(ii).x))
         
-        % Fit second-order polynomial to the last 25% of the whisker. Use
-        % this to extrapolate for the extension
         
-        num2fit = round(length(tracked3D(ii).x)*.25);
-        xyfit = polyfit(tracked3D(ii).x(end-num2fit:end),tracked3D(ii).y(end-num2fit:end),2);
-        xzfit = polyfit(tracked3D(ii).x(end-num2fit:end),tracked3D(ii).z(end-num2fit:end),2);
+        count = 1;
+        tempTracked = tracked3D(ii);
+        while isempty(idx) || (idx(1)+length(tempTracked.x)*ext_pct)>=(length(tempTracked.x))
+%             fprintf('Extending iteration %i on frame %i\n',count,ii)
+            [tempTracked,idx] = LOCAL_extend(tempTracked,num_nodes,calibInfo,px,py,useFront);
+            count = count+1;
+            if count>5
+                break
+            end
+            
+        end
         
-        % Run a local function to extend the whisker 
-        [~,~,idx,tempTracked] = LOCAL_extend_one_Seg(tracked3D(ii),xyfit,xzfit,px,py,calibInfo(5:8),calibInfo(1:4),calibInfo(9:10),isnan(Y0_t(ii)));
-        idx(isnan(idx)) = [];
         
-        % plot is always turned off during normal code running. These lines
+        %         plot is always turned off during normal code running. These lines
         % are here to remind you what to plot
         plotTGL = 0;
         if plotTGL
@@ -100,23 +110,27 @@ parfor ii = 1:length(tracked3D)
             plot(px,py,'r')
             ho
             if ~isnan(Y0_t(ii))
-                plotv(wskrTop,'.')
-                plotv(wskrTopext,'go')
+                plotv(wskrTop,'.');
+                plotv(wskrTopext,'go');
                 
             else
-                plotv(wskrFront,'.')
-                plotv(wskrFrontext,'go')
+                plotv(wskrFront,'.');
+                plotv(wskrFrontext,'go');
             end
             figure
             plot3(tracked3D(ii).x,tracked3D(ii).y,tracked3D(ii).z,'.')
             ho
             plot3(tempTracked.x,tempTracked.y,tempTracked.z,'go')
             pause
+            close all
+            pause(.01)
         end
-        tracked3D(ii) = tempTracked;
-        
+        tracked3D(ii).x = tempTracked.x;
+        tracked3D(ii).y = tempTracked.y;
+        tracked3D(ii).z = tempTracked.z;
     end
-    % outputs
+    
+    %% outputs
     if ~isempty(idx)
         CPidx(ii) = idx(1);
         ridx = round(idx(1));
@@ -135,69 +149,47 @@ parfor ii = 1:length(tracked3D)
     end
     
     
+    
+    warning('on')
 end
-warning('on')
 end
 
-%% local function to extend the tip if needed
-function [CPx,CPy,tempCPidx,wskr3D] = LOCAL_extend_one_Seg(wskr3D,whfitA,whfitB,px,py,A_camera,B_camera,A2B_transform,useFront)
+function [wskr3D,idx] = LOCAL_extend(tracked3D,num_nodes,calibInfo,px,py,useFront)
+%% Splinefit to extend
 
-extPct = .05; % how much to extend the whisker, in percentage of number of nodes
-counter = 1;
+% extend the whisker by 10%
+extPts = round(length(tracked3D.x)*0.1);
+
+%
+node_spacing = median(diff(tracked3D.x));
+
+
+
+% splinefit
+PP = splinefit(tracked3D.x,tracked3D.y,num_nodes,'r');
+
+
+xx = [tracked3D.x(1:end-1) [tracked3D.x(end):node_spacing:(tracked3D.x(end)+node_spacing*extPts)]];
+yy = ppval(PP,xx);
+
+
+PP = splinefit(tracked3D.x,tracked3D.z,num_nodes,'r');
+zz = ppval(PP,xx);
+
+wskr3D.x = xx;
+wskr3D.y = yy;
+wskr3D.z = zz;
+
 if useFront
-    [wskr,~] = BackProject3D(wskr3D,A_camera,B_camera,A2B_transform);
+    [wskr,~] = BackProject3D(wskr3D,calibInfo(5:8),calibInfo(1:4),calibInfo(9:10));
 else
-    [~,wskr] = BackProject3D(wskr3D,A_camera,B_camera,A2B_transform);
+    [~,wskr] = BackProject3D(wskr3D,calibInfo(5:8),calibInfo(1:4),calibInfo(9:10));
 end
 
-numExtend = round(length(wskr(:,1))*extPct);
+[~,~,idx,~] = intersections(wskr(:,1),wskr(:,2),px,py);
 
 
-[CPx,CPy,tempCPidx,~] = intersections(wskr(:,1),wskr(:,2),px,py);
-
-tempCPidx(isnan(tempCPidx)) = [];
-
-% cludge if multiple CPs are found
-if ~isempty(tempCPidx)
-    tempCPidx = tempCPidx(1);
 end
-
-% while no contact point is found or the length of the whisker is not the
-% required percentage past the CP. Only allows 5 runs of this loop so as to
-% prevent infinite looping.
-while counter <= 5 && (isempty(tempCPidx) || (tempCPidx+length(wskr(:,1))*.05)>length(wskr(:,1)) )
-    
-    if useFront
-        [wskr,~] = BackProject3D(wskr3D,A_camera,B_camera,A2B_transform);
-    else
-        [~,wskr] = BackProject3D(wskr3D,A_camera,B_camera,A2B_transform);
-    end
-    
-    numExtend = round(length(wskr)/20);
-    [CPx,CPy,tempCPidx,~] = intersections(wskr(:,1),wskr(:,2),px,py);
-    tempCPidx(isnan(tempCPidx)) = [];
-    if ~isempty(tempCPidx)
-        tempCPidx = tempCPidx(1);
-    end
-    
-    
-    nodespacing = median(diff(wskr3D.x));
-    if size (wskr3D.x,1) == 1
-        wskr3D.x = [wskr3D.x,wskr3D.x(end)+nodespacing];
-        wskr3D.y = [wskr3D.y,polyval(whfitA,wskr3D.x(end))];
-        wskr3D.z = [wskr3D.z,polyval(whfitB,wskr3D.x(end))];
-    else
-        wskr3D.x = [wskr3D.x;linspace(wskr3D.x(end),wskr3D.x(end)+(nodespacing*numExtend),numExtend)'];
-        wskr3D.y = [wskr3D.y;polyval(whfitA,wskr3D.x(end-numExtend+1:end))];
-        wskr3D.z = [wskr3D.z;polyval(whfitB,wskr3D.x(end-numExtend+1:end))];
-    end
-    counter = counter+1;
-    
-end
-
-
-end % function LOCAL_extend_one_Seg
-
 
 
 
