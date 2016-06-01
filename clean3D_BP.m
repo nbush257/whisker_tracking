@@ -1,13 +1,35 @@
-function [BPout, wStruct3D_out] = clean3D_BP(wstruct3D)
-%% function wStruct3D_out = clean3D_BP(wstruct3D)
+function [BPout, wstruct3D_out] = clean3D_BP(wstruct3D,varargin)
+%% function wStruct3D_out = clean3D_BP(wstruct3D,[node_num])
 % Once you have a merged 3D whisker we should smooth the basepoint again in
 % 3D
+% BB 2016_05_31 Changing the function to work on any node, not just the
+% basepoint. Be careful not to go too far out. Nodes near the basepoint
+% should be pretty equivalent over time.
+
+% Default to basepoint smoothing
+
+
+%% input handling
+
+
+numvargs = length(varargin);
+% set defaults
+optargs = {1};
+% overwrite user supplied args
+optargs(1:numvargs) = varargin;
+[node_num] = optargs{:};
+
+%%
 BP = nan(length(wstruct3D),3);
+
 for ii = 1:length(wstruct3D)
     if ~isempty(wstruct3D(ii).x)
-        BP(ii,:) = [wstruct3D(ii).x(1) wstruct3D(ii).y(1) wstruct3D(ii).z(1)];
+        if length(wstruct3D(ii).x) >= node_num
+            BP(ii,:) = [wstruct3D(ii).x(node_num) wstruct3D(ii).y(node_num) wstruct3D(ii).z(node_num)];
+        end
     end
 end
+
 BPf = medfilt1(BP,5);
 
 for ii = 1:3
@@ -123,9 +145,9 @@ BPout(all(BPout'==0),:) = NaN;
 wstruct3D_out = wstruct3D;
 for ii = 1:length(wstruct3D)
     if ~isempty(wstruct3D(ii).x)
-        wstruct3D_out(ii).x(1) = BPout(ii,1);
-        wstruct3D_out(ii).y(1) = BPout(ii,2);
-        wstruct3D_out(ii).z(1) = BPout(ii,3);
+        wstruct3D_out(ii).x(node_num) = BPout(ii,1);
+        wstruct3D_out(ii).y(node_num) = BPout(ii,2);
+        wstruct3D_out(ii).z(node_num) = BPout(ii,3);
     end
 end
 
