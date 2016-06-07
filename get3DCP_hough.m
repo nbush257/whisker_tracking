@@ -1,4 +1,4 @@
-function [CP,CPidx,tracked3D,C] = get3DCP_hough(manip,tracked3D,calibInfo,C)
+function [CP,CPidx,tracked3D] = get3DCP_hough(manip,tracked3D,calibInfo,C)
 %% function CP = get3DCP_hough(Y0,Y1,tracked3D,calibInfo)
 % Calculates the 3D contact point by backprojecting the tracked 3D whisker
 % into 2D and finding the intersection. Will change C from 1 to 0 if no
@@ -15,7 +15,11 @@ function [CP,CPidx,tracked3D,C] = get3DCP_hough(manip,tracked3D,calibInfo,C)
 %           C = contact binary
 % OUTPUTS:
 %           CP = [numFrames x 3] matrix of the contact point in tracked 3D
-%           space. Units are in the same units as tracked3D(should be mm)
+%               space. Units are in the same units as tracked3D (should be mm)
+%           CPidx = [numFrames x 1] vector indicating the node index which is
+%               closest to the 3D contact point.
+%           tracked3D = structure of 3D whisker points; will have extended
+%               shapes in it.
 % =========================================================================
 %% Unpack inputs
 Y0_f = manip.Y0_f;
@@ -75,9 +79,8 @@ parfor ii = 1:length(tracked3D)
         [~,~,idx,~] = intersections(wskrFront(:,1),wskrFront(:,2),px,py);
         idx(isnan(idx)) = [];
         
-        % call contact 0 if no manipulator is tracked in this frame.
+        % Skip CP if no manipulator is tracked in this frame.
     else
-        C(ii) = 0;
         continue
     end
     
@@ -85,7 +88,6 @@ parfor ii = 1:length(tracked3D)
     % Run this section if contact was indicated and a manipulator was tracked, but the whisker and manipulator do not intersect
     
     if isempty(idx) || (idx(1)+length(tracked3D(ii).x)*ext_pct)>=(length(tracked3D(ii).x))
-        
         
         count = 1;
         tempTracked = tracked3D(ii);
