@@ -69,6 +69,9 @@ parfor ii = 1:length(wIn)
             
         % implement splinefit smoothing
         case 'spline'     
+            % prevent splinefit from being annoying
+            warning('off')
+            
             PP = splinefit(wIn(ii).x,wIn(ii).y,numNodes,'r');
             xx = min(wIn(ii).x):.1:(max(wIn(ii).x))+abs(extend*max(wIn(ii).x));
             yy = ppval(PP,xx);
@@ -78,6 +81,8 @@ parfor ii = 1:length(wIn)
             PP = splinefit(wIn(ii).x,wIn(ii).z,numNodes,'r');
             zz = ppval(PP,xx);
             wOut(ii).z = zz;
+            
+            warning('on')
     end
     
     
@@ -85,7 +90,7 @@ parfor ii = 1:length(wIn)
     if mod(ii,round(length(wIn)/100)) == 0
         fprintf('.')
     end
-    if mod(ii,round(length(wIn)/10)) ==0
+    if mod(ii,round(length(wIn)/10)) == 0
         fprintf('\n')
     end
     
