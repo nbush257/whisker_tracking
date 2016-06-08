@@ -1,18 +1,18 @@
-function [wOut,PP] = smooth3DWhisker(wIn,varargin)
+function [wOut,coefs] = smooth3DWhisker(wIn,varargin)
 %% function wStruct_3DOut = smooth3DWhisker(wStruct_3D,[mode],[numNodes],[extend])
 % ========================================
 % takes a 3D whisker structure and smooths it. Should
 % smooth out the basepoint and kinks. Can operate in either splinefit mode
-% or lowess mode. 
-% 
+% or lowess mode.
+%
 % Splinefit mode offers advantages of being faster, and being able to extend
-% and interpolate the whisker. However, it assumes that x points are 
-% sorted as ascending in the x coordinate. If this is not true, then it 
-% will extend the basepoint. 
+% and interpolate the whisker. However, it assumes that x points are
+% sorted as ascending in the x coordinate. If this is not true, then it
+% will extend the basepoint.
 %
 % Lowess is slower, but also doesn't compensate the whisker shape as easily
-% as splinefit. 
-% 
+% as splinefit.
+%
 % =======================================
 % INPUTS:
 %           wIn - a 3D whisker structure.
@@ -40,13 +40,17 @@ optargs = {'spline', 4, 0.1};
 % overwrite user supplied args
 optargs(1:numvargs) = varargin;
 [mode,numNodes,extend] = optargs{:};
-
+coefs = nan(length(wIn),2*numNodes^2);
 wOut = wIn;
 fprintf('Smoothing')
 %% Loop over frames
 parfor ii = 1:length(wIn)
+    
+    xIn = wIn(ii).x;
+    yIn = wIn(ii).y;
+    zIn = wIn(ii).z;
     % skip empty entries
-    if isempty(wIn(ii).x)|| isempty(wIn(ii).y) || isempty(wIn(ii).z)
+    if isempty(xIn)|| isempty(yIn) || isempty(zIn)
         continue
     end
     
@@ -67,22 +71,23 @@ parfor ii = 1:length(wIn)
                 disp('error')
             end
             
-        % implement splinefit smoothing
-        case 'spline'     
+            % implement splinefit smoothing
+        case 'spline'
             % prevent splinefit from being annoying
             warning('off')
             % make pts into row vectors for splinefit
             if iscolumn(wIn(ii).x)
-                wIn(ii).x = wIn(ii).x';
-                wIn(ii).y = wIn(ii).y';
-                wIn(ii).z = wIn(ii).z';
+                xIn = xIn';
+                yIn = yIn';
+                zIn = zIn';
             end
-            PP(ii) = splinefit(wIn(ii).x,[wIn(ii).y;wIn(ii).z],numNodes,'r');
+            PP = splinefit(xIn,[yIn;zIn],numNodes,'r');
+            coefs(ii,:) = PP.coefs(:);
             xx = min(wIn(ii).x):.1:(max(wIn(ii).x))+abs(extend*max(wIn(ii).x));
             pts = ppval(PP,xx);
-            wOut(ii).x = xx; 
+            wOut(ii).x = xx;
             wOut(ii).y = pts(1,:);
-            wOut(ii).y = pts(2,:);
+            wOut(ii).z = pts(2,:);
             
             warning('on')
     end
