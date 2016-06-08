@@ -1,4 +1,4 @@
-function wOut = smooth3DWhisker(wIn,varargin)
+function [wOut,PP] = smooth3DWhisker(wIn,varargin)
 %% function wStruct_3DOut = smooth3DWhisker(wStruct_3D,[mode],[numNodes],[extend])
 % ========================================
 % takes a 3D whisker structure and smooths it. Should
@@ -71,16 +71,18 @@ parfor ii = 1:length(wIn)
         case 'spline'     
             % prevent splinefit from being annoying
             warning('off')
-            
-            PP = splinefit(wIn(ii).x,wIn(ii).y,numNodes,'r');
+            % make pts into row vectors for splinefit
+            if iscolumn(wIn(ii).x)
+                wIn(ii).x = wIn(ii).x';
+                wIn(ii).y = wIn(ii).y';
+                wIn(ii).z = wIn(ii).z';
+            end
+            PP(ii) = splinefit(wIn(ii).x,[wIn(ii).y;wIn(ii).z],numNodes,'r');
             xx = min(wIn(ii).x):.1:(max(wIn(ii).x))+abs(extend*max(wIn(ii).x));
-            yy = ppval(PP,xx);
+            pts = ppval(PP,xx);
             wOut(ii).x = xx; 
-            wOut(ii).y = yy;
-            
-            PP = splinefit(wIn(ii).x,wIn(ii).z,numNodes,'r');
-            zz = ppval(PP,xx);
-            wOut(ii).z = zz;
+            wOut(ii).y = pts(1,:);
+            wOut(ii).y = pts(2,:);
             
             warning('on')
     end
