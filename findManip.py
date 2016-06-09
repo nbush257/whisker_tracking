@@ -3,7 +3,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from skimage.transform import (hough_line, hough_line_peaks)
 
-from skimage.filter import canny
+from skimage.filters import canny
 from skimage.draw import circle, polygon
 import scipy.io.matlab as sio
 from os.path import isfile
@@ -100,7 +100,7 @@ def getBW(y0, y1, image):
     return imROI
 
 
-def sanityCheck(y0, y1, image, frameNum=0):
+def sanityCheck(y0, y1, image, frameNum=0): 
     plt.cla()
     plt.imshow(image, cmap='gray')
     rows, cols = image.shape
@@ -109,6 +109,7 @@ def sanityCheck(y0, y1, image, frameNum=0):
     plt.gca().invert_yaxis()
     plt.title('Frame: %i' % frameNum)
     plt.draw()
+    plt.pause(.0001)
     lines.pop(0).remove()
 
 
@@ -171,7 +172,7 @@ def getMask(image):
     plt.axis([0, cols, 0, rows])
     plt.gca().invert_yaxis()
 
-    plt.title('Outline the Mask')
+    plt.title('Outline the Mask.')
 
     ii = 0
     pts = np.asarray(plt.ginput(1))[0]
@@ -188,6 +189,7 @@ def getMask(image):
             pts = np.vstack([pts, pt])
             plt.plot(pt[0], pt[1], 'r*')
             plt.draw()
+    print 'Calculating mask'
     rr, cc = polygon(pts[:, 1], pts[:, 0], (rows, cols))
     mask = np.zeros_like(image, dtype='bool')
     mask[rr, cc] = 1
@@ -251,7 +253,6 @@ def trackFirstView(fname):
             print 'loaded data in. Index is at Frame %i\n' % idx
             idx = frameSeek(fid, idx, Y0, Y1)
             Y0, Y1, Th, D = eraseFuture(Y0, Y1, Th, D, idx)
-            
 
         if overwriteTGL == 'n':
             suffix = 0
@@ -267,7 +268,7 @@ def trackFirstView(fname):
     # if there is not a precomputed mask, get one now
     if len(mask) == 0:
         mask = getMask(image)
-
+        plt.close('all')
     # get the background intensity
     b = getBckgd(image)
 
@@ -365,7 +366,6 @@ def trackFirstView(fname):
 
         # Refresh and save every 1000 frames
         if (idx % 1000 == 0):
-            plt.close('all')
             sio.savemat(outFName, {'D': D, 'Y0': Y0, 'Th': Th, 'Y1': Y1, 'mask': mask, 'b': b})
 
         idx += 1
@@ -465,7 +465,6 @@ def trackSecondView(fname, otherView):
             print 'loaded data in. Index is at Frame %i\n' % idx
             idx = frameSeek(fid, idx, Y0, Y1)
             Y0, Y1, Th, D = eraseFuture(Y0, Y1, Th, D, idx)
-
 
         if overwriteTGL == 'n':
             suffix = 0
