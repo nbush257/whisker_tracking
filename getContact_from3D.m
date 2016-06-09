@@ -16,7 +16,7 @@ function C = getContact_from3D(w,varargin)
 %% varargin handling
 narginchk(1,3)
 numvargs = length(varargin);
-optargs = {false(length(w)),5000;};
+optargs = {false(length(w),1),5000;};
 optargs(1:numvargs) = varargin;
 [C,winsize] = optargs{:};
 
