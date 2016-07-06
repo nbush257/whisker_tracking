@@ -1,4 +1,4 @@
-function smoothed = smooth2D_whisker(wStruct,varargin)
+function smoothed = smooth2Dwhisker(wStruct,varargin)
 %% function smoothed = smooth2D_whisker(wStruct,[method],[extend])
 % =============================================
 % Smooths each frame of a 2D whisker struct. Can use either splinefit or
