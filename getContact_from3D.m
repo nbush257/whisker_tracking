@@ -3,15 +3,17 @@ function C = getContact_from3D(w,varargin)
 %% function C = getContact_from3D(w,[C],[winsize])
 % takes a 3D whisker structure as input and asks the user to manually find
 % contact periods based on a PCA decomposition of the tip location.
+% =======================================================
 % INPUTS:   w - a 3D whisker struct
-
+%
 %           [C] - a [length(w) by 1] contact logical. This is used if you have found part of
-%           the C variable, but not all of it. If a C variable is input,
-%           the user inputting starts at the last True value of C.
+%            the C variable, but not all of it. If a C variable is input,
+%            the user inputting starts at the last True value of C.
 %       
 %           [winsize] - how much of the tip position to view at a time.
-
+%
 % OUTPUTS:  C - a [length(w) x 1] contact logical 
+% =====================================================
 % NEB 2016_06_08
 %% varargin handling
 narginchk(1,3)
