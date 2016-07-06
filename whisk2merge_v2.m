@@ -1,32 +1,29 @@
 function [tws,fws,C] = whisk2merge_v2(tw,twM,fw,fwM,tVidName,fVidName,outfilename)
 %% function [tws,fws,C] = whisk2merge_v2(tw,twM,fw,fwM,tVidName,fVidName,outfilename)
+% takes relevant whisker and measurement file information to prepare the
+% data for merging.
+% ===========================================================
+% INPUTS:
+%       tw - the top tracked whisker struct
+%       twM - the top tracked measurement struct
+%       fw - the front tracked whisker struct
+%       fwM - the front tracked measurement struct
+%       tVidName - the full file name of an avi from the top video. Used to
+%          get the basepoint position so you can use any video from the set
+%       fVidName - same as tVidName, but front
+%       outfilename - filename where the ready to merge data goes.
+%
+% OUTPUTS:
+%       tws - a smoothed version of the top whisker struct
+%       fws - a smoothed version of the front whisker struct
+%       C - a contact biniary
+% ==========================================================
+% NEB 2016 Commented and refactoring 2016_07_06
+%% 
+error('Nick thinks this needs to be refactored badly. We probably want to calculate contact after the merge.2016_07_06')
 
-
-% fVidName = 'E:\raw\2015_15\rat2015_15_JUN11_VG_C2_t01_Front.avi';
-% tVidName = 'E:\raw\2015_15\rat2015_15_JUN11_VG_C2_t01_Top.avi';
-% tVid = VideoReader(tVidName);
-% fVid = VideoReader(fVidName);
-% 
-% frontTracked = '.mat'
-% topTracked = '.mat'
-% %% load in data
-% error('This is code is being refactored')
-% % Nick Bush 2015_11_23
-% % load front data
-% load(frontTracked)
-% fw = w;
-% fwM = wM;
-% fm = m;
-% fmM = mM;
-% clear w wM m mM
-% % load top data
-% load(topTracked)
-% tw = w;
-% twM = wM;
-% tm = m;
-% tmM = mM;
-% clear m w mM wM
-ca
+close all
+% start parallel pool if not running
 gcp;
 tVid = VideoReader(tVidName);
 fVid = VideoReader(fVidName);
@@ -88,47 +85,6 @@ for ii = 1:500
     plot(tws(sample(ii)).x(1),tws(sample(ii)).y(1),'r*')
     title('Top')
 end
-%% Get contact
-% % get theta for contact estimation
-% TH_top = nan(length(tws),1);
-% for ii = 1:length(tws)
-%     if isempty(tws(ii).x)
-%         continue
-%     end
-%     x1 = tws(ii).x(1);
-%     y1 = tws(ii).y(1);
-%     l = length(tws(ii).x);
-%     ye = tws(ii).y(ceil(l/5));
-%     xe = tws(ii).x(ceil(l/5));
-%     TH_top(ii) = atan2(ye-y1,xe-x1)*180/pi;
-% end
-% 
-% % wrap theta
-% TH_top(TH_top>nanmean(TH_top)+180) = TH_top(TH_top>nanmean(TH_top)+180)-360;
-% TH_top(TH_top<nanmean(TH_top)-180) = TH_top(TH_top<nanmean(TH_top)-180)+360;
-% TH_top = double(TH_top);
-% 
-% % get theta front
-% TH_front = nan(length(fws),1);
-% for ii = 1:length(fws)
-%     if isempty(fws(ii).x)
-%         continue
-%     end
-%     x1 = fws(ii).x(1);
-%     y1 = fws(ii).y(1);
-%     l = length(fws(ii).x);
-%     ye = fws(ii).y(ceil(l/5));
-%     xe = fws(ii).x(ceil(l/5));
-%     TH_front(ii) = atan2(ye-y1,xe-x1)*180/pi;
-% end
-% 
-% % wrap theta
-% TH_front(TH_front>nanmean(TH_front)+180) = TH_front(TH_front>nanmean(TH_front)+180)-360;
-% TH_front(TH_front<nanmean(TH_front)-180) = TH_front(TH_front<nanmean(TH_front)-180)+360;
-% TH_front = double(TH_front);
-% 
-
-
 %% Get auto contact estimation
 C = logical(zeros(length(tw),1));
 k = [];
@@ -149,10 +105,6 @@ C = logical(zeros(length(k2),1));
 for ii = 1:length(cStart)
     C(cStart(ii):cEnd(ii)) = 1;
 end
-% plot(find(C),k3(C),'.')
-% ho
-% plot(find(~C),k3(~C),'.')
-
 %% manually fix contacts
 starts = 1;
 winsize = 5000;

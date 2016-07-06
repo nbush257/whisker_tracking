@@ -12,7 +12,7 @@ function CPout = cleanCP(CP)
 %   CPout:          the N x 3 cleaned cpntact point matrix
 % =====================================================
 % Nick Bush 12/18/2015
-
+%%
 % Median filter
 CPf = medfilt1(CP,5);
 % calculate the measurement variance
