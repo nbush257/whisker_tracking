@@ -5,11 +5,10 @@ function [allWhisker,allWMeasure] = combineWhiskers(wFileName,saveTGL)
 %% input handling
 
 if nargin == 1
-    saveTGL = false;% default to not saving
+    saveTGL = 0;% default to not saving
     [wPathName,wFileName,ext] = fileparts(wFileName);
     
 elseif nargin == 0
-    saveTGL = false;
     [wFileName,wPathName] = uigetfile('*.whiskers','Select one file of the whisker that you want to combine');
     [~,wFileName] = fileparts(wFileName);
 else
@@ -66,7 +65,7 @@ end
 %% Main Loop that grabs the information from each file and puts it in a global reference
 for ii = 1:length(wMeasureDir)
     % load in all the data
-    fprintf('Loading whisker %i of %i:\n\t%s\n\t%s\n',ii,length(wMeasureDir),wTraceDir(ii).name,wMeasureDir(ii).name)
+    fprintf('Loading whisker %i of %i\:t file %s \n',ii,length(wMeasureDir),wMeasureDir(ii))
     
     wTraces = LoadWhiskers([wPathName wTraceDir(ii).name]);
     wMeasure = LoadMeasurements([wPathName wMeasureDir(ii).name]);
