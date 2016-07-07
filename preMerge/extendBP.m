@@ -1,11 +1,9 @@
-function [BPout, wStructOut] = extendBP(wStruct,v)
+function [BPout, wStructOut] = extendBP(wStruct,I)
 figure
-v.seek(10000);
-I = v.getframe();
 imshow(I);
 zoom on
 title('zoom to BP and press enter')
-pause
+% pause
 title('Click on the BP')
 initBP = round(ginput(1));
 wStructOut = wStruct;
@@ -30,6 +28,9 @@ parfor ii = 1:length(wStruct)
     wStructOut(ii).x =[xIn;wStruct(ii).x];
     wStructOut(ii).y =[yIn;wStruct(ii).y];
     BPout(ii,:) = [wStructOut(ii).x(1) wStructOut(ii).y(1)];
+    if mod(ii,1000) == 0
+        fprintf('\n Frame %i',ii)
+    end
 %     if mod(ii,100) == 0 && ii> 80000
 %         v.seek(ii-1);
 %         I = v.getframe();

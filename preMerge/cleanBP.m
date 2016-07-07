@@ -15,7 +15,7 @@ function [BPout,wStructOut] = cleanBP(wStruct,r)
 %                   smoothed basepoint
 % =====================================================
 % Nick Bush 12/18/2015
-%%
+%% Get Basepoint
 % preallocate the Basepoint matrix (Nx2)
 BP = nan(length(wStruct),2);
 % Extract the Basepoint from the structure
@@ -27,12 +27,12 @@ for ii = 1:length(wStruct)
     end
 end
 
-% apply a median filter and delete outliers to remove point disconitnuities
+%% apply a median filter and delete outliers to remove point disconitnuities
 BPf1 = medfilt1(BP,5);
 BPf2(:,1) = deleteoutliers(BPf1(:,1),.00000001,1);
 BPf2(:,2) = deleteoutliers(BPf1(:,2),.00000001,1);
 
-% Interpolate over NaNs. If the first or last point are NaN, then make them
+%% Interpolate over NaNs. If the first or last point are NaN, then make them
 % equal to the first or las non-NaN point, respectively.
 if any(isnan(BPf2(end,:)))
     BPf2(end,:) = BPf2(find(~any(isnan(BPf2)'),1,'last'),:);
@@ -43,7 +43,11 @@ if any(isnan(BPf2(1,:)))
 end
 pos = naninterp(BPf2);
 
-%position must be a 2 x N time series of points.
+
+%% Kalman Filter
+% This code was adapted by NEB from the ekfukf toolbox examples.
+
+% position must be a 2 x N time series of points.
 if size(pos,2)<size(pos,1)
     pos = pos';
 end

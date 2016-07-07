@@ -1,32 +1,45 @@
-function [BPout, wStruct3D_out] = clean3D_BP(wstruct3D)
-%% function wStruct3D_out = clean3D_BP(wstruct3D)
-% Once you have a merged 3D whisker we should smooth the basepoint again in
-% 3D
-BP = nan(length(wstruct3D),3);
-for ii = 1:length(wstruct3D)
-    if ~isempty(wstruct3D(ii).x)
-        BP(ii,:) = [wstruct3D(ii).x(1) wstruct3D(ii).y(1) wstruct3D(ii).z(1)];
-    end
-end
-BPf = medfilt1(BP,5);
+function CPout = cleanCP(CP)
+%% function CPout = cleanCP(CP)
 
+% =====================================================
+% Takes a 3D Contact Point Time series (Nx3) and performs:
+%   1) Median Filtering with length 5 window size
+%   2) delete outliers
+%   3) Kalman Filtering
+%  INPUTS:
+%   CP:             an N x 3 matrix of the contact point (x,y,z)
+%  OUTPUTS:
+%   CPout:          the N x 3 cleaned cpntact point matrix
+% =====================================================
+% Nick Bush 12/18/2015
+%%
+% Median filter
+CPf = medfilt1(CP,5);
+% calculate the measurement variance
+r = nanvar(CPf);
+% Interpolate over small NaN gaps
 for ii = 1:3
-    BPf(:,ii) = InterpolateOverNans(BPf(:,ii),20);
-end
-for ii = 1:3
-    BPf(:,ii) = deleteoutliers(BPf(:,ii),.0001,1);
-    BPf(:,ii) = InterpolateOverNans(BPf(:,ii),20);
+    CPf(:,ii) =InterpolateOverNans(CPf(:,ii),10);
 end
 
-cpt = all(~isnan(BPf'))'; % first find where it is not a NaN
+% delete outliers
+for ii = 1:3
+    CPf(:,ii) = deleteoutliers(CPf(:,ii),.00001,1);
+end
+
+% Can only apply kalman filter to data no interrupted by nans, so find out
+% where there contact periods start. Theoretically you could use the C
+% logical but sometimes there are NaNs in there.
+
+cpt = all(~isnan(CPf'))'; % first find where it is not a NaN
 ccomp = [0; cpt; 0]; % add these for easier diffing (and force first frame to be a start)
 difc = diff(ccomp);
 cStart = find(difc == 1);  % mark where all whisks START
 cEnd = find(difc == -1) - 1;
 
 % preallocate the CP output
-BPout = nan(size(BPf));
-r = nanvar(BPf);
+CPout = nan(size(CPf));
+
 % loop over all the contact periods
 for ii = 1:length(cStart)
     % If the contact period is less than 3 bins long, skip it.
@@ -35,9 +48,11 @@ for ii = 1:length(cStart)
     end
     
     % apply the kalman filter
-    [x,y,z] = applyKalman(BPf(cStart(ii):cEnd(ii),:),r);
-    BPout(cStart(ii):cEnd(ii),:) = [x' y' z'];
+    [x,y,z] = applyKalman(CPf(cStart(ii):cEnd(ii),:),r);
+    CPout(cStart(ii):cEnd(ii),:) = [x' y' z'];
 end
+
+
 
     function [x,y,z] = applyKalman(pos,r)
         
@@ -119,14 +134,7 @@ end
         y = SM(2,:);
         z = SM(3,:);
     end %EOLF
-BPout(all(BPout'==0),:) = NaN;
-wstruct3D_out = wstruct3D;
-for ii = 1:length(wstruct3D)
-    if ~isempty(wstruct3D(ii).x)
-        wstruct3D_out(ii).x(1) = BPout(ii,1);
-        wstruct3D_out(ii).y(1) = BPout(ii,2);
-        wstruct3D_out(ii).z(1) = BPout(ii,3);
-    end
-end
 
+% remove zeros where NaNs should be
+CPout(all(CPout'==0),:) = NaN;
 end
