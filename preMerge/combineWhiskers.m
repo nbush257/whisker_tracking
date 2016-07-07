@@ -18,7 +18,6 @@ end
 
 %% Get all clips from a particular trial
 
-
 % For the whisker
 % Replace Frame numbers with a wildcard to create a directory pointer that looks at every file from a partiucular trial
 [Tag_start,Tag_end] = regexp(wFileName,'_F\d{6}F\d{6}'); TagW = [wFileName([1:Tag_start-1]) '*' wFileName(Tag_end+1:end)];
@@ -29,13 +28,9 @@ wMeasureDir = dir([wPathName TagW '.measurements']);
 % if there are equal numbers of files
 
 lDir = [length(wTraceDir) length(wMeasureDir)];
-
+assert(lDir(1) == lDir(2))
 % Throw an error if the number of files are not consistent across
 % measurements and whiskers files or across manipulators and whiskers
-if length(unique(lDir))~=1
-    error('Inconsistent number of files available')
-end
-
 %% init global reference structures
 % trying to init so that the global struct is the size of the video.
 
