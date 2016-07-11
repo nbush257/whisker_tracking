@@ -11,7 +11,7 @@ wOut = w;
 if isnumeric(v)
     I = v;
 else
-    I = read(v,5000);
+    I = read(v,20000);
 end
 imshow(I)
 ho
