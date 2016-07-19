@@ -7,7 +7,7 @@ function [allWhisker,allWMeasure] = combineWhiskers(wFileName,saveTGL)
 narginchk(0,2)    
 if nargin == 2
     [wPathName,wFileName,ext] = fileparts(wFileName);
-if nargin == 1
+elseif nargin == 1
     saveTGL = false;% default to not saving
     [wPathName,wFileName,ext] = fileparts(wFileName);
     
@@ -16,6 +16,8 @@ elseif nargin == 0
     [wFileName,wPathName] = uigetfile('*.whiskers','Select one file of the whisker that you want to combine');
 
     [~,wFileName] = fileparts(wFileName);
+else 
+    error('Wrong number of inputs')
 end
 
 %% Get all clips from a particular trial

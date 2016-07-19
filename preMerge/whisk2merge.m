@@ -20,6 +20,7 @@ function [tws,fws] = whisk2merge(tw,twM,fw,fwM,tVidName,fVidName,outfilename)
 % ==========================================================
 % NEB 2016 Commented and refactoring 2016_07_06
 %% 
+lastFinishedStep = '';
 close all
 % start parallel pool if not running
 gcp;
@@ -29,14 +30,23 @@ fVid = VideoReader(fVidName);
 It = read(tVid,20000);
 If = read(fVid,20000);
 %% Trim to the basepoint
+fprintf('Trimming top basepoint...')
 [tBP,tws] = extendBP(tw,It);
+fprintf('done.\n')
+fprintf('Trimming Front basepoint...')
 [fBP,fws] = extendBP(fw,If);
-save(outfilename,'tws','fws','twM','fwM');
+fprintf('done.\n')
+fprintf('saving...\n')
+lastFinishedStep = 'bptrim';
+save(outfilename,'tws','fws','twM','fwM','lastFinishedStep');
 close all
 %% Smooth basepoint
+fprintf('Smooth basepoint...\n')
 [fBP,fws] = cleanBP(fws);
 [tBP,tws] = cleanBP(tws);
-save(outfilename,'-append','tws','fws');
+fprintf('saving...\n')
+lastFinishedStep = 'bpsmooth';
+save(outfilename,'-append','tws','fws','lastFinishedStep');
 
 %% Smooth whisker shape
 % this step takes forever
@@ -48,4 +58,5 @@ fprintf('Smoothing the front whisker...\n')
 tic
 fws = smooth2Dwhisker(fws);
 toc
-save(outfilename,'-append','tws','fws');
+lastFinishedStep = 'whisker_smooth';
+save(outfilename,'-append','tws','fws','lastFinishedStep');
