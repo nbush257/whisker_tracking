@@ -1,4 +1,4 @@
-function [tws,fws] = whisk2merge(tw,twM,fw,fwM,tVidName,fVidName,outfilename)
+function [tws,fws] = whisk2merge(tw,fw,tVidName,fVidName,outfilename)
 %% function [tws,fws,C] = whisk2merge_v2(tw,twM,fw,fwM,tVidName,fVidName,outfilename)
 % takes relevant whisker and measurement file information to prepare the
 % data for merging.
@@ -31,10 +31,12 @@ It = read(tVid,20000);
 If = read(fVid,20000);
 %% Trim to the basepoint
 fprintf('Trimming top basepoint...')
-[tBP,tws] = extendBP(tw,It);
+[~,tws] = extendBP(tw,It);
+clear tW
 fprintf('done.\n')
 fprintf('Trimming Front basepoint...')
-[fBP,fws] = extendBP(fw,If);
+[~,fws] = extendBP(fw,If);
+clear fW
 fprintf('done.\n')
 fprintf('saving...\n')
 lastFinishedStep = 'bptrim';
