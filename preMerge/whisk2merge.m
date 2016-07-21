@@ -40,7 +40,7 @@ clear fW
 fprintf('done.\n')
 fprintf('saving...\n')
 lastFinishedStep = 'bptrim';
-save(outfilename,'tws','fws','twM','fwM','lastFinishedStep');
+save(outfilename,'tws','fws','lastFinishedStep');
 close all
 %% Smooth basepoint
 fprintf('Smooth basepoint...\n')

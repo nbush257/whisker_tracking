@@ -1,4 +1,4 @@
-function [I,points] = autoExtractCorners(vFNameTop,vFNameFront,numPts,varargin)
+function [I,points] = autoExtractCorners(vFnameTop,vFnameFront,numPts,varargin)
 %% function[I,points] = autoExtractCorners(vFNameTop,vFNameFront,numPts,[firstFrame],[lastFrame])
 % ======================================================
 % This function goes through both calibration videos to find the
@@ -32,7 +32,7 @@ plotting = 1; % Show the images as the checkerboard is being detected
 
 % set the number of frames to skip between detecting checkerboard. We dont
 % want to detect on every frame because that would be overkill.
-stride  = 50;
+stride  = 25;
 
 % make sure we have seq files
 [~,~,extT] = fileparts(vFnameTop);
@@ -42,8 +42,8 @@ assert(strcmp(extT,'.seq'))
 assert(strcmp(extF,'.seq'))
 
 % get video files
-vTop = seqIo(vFNameTop,'r');
-vFront = seqIo(vFNameFront,'r');
+vTop = seqIo(vFnameTop,'r');
+vFront = seqIo(vFnameFront,'r');
 
 info = vTop.getinfo();
 
