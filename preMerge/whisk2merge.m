@@ -31,11 +31,13 @@ It = read(tVid,20000);
 If = read(fVid,20000);
 %% Trim to the basepoint
 fprintf('Trimming top basepoint...')
-[~,tws] = extendBP(tw,It);
+tws = applyMaskToWhisker(It,tw);
+[~,tws] = extendBP(tws,It);
 clear tW
 fprintf('done.\n')
 fprintf('Trimming Front basepoint...')
-[~,fws] = extendBP(fw,If);
+fws = applyMaskToWhisker(If,fw);
+[~,fws] = extendBP(fws,If);
 clear fW
 fprintf('done.\n')
 fprintf('saving...\n')
@@ -44,8 +46,10 @@ save(outfilename,'tws','fws','lastFinishedStep');
 close all
 %% Smooth basepoint
 fprintf('Smooth basepoint...\n')
+warning('off')
 [fBP,fws] = cleanBP(fws);
 [tBP,tws] = cleanBP(tws);
+warning('on')
 fprintf('saving...\n')
 lastFinishedStep = 'bpsmooth';
 save(outfilename,'-append','tws','fws','lastFinishedStep');
@@ -61,4 +65,6 @@ tic
 fws = smooth2Dwhisker(fws);
 toc
 lastFinishedStep = 'whisker_smooth';
+fprintf('Saving last step...\n')
 save(outfilename,'-append','tws','fws','lastFinishedStep');
+fprintf('whisk2merge complete!\n')

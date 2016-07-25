@@ -29,12 +29,13 @@ numvargs = length(varargin);
 optargs = {'splinefit',0};
 optargs(1:numvargs) = varargin;
 [method,extend] = optargs{:};
+lenThresh = 10; % Minimum number of nodes that the whisker has. Cannot smooth with less than a certain number
 %% Init ouptut
 smoothed = wStruct;
 
 %% smooth in a parallel loop over each frame.
 parfor ii = 1:length(wStruct)
-    if isempty(wStruct(ii).x)
+    if isempty(wStruct(ii).x) || length(wStruct(ii).x)<lenThresh
         continue
     end
     
@@ -44,7 +45,7 @@ parfor ii = 1:length(wStruct)
             smoothed(ii).y = smooth(wStruct(ii).x,wStruct(ii).y,'lowess',15);
         case 'splinefit'
             PP = splinefit(double(wStruct(ii).x),double(wStruct(ii).y),6,'r');
-            xx = min(wStruct(ii).x):.1:(max(wStruct(ii).x))+abs(extend*max(wStruct(ii).x));
+            xx = min(wStruct(ii).x):.5:(max(wStruct(ii).x))+abs(extend*max(wStruct(ii).x));
             yy = ppval(PP,xx);
             smoothed(ii).x = xx;
             smoothed(ii).y = yy;

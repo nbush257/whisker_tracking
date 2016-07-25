@@ -28,9 +28,9 @@ parfor ii = 1:length(wStruct)
     wStructOut(ii).x =[xIn;wStruct(ii).x];
     wStructOut(ii).y =[yIn;wStruct(ii).y];
     BPout(ii,:) = [wStructOut(ii).x(1) wStructOut(ii).y(1)];
-    if mod(ii,1000) == 0
-        fprintf('\n Frame %i',ii)
-    end
+%     if mod(ii,1000) == 0
+%         fprintf('\n Extending BP Frame %i',ii)
+%     end
 %     if mod(ii,100) == 0 && ii> 80000
 %         v.seek(ii-1);
 %         I = v.getframe();

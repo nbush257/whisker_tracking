@@ -1,12 +1,15 @@
 function wStructOut = applyMaskToWhisker(I,wStruct)
 figure
 title('apply mask where you want to remove tracked points')
+pause(.4)
 mask = roipoly(I);
+close all
+pause(.1)
 
 wStructOut = wStruct;
 parfor ii = 1:length(wStruct)
     if mod(ii,1000)==0
-        fprintf('\nFrame %i',ii)
+        fprintf('\nApplying mask to Frame %i',ii)
     end
     if ~isempty(wStruct(ii).x)
         pt = logical(ones(length(wStruct(ii).x),1));
@@ -27,5 +30,5 @@ parfor ii = 1:length(wStruct)
         wStructOut(ii).y = wStructOut(ii).y(pt);
     end
 end
-         
+
                 
