@@ -39,14 +39,14 @@ switch extT
             cla
             imshow(read(tV,ii))
             hold on
-            plot(tW(ii).x,tW(ii).y,'-o')
+            plot(tW(ii).x+1,tW(ii).y+1,'-o')
             drawnow
             
             subplot(122)
             cla
             imshow(read(fV,ii))
             hold on
-            plot(fW(ii).x,fW(ii).y,'-o')
+            plot(fW(ii).x+1,fW(ii).y+1,'-o')
             drawnow
         end
 
@@ -65,7 +65,7 @@ switch extT
             imshow(tV.getframe())
             title(['Frame: ' num2str(ii)])
             hold on
-            plot(tW(ii).x,tW(ii).y,'-o')
+            plot(tW(ii).x+1,tW(ii).y+1,'-o')
             drawnow
             
             subplot(122)
@@ -74,7 +74,7 @@ switch extT
             title(['Frame: ' num2str(ii)])
             imshow(fV.getframe())
             hold on
-            plot(fW(ii).x,fW(ii).y,'-o')
+            plot(fW(ii).x+1,fW(ii).y+1,'-o')
             drawnow
         end
     otherwise
