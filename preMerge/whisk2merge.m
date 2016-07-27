@@ -25,10 +25,12 @@ close all
 % start parallel pool if not running
 gcp;
 % get representative images
-tVid = VideoReader(tVidName);
-fVid = VideoReader(fVidName);
-It = read(tVid,20000);
-If = read(fVid,20000);
+tVid = seqIo(tVidName,'r');
+fVid = seqIo(fVidName,'r');
+tVid.seek(20000);
+fVid.seek(20000);
+It = tVid.getframe();
+If = fVid.getframe();
 %% Trim to the basepoint
 fprintf('Trimming top basepoint...')
 tws = applyMaskToWhisker(It,tw);

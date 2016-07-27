@@ -3,7 +3,7 @@ figure
 imshow(I);
 zoom on
 title('zoom to BP and press enter')
-% pause
+pause
 title('Click on the BP')
 initBP = round(ginput(1));
 wStructOut = wStruct;

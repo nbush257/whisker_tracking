@@ -58,24 +58,65 @@ switch extT
         fInfo = fV.getinfo();
         assert(tInfo.numFrames == fInfo.numFrames)
         
+        tV.seek(10000);
+        fV.seek(10000);
+        It = tV.getframe();
+        If = fV.getframe();
+        tFig = figure;
+        imshow(It)
+        zoom on 
+        drawnow
+        pause
+        tPos = [xlim;ylim];
+        close all
+
+        fFig = figure;
+        imshow(If)
+        zoom on 
+        pause(.1)
+        drawnow
+        pause
+        fPos = [xlim;ylim];
+        close all
+        
+        FF = figure;
+        FF.Position = [1 41 1920 963];
         for ii = firstFrame:stride:tInfo.numFrames
-            subplot(121)
+            subplot(221)
             tV.seek(ii-1);
             cla
             imshow(tV.getframe())
             title(['Frame: ' num2str(ii)])
             hold on
             plot(tW(ii).x+1,tW(ii).y+1,'-o')
-            drawnow
             
-            subplot(122)
+            
+            subplot(222)
             fV.seek(ii-1);
             cla
             title(['Frame: ' num2str(ii)])
             imshow(fV.getframe())
             hold on
             plot(fW(ii).x+1,fW(ii).y+1,'-o')
-            drawnow
+            
+            
+            subplot(223)
+            cla
+            imshow(tV.getframe())
+            hold on
+            plot(tW(ii).x+1,tW(ii).y+1,'-o')
+            axx(tPos(1),tPos(3))
+            axy(tPos(2),tPos(4))
+            
+            
+            subplot(224)
+            cla
+            imshow(fV.getframe())
+            hold on
+            plot(fW(ii).x+1,fW(ii).y+1,'-o')
+            axx(fPos(1),fPos(3))
+            axy(fPos(2),fPos(4))
+            drawnow;
         end
     otherwise
         error('wrong video file type')
