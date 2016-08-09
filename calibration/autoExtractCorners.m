@@ -34,23 +34,35 @@ plotting = 1; % Show the images as the checkerboard is being detected
 % want to detect on every frame because that would be overkill.
 stride  = 25;
 
-% make sure we have seq files
+% determine the format of the video file
 [~,~,extT] = fileparts(vFnameTop);
 [~,~,extF] = fileparts(vFnameFront);
-
-assert(strcmp(extT,'.seq'))
-assert(strcmp(extF,'.seq'))
+assert(extT==extF);
 
 % get video files
-vTop = seqIo(vFnameTop,'r');
-vFront = seqIo(vFnameFront,'r');
+switch extT
+    case '.seq'
+        vTop = seqIo(vFnameTop,'r');
+        vFront = seqIo(vFnameFront,'r');
+        infoT = vTop.getinfo();
+        infoF = vFront.getinfo();
+        nFramesT = infoT.numFrames;
+        nFramesF = infoF.numFrames;
+   
+    case '.avi'
+        vTop = VideoReader(vFnameTop);
+        vFront = VideoReader(vFnameFront);
+        nFramesT = vTop.numberOfFrames;
+        nFramesF = vFront.numberOfFrames;
+end
 
-info = vTop.getinfo();
+assert(nFramesT == nFramesF,'Number of frames is inconsistent across videos')
+numFrames = nFramesT;
 
 % get frame limits 
 if length(varargin) < 2 
     firstFrame = 2;
-    lastFrame = info.numFrames;
+    lastFrame = numFrames;
 elseif length(varargin)>2
     error('improper varargin. Too Many input Args')
 else
@@ -69,10 +81,18 @@ map = hsv(numPts);
 for i = firstFrame:stride:lastFrame
     
     % get the images
-    vTop.seek(i-1);
-    Itop = vTop.getframe();
-    vFront.seek(i-2);
-    Ifront = vFront.getframe();
+    switch extT
+        
+        case '.seq'
+            vTop.seek(i-1);
+            Itop = vTop.getframe();
+            vFront.seek(i-2);
+            Ifront = vFront.getframe();
+            
+        case '.avi'
+            Itop = read(vTop,i);
+            Ifront = read(vFront,i);
+    end
     
     % get the checkerboard points
     tempTop =  detectCheckerboardPoints(Itop);
