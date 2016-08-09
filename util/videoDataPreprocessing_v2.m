@@ -74,6 +74,15 @@ for ii = 1:numSeqs
 end
 %% Split full into clips
 dAvi = dir([aviPath '\*.avi'])
+
+idx = [];
+for ii = 1:length(dAvi)
+    if strfind(dAvi(ii).name,'calib')
+        idx = [idx ii];
+    end
+end
+dAvi(idx) = [];
+
 for ii = 1:length(dAvi)
     cd(aviPath)
     numFrames = V.numberOfFrames;
