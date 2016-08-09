@@ -69,28 +69,32 @@ numSeqs = length(d);
 for ii = 1:numSeqs
     [~,aviName] = fileparts(d(ii).name);
     aviName = [aviName '.avi'];
-    clestring = sprintf('clexport -i %s -f avi -cv 0 -o %s -ofs %s',[seqPath '\' d(ii).name],aviPath,aviName);
+    clestring = sprintf('clexport -i %s -f avi -cv 0 -tos 0 -o %s -of %s &',[seqPath '\' d(ii).name],aviPath,aviName);
     system(clestring)
 end
 %% Split full into clips
 dAvi = dir([aviPath '\*.avi'])
 for ii = 1:length(dAvi)
-    cd aviPath
-    V = VideoReader(dAvi(ii).name);
+    cd(aviPath)
     numFrames = V.numberOfFrames;
     bds = [1:step:numFrames numFrames];
     numClips = length(bds)-1;
-    for jj = 1:numClips
+    parfor jj = 1:numClips
+        V = VideoReader(dAvi(ii).name);
+
         startFrame = bds(jj);
         endFrame = bds(jj+1)-1;
         if jj==numClips
             endFrame = endFrame+1;
         end
-        fileOutName = sprintf([dAvi(ii).name(1:end-4) '_F%06iF%06i.avi'],firstFrame,lastFrame);
+        fileOutName = sprintf([dAvi(ii).name(1:end-4) '_F%06iF%06i.avi'],startFrame,endFrame);
         outName = [aviPath '\' fileOutName];
         W = VideoWriter(outName,'Grayscale AVI');
         W.open;
-        for kk = firstFrame:lastFrame
+        for kk = startFrame:endFrame
+            if mod(kk,500)==0
+                fprintf('Frame %06d of %06d on clip %d',kk,numFrames,numClips)
+            end
             I = read(V,kk);
             writeVideo(W,I);
         end
@@ -100,9 +104,8 @@ for ii = 1:length(dAvi)
 end
 %% Run ffmppeg compression to reduce size of full length AVI which is no longer needed
 if convertTGL
-    error('this section needs to be debugged')
     cd(aviPath)
-    for ii = 1:length(dAvi)
+    parfor ii = 1:length(dAvi)
         outName  = [dAvi(ii).name(1:end-4) '_c.avi'];
         ffString = sprintf(['ffmpeg -i ' dAvi(ii).name ' -c:v  wmv2 -q 2  ' outName]);
         system(ffString)
@@ -115,7 +118,7 @@ if convertTGL
     end
 end
 %% Trace Clips
-avis = dir([aviPath '\*.avi']);
+avis = dir([aviPath '\*F*F*.avi']);
 aviNames = {avis.name};
 TAGidx = regexp(aviNames,'_F\d{6}F\d{6}');
 TAG = {};
@@ -125,6 +128,7 @@ end
 [TAGu,first] = unique(TAG);
 
 if trackTGL
+    cd(aviPath)
     %% Track
     ii=1;% initialize with the first whisker file
     
@@ -138,26 +142,53 @@ if trackTGL
         system(['trace ' aviPath '\' avis(ii).name ' ' wName ]);
     end
     %% Measure
-    cd(aviPath)
-    for ii = 1:length(TAGu)
-        batchMeasureTraces(TAGu{ii},bp(ii,:),fol(ii),'v');
-    end
 end
 %% Compress clips
 
-error('this section needs to be debugged')
-cd(aviPath)
 for ii = 1:length(avis)
     outName  = [avis(ii).name(1:end-4) '_c.avi'];
     ffString = sprintf(['ffmpeg -i ' avis(ii).name ' -c:v  wmv2 -q 2  ' outName]);
     system(ffString)
-    delete(avi(ii).name)
+    delete(avis(ii).name)
 end
 newAvis = dir('*_c.avi');
 for ii = 1:length(newAvis)
     newOutname = newAvis(ii).name([1:end-6 end-3:end]);
     java.io.File(newAvis(ii).name).renameTo(java.io.File(newOutname));
 end
+%% 
+%% get BP and Fol
+if trackTGL
+    for jj = 1:dAvi
+        V = VideoReader(dAvi(ii).name)
+        img = read(V,100000);
+        imshow(img);hold on
+        title('Click on the center of the pad')
+        bp(jj,:) = ginput(1);
+        plotv(bp(jj,:),'g*');
+        title('Click on the rightmost line that limits the follicle position')
+        [fol(jj),~] = ginput(1);
+        clf
+    end
+    
+    for ii = 1:length(TAGu)
+        batchMeasureTraces(TAGu{ii},bp(ii,:),fol(ii),'v');
+    end
+    
+end
+%% Combine whiskers
+tops = dir('*Top*F000001*.whiskers');
+fronts = dir('*Front*F000001*.whiskers');
+for ii = 1:length(tops)
+    [tW,tM] = combineWhiskers(tops(ii).name,0);
+    [fW,fM] = combineWhiskers(fronts(ii).name,0);
+    outFileName = regexp(tops(ii).name,'Top','split');
+    outFileName = [outFileName{1} 'tracked.mat'];
+    save(outFileName,'tW','fW','tM','fM')
+end
 
+    
+    
+        
 
 
