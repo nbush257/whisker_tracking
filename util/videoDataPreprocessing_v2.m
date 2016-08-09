@@ -56,14 +56,14 @@ end
 %% Convert to full length avi
 
 d = dir([seqPath '\*.seq']);
-% remove calibration seqs from consideration
-idx = [];
-for ii = 1:length(d)
-    if strfind(d(ii).name,'calib')
-        idx = [idx ii];
-    end
-end
-d(idx) = [];
+% % remove calibration seqs from consideration
+% idx = [];
+% for ii = 1:length(d)
+%     if strfind(d(ii).name,'calib')
+%         idx = [idx ii];
+%     end
+% end
+% d(idx) = [];
 numSeqs = length(d);
 
 for ii = 1:numSeqs
