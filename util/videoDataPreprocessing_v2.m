@@ -69,7 +69,7 @@ numSeqs = length(d);
 for ii = 1:numSeqs
     [~,aviName] = fileparts(d(ii).name);
     aviName = [aviName '.avi'];
-    clestring = sprintf('clexport -i %s -f avi -cv 0 -tos 0 -o %s -of %s &',[seqPath '\' d(ii).name],aviPath,aviName);
+    clestring = sprintf('clexport -i %s -f avi -cv 0 -ots -ets -o %s -of %s ',[seqPath '\' d(ii).name],aviPath,aviName);
     system(clestring)
 end
 %% Split full into clips
