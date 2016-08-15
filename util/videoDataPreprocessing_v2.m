@@ -1,4 +1,4 @@
-function videoDataPreprocessing_v2()
+% videoDataPreprocessing_v2()
 %%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Run this file at the end of the day after recording whisker videos. This
@@ -11,9 +11,7 @@ function videoDataPreprocessing_v2()
 % Written:  Nick Bush 2015_04_22
 %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-step = 20000; % number of frames to save to each avi
-% Get the files to convert
-
+%%
 
 copyTGL = 0;convertTGL = 0; trackTGL = 0;
 copyTGL = input('Do you want to copy the seqs somewhere? Will copy all seqs from D:,E:, and F:  (1/0)');
@@ -66,7 +64,7 @@ d = dir([seqPath '\*.seq']);
 % d(idx) = [];
 numSeqs = length(d);
 
-for ii = 1:numSeqs
+parfor ii = 1:numSeqs
     [~,aviName] = fileparts(d(ii).name);
     aviName = [aviName '.avi'];
     clestring = sprintf('clexport -i %s -f avi -cv 0 -ots -ets -o %s -of %s ',[seqPath '\' d(ii).name],aviPath,aviName);
@@ -85,6 +83,7 @@ dAvi(idx) = [];
 
 for ii = 1:length(dAvi)
     cd(aviPath)
+    V = VideoReader(dAvi(ii).name);
     numFrames = V.numberOfFrames;
     bds = [1:step:numFrames numFrames];
     numClips = length(bds)-1;
@@ -102,7 +101,7 @@ for ii = 1:length(dAvi)
         W.open;
         for kk = startFrame:endFrame
             if mod(kk,500)==0
-                fprintf('Frame %06d of %06d on clip %d',kk,numFrames,numClips)
+                fprintf('Frame %06d of %06d on clip %d\n',kk,numFrames,numClips)
             end
             I = read(V,kk);
             writeVideo(W,I);
@@ -168,20 +167,23 @@ end
 %% 
 %% get BP and Fol
 if trackTGL
-    for jj = 1:dAvi
-        V = VideoReader(dAvi(ii).name)
-        img = read(V,100000);
+    bp= [];
+    fol = [];
+    for jj = 1:length(dAvi)
+        V = VideoReader(dAvi(jj).name)
+        nn = round(V.numberOfFrames/2);
+        img = read(V,nn);
         imshow(img);hold on
         title('Click on the center of the pad')
         bp(jj,:) = ginput(1);
-        plotv(bp(jj,:),'g*');
+        plotv(bp(jj,:)','g*');
         title('Click on the rightmost line that limits the follicle position')
         [fol(jj),~] = ginput(1);
         clf
     end
     
-    for ii = 1:length(TAGu)
-        batchMeasureTraces(TAGu{ii},bp(ii,:),fol(ii),'v');
+    for ii = 1:length(dAvi)
+        batchMeasureTraces(dAvi(ii).name(1:end-4),bp(ii,:),fol(ii),'v');
     end
     
 end
