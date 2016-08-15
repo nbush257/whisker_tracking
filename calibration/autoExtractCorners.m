@@ -32,12 +32,12 @@ plotting = 1; % Show the images as the checkerboard is being detected
 
 % set the number of frames to skip between detecting checkerboard. We dont
 % want to detect on every frame because that would be overkill.
-stride  = 25;
+stride  = 100;
 
 % determine the format of the video file
 [~,~,extT] = fileparts(vFnameTop);
 [~,~,extF] = fileparts(vFnameFront);
-assert(extT==extF);
+assert(strcmp(extT,extF));
 
 % get video files
 switch extT
@@ -48,7 +48,7 @@ switch extT
         infoF = vFront.getinfo();
         nFramesT = infoT.numFrames;
         nFramesF = infoF.numFrames;
-   
+        
     case '.avi'
         vTop = VideoReader(vFnameTop);
         vFront = VideoReader(vFnameFront);
@@ -59,8 +59,8 @@ end
 assert(nFramesT == nFramesF,'Number of frames is inconsistent across videos')
 numFrames = nFramesT;
 
-% get frame limits 
-if length(varargin) < 2 
+% get frame limits
+if length(varargin) < 2
     firstFrame = 2;
     lastFrame = numFrames;
 elseif length(varargin)>2
@@ -71,7 +71,7 @@ else
 end
 
 % init vars
-count = 0; 
+count = 0;
 points = struct;
 plots = figure;
 I = struct;
@@ -120,7 +120,8 @@ for i = firstFrame:stride:lastFrame
     % plot
     if plotting
         subplot(121)
-        image(Itop)
+        cla
+        imshow(Itop)
         colormap('gray')
         hold on
         for j = 1:size(points(count).top,1)
@@ -134,7 +135,8 @@ for i = firstFrame:stride:lastFrame
         end
         
         subplot(122)
-        image(Ifront)
+        cla
+        imshow(Ifront)
         colormap('gray')
         hold on
         
@@ -148,9 +150,8 @@ for i = firstFrame:stride:lastFrame
         
     end
     
-    % pause for plotting
-    pause(.01)
-    cla
+    drawnow
+    
 end
 
 close all force;
