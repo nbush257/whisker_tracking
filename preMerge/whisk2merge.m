@@ -25,12 +25,35 @@ close all
 % start parallel pool if not running
 gcp;
 % get representative images
-tVid = seqIo(tVidName,'r');
-fVid = seqIo(fVidName,'r');
-tVid.seek(20000);
-fVid.seek(20000);
-It = tVid.getframe();
-If = fVid.getframe();
+[~,~,extT] = fileparts(tVidName);
+[~,~,extF] = fileparts(fVidName);
+
+assert(strcmp(extT,extF),'Video files are not the same type');
+
+switch extT
+    case '.avi'
+        tVid = VideoReader(tVidName);
+        fVid = VideoReader(fVidName);
+        nFramesT = tVid.numberOfFrames;
+        nFramesF = fVid.numberOfFrames;
+        assert(nFramesT==nFramesF,'Number of frames is inconsistent')
+        
+        It = read(tVid,round(nFramesT/2));
+        If = read(tVid,round(nFramesT/2));
+        
+    case '.seq'
+        tVid = seqIo(tVidName,'r');
+        fVid = seqIo(fVidName,'r');
+        nFramesT = tVid.numFrames;
+        nFramesF = fVid.numFrames;
+        assert(nFramesT==nFramesF,'Number of frames is inconsistent')
+        tVid.seek(round(nFramesT/2));
+        fVid.seek(round(nFramesT/2));
+        It = tVid.getframe();
+        If = fVid.getframe();
+end
+
+
 %% Trim to the basepoint
 fprintf('Trimming top basepoint...')
 tws = applyMaskToWhisker(It,tw);
