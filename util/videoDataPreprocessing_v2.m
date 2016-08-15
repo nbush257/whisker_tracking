@@ -150,7 +150,6 @@ if trackTGL
         fprintf('tracing whiskers on %s',wName)
         system(['trace ' aviPath '\' avis(ii).name ' ' wName ]);
     end
-    %% Measure
 end
 %% Compress clips
 
@@ -186,6 +185,7 @@ if trackTGL
     
 end
 %% Combine whiskers
+cd(aviPath)
 tops = dir('*Top*F000001*.whiskers');
 fronts = dir('*Front*F000001*.whiskers');
 for ii = 1:length(tops)
@@ -195,7 +195,6 @@ for ii = 1:length(tops)
     outFileName = [outFileName{1} 'tracked.mat'];
     save(outFileName,'tW','fW','tM','fM')
 end
-
     
     
         
