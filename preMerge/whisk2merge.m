@@ -39,7 +39,7 @@ switch extT
         assert(nFramesT==nFramesF,'Number of frames is inconsistent')
         
         It = read(tVid,round(nFramesT/2));
-        If = read(tVid,round(nFramesT/2));
+        If = read(fVid,round(nFramesT/2));
         
     case '.seq'
         tVid = seqIo(tVidName,'r');
