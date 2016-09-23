@@ -1,5 +1,5 @@
 function [tws,fws] = whisk2merge(tw,fw,tVidName,fVidName,outfilename)
-%% function [tws,fws,C] = whisk2merge_v2(tw,twM,fw,fwM,tVidName,fVidName,outfilename)
+%% function [tws,fws] = whisk2merge_v2(tw,twM,fw,fwM,tVidName,fVidName,outfilename)
 % takes relevant whisker and measurement file information to prepare the
 % data for merging.
 % ===========================================================
@@ -16,7 +16,6 @@ function [tws,fws] = whisk2merge(tw,fw,tVidName,fVidName,outfilename)
 % OUTPUTS:
 %       tws - a smoothed version of the top whisker struct
 %       fws - a smoothed version of the front whisker struct
-%       C - a contact biniary
 % ==========================================================
 % NEB 2016 Commented and refactoring 2016_07_06
 %% 
