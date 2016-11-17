@@ -9,7 +9,7 @@ import scipy.io.matlab as sio
 from os.path import isfile
 from sys import stdout
 
-fname = 'N:\\3dTesting\\rat2015_15_JUN11_VG_B1_t01_Front.seq'
+# fname = 'N:\\3dTesting\\rat2015_15_JUN11_VG_B1_t01_Front.seq'
 
 
 def manualTrack(image, bckMean, plotTGL=0):
@@ -100,7 +100,7 @@ def getBW(y0, y1, image):
     return imROI
 
 
-def sanityCheck(y0, y1, image, frameNum=0): 
+def sanityCheck(y0, y1, image, frameNum=0):
     plt.cla()
     plt.imshow(image, cmap='gray')
     rows, cols = image.shape
@@ -203,7 +203,7 @@ def eraseFuture(Y0, Y1, Th, D, idx):
     Th[idx:] = np.NaN
     return Y0, Y1, Th, D
 
-
+# these two are the functions to run from the shell:
 def trackFirstView(fname):
     '''
     First Tracking
@@ -237,6 +237,7 @@ def trackFirstView(fname):
     if isfile(outFName):
         loadTGL = raw_input('Load in previously computed manipulator? ([y]/n)')
         overwriteTGL = raw_input('Overwrite old tracking? ([y],n)')
+
         if loadTGL == 'n':
             idx = frameSeek(fid, 0)
         else:
@@ -296,7 +297,7 @@ def trackFirstView(fname):
             print '\nNo edge detected, retrack'
             manTrack = True
             y0, y1, th, d, stopTrack = manualTrack(image, b, plotTGL=0)
-        elif(np.mean(abs(d0 - d)) > 35):
+        elif(np.mean(abs(d0 - d)) > 35): # Play with this condition if tracking is problematic
             print '\nLarge distance detected, Retrack'
             manTrack = True
             y0, y1, th, d, stopTrack = manualTrack(image, b, plotTGL=0)
