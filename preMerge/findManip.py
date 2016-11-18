@@ -13,6 +13,8 @@ from sys import stdout
 
 
 def manualTrack(image, bckMean, plotTGL=0):
+    plt.close('all')
+
     stopTrack = False
     plt.imshow(image, cmap='gray')
     rows, cols = image.shape
@@ -115,6 +117,7 @@ def sanityCheck(y0, y1, image, frameNum=0):
 
 def frameSeek(fid, n, Y0=[], Y1=[]):
     nFrames = fid.header_dict['allocated_frames']
+    plt.cla()
     if n > nFrames:
         n = nFrames - 1
         print 'Reached the end of the video'
@@ -193,6 +196,7 @@ def getMask(image):
     rr, cc = polygon(pts[:, 1], pts[:, 0], (rows, cols))
     mask = np.zeros_like(image, dtype='bool')
     mask[rr, cc] = 1
+    plt.close('all')
     return mask
 
 
@@ -246,10 +250,7 @@ def trackFirstView(fname):
             Th = fOld['Th'][0]
             Y0 = fOld['Y0'][0]
             Y1 = fOld['Y1'][0]
-            try:
-                mask = np.asarray(fOld['mask'], dtype='bool')
-            except:
-                mask = []
+            
             idx = int(np.where(np.isfinite(D))[0][-1])
             print 'loaded data in. Index is at Frame %i\n' % idx
             idx = frameSeek(fid, idx, Y0, Y1)
@@ -269,7 +270,7 @@ def trackFirstView(fname):
     # if there is not a precomputed mask, get one now
     if len(mask) == 0:
         mask = getMask(image)
-        plt.close('all')
+        
     # get the background intensity
     b = getBckgd(image)
 
@@ -321,42 +322,7 @@ def trackFirstView(fname):
         Y1[idx] = y1
         Th[idx] = th
 
-        # running average of last 5 theta and d:
-
-        diffTh = np.mean(np.abs(np.diff(Th[idx - 20:idx + 1])))
-
-        diffD = np.mean(np.abs(np.diff(D[idx - 20:idx + 1])))
-        # stdTh = np.std(Th[-5:])
-        # stdD = np.std(D[-5:])
-        # if the angle doesn't change much
-        # THIS IS NOT CURRENTLY WORKING WELL!!
-        if diffTh < 10 ^ -5:
-            manTrack = True
-            # rebuild this so it looks at a 5 frame window into the past and says, hey, the last 5 are almost identical.
-            print 'identical lines detected. Retrack'
-            idx -= 5
-            image = fid.get_frame(idx)
-            y0, y1, th, d, stopTrack = manualTrack(image, b, plotTGL=0)
-            D[idx] = d
-            Y0[idx] = y0
-            Y1[idx] = y1
-            Th[idx] = th
-            idx += 1
-
-        # if the line is at an edge
-        if diffD < 2 and (np.mean(D[idx - 20:idx + 1]) > 638 or np.mean(D[idx - 20:idx + 1]) < 3):
-            print 'Close to edge'
-            idx -= 20
-            idx = frameSeek(fid, idx, Y0, Y1)
-            Y0, Y1, Th, D = eraseFuture(Y0, Y1, Th, D, idx)
-
-            if idx > (nFrames - 1):
-                break
-            else:
-                image = fid.get_frame(idx)
-                manTrack = True
-                y0, y1, th, d, stopTrack = manualTrack(image, b, plotTGL=0)
-
+      
         # Verbose
         if (idx % 100 == 0):
             stdout.write('\rFrame %i of %i' % (idx, nFrames))
@@ -449,23 +415,31 @@ def trackSecondView(fname, otherView):
 
     mask = []
 
+	# Use other view to start the tracking
+    firstTrackedFrame = np.where(tracked)[0][0]
+    notTracked = np.invert(tracked)
+    notTracked[:firstTrackedFrame] = False
+    idx = np.where(notTracked)[0][0]
+    idx = int(idx)
+    
     if isfile(outFName):
         loadTGL = raw_input('Load in previously computed manipulator? ([y]/n)')
         overwriteTGL = raw_input('Overwrite old tracking? ([y],n)')
         if loadTGL == 'n':
-            idx = frameSeek(fid, 0)
+            idx = frameSeek(fid, idx)
         else:
             fOld = sio.loadmat(outFName, squeeze_me=True)
             D = fOld['D']
             Th = fOld['Th']
             Y0 = fOld['Y0']
             Y1 = fOld['Y1']
-            mask = np.asarray(fOld['mask'], dtype='bool')
 
-            idx = int(np.where(np.isfinite(D))[0][-1])
+            idx = int(np.where(np.isfinite(D))[0][-1]) # set idx to the last frame that is not a nan in the current view's old tracking.
             print 'loaded data in. Index is at Frame %i\n' % idx
             idx = frameSeek(fid, idx, Y0, Y1)
             Y0, Y1, Th, D = eraseFuture(Y0, Y1, Th, D, idx)
+            notTracked = np.invert(tracked)
+            notTracked[:idx] = False
 
         if overwriteTGL == 'n':
             suffix = 0
@@ -473,11 +447,9 @@ def trackSecondView(fname, otherView):
                 suffix += 1
                 outFName = fname[:-4] + '_manip(%i).mat' % suffix
     else:
-        firstTrackedFrame = np.where(tracked)[0][0]
-        notTracked = np.invert(tracked)
-        notTracked[:firstTrackedFrame] = False
-        idx = np.where(notTracked)[0][0]
-        idx = int(idx)
+     	import pdb; pdb.set_trace()  # breakpoint 39039ac8 //
+
+        
         # use the first not tracked frame as the first frame
         idx = frameSeek(fid, idx)
         Y0, Y1, Th, D = eraseFuture(Y0, Y1, Th, D, idx)
@@ -499,10 +471,15 @@ def trackSecondView(fname, otherView):
     d0 = d
 
     while idx < nFrames:
-        if tracked[idx]:
+    	if not np.any(notTracked[idx:]): # if the rest of the video has been tracked, save and quit
+            break
+        if tracked[idx]:# if the current frame has been tracked, go to the next frame that hasn't been tracked
+            import pdb; pdb.set_trace()  # breakpoint d82d6d91 //
 
-            idx += int(np.where(notTracked[idx:])[0][0])
+            idx = int(np.where(notTracked[idx:])[0][0])
             image = fid.get_frame(idx)
+            sio.savemat(outFName, {'D': D, 'Y0': Y0, 'Th': Th, 'Y1': Y1, 'mask': mask, 'b': b})
+
             y0, y1, th, d, stopTrack = manualTrack(image, b, plotTGL=0)
         else:
             manTrack = False
@@ -517,10 +494,14 @@ def trackSecondView(fname, otherView):
         if (len(d) == 0):
             print '\nNo edge detected, retrack'
             manTrack = True
+            sio.savemat(outFName, {'D': D, 'Y0': Y0, 'Th': Th, 'Y1': Y1, 'mask': mask, 'b': b})
+
             y0, y1, th, d, stopTrack = manualTrack(image, b, plotTGL=0)
         elif(np.mean(abs(d0 - d)) > 35):
             print '\nLarge distance detected, Retrack'
             manTrack = True
+            sio.savemat(outFName, {'D': D, 'Y0': Y0, 'Th': Th, 'Y1': Y1, 'mask': mask, 'b': b})
+
             y0, y1, th, d, stopTrack = manualTrack(image, b, plotTGL=0)
 
         while stopTrack:
@@ -543,40 +524,6 @@ def trackSecondView(fname, otherView):
         Y1[idx] = y1
         Th[idx] = th
 
-        # running average of last 5 theta and d:
-
-        diffTh = np.mean(np.abs(np.diff(Th[idx - 20:idx + 1])))
-
-        diffD = np.mean(np.abs(np.diff(D[idx - 20:idx + 1])))
-        # stdTh = np.std(Th[-5:])
-        # stdD = np.std(D[-5:])
-        # if the angle doesn't change much
-        # THIS IS NOT CURRENTLY WORKING WELL!!
-        if diffTh < 10 ^ -5:
-            manTrack = True
-            # rebuild this so it looks at a 5 frame window into the past and says, hey, the last 5 are almost identical.
-            print 'identical lines detected. Retrack'
-            idx -= 5
-            image = fid.get_frame(idx)
-            y0, y1, th, d, stopTrack = manualTrack(image, b, plotTGL=0)
-            D[idx] = d
-            Y0[idx] = y0
-            Y1[idx] = y1
-            Th[idx] = th
-            idx += 1
-
-        # if the line is at an edge
-        if diffD < 2 and (np.mean(D[idx - 20:idx + 1]) > 637 or np.mean(D[idx - 20:idx + 1]) < 3):
-            print 'Close to edge'
-            idx -= 20
-            idx = frameSeek(fid, idx, Y0, Y1)
-            if idx > (nFrames - 1):
-                break
-            else:
-                Y0, Y1, Th, D = eraseFuture(Y0, Y1, Th, D, idx)
-                image = fid.get_frame(idx)
-                manTrack = True
-                y0, y1, th, d, stopTrack = manualTrack(image, b, plotTGL=0)
 
         # Verbose
         if (idx % 100 == 0):
@@ -594,3 +541,4 @@ def trackSecondView(fname, otherView):
         idx += 1
 
     sio.savemat(outFName, {'D': D, 'Y0': Y0, 'Th': Th, 'Y1': Y1, 'mask': mask, 'b': b})
+    plt.close('all')
