@@ -30,24 +30,72 @@ switch extT
     case '.avi' 
         tV = VideoReader(tVid);
         fV = VideoReader(fVid);
-        
+               
         assert(tV.numberOfFrames == fV.numberOfFrames);
         
+        
+        It = read(tV,10000);
+        If = read(fV,10000);
+        
+        tFig = figure;
+        imshow(It)
+        title('Zoom to base')
+        zoom on 
+        drawnow
+        pause
+        tPos = [xlim;ylim];
+        close all
+
+        fFig = figure;
+        imshow(If)
+        title('Zoom to base')
+        zoom on 
+        pause(.1)
+        drawnow
+        pause
+        fPos = [xlim;ylim];
+        close all
+        
         figure()
-        for ii = firstFrame:stride:tV.numFrames
-            subplot(121)
+        for ii = firstFrame:stride:tV.numberOfFrames
+            subplot(221)
+            It = read(tV,ii);
             cla
-            imshow(read(tV,ii))
+            imshow(It)
             hold on
             plot(tW(ii).x+1,tW(ii).y+1,'-o')
-            drawnow
             
-            subplot(122)
+            
+            subplot(222)
+            If = read(fV,ii);
             cla
-            imshow(read(fV,ii))
+            imshow(If)
             hold on
             plot(fW(ii).x+1,fW(ii).y+1,'-o')
+            
+            
+            subplot(223)
+            
+            It = read(tV,ii);
+            cla
+            imshow(It)
+            hold on
+            plot(tW(ii).x+1,tW(ii).y+1,'-o')
+            axx(tPos(1),tPos(3))
+            axy(tPos(2),tPos(4))
+            
+            subplot(224)
+            
+            If = read(fV,ii);
+            cla
+            imshow(If)
+            hold on
+            plot(fW(ii).x+1,fW(ii).y+1,'-o')
+            
+            axx(fPos(1),fPos(3))
+            axy(fPos(2),fPos(4))
             drawnow
+            
         end
 
     case '.seq'
@@ -64,17 +112,19 @@ switch extT
         If = fV.getframe();
         tFig = figure;
         imshow(It)
+        title('Zoom to base')
         zoom on 
-        drawnow
+%         drawnow
         pause
         tPos = [xlim;ylim];
         close all
 
         fFig = figure;
         imshow(If)
+        title('Zoom to base')
         zoom on 
         pause(.1)
-        drawnow
+%         drawnow
         pause
         fPos = [xlim;ylim];
         close all

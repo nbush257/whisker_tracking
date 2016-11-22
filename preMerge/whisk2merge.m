@@ -1,13 +1,11 @@
 function [tws,fws] = whisk2merge(tw,fw,tVidName,fVidName,outfilename)
-%% function [tws,fws] = whisk2merge_v2(tw,twM,fw,fwM,tVidName,fVidName,outfilename)
+%% function [tws,fws] = whisk2merge_v2(tw,fw,tVidName,fVidName,outfilename)
 % takes relevant whisker and measurement file information to prepare the
 % data for merging.
 % ===========================================================
 % INPUTS:
 %       tw - the top tracked whisker struct
-%       twM - the top tracked measurement struct
 %       fw - the front tracked whisker struct
-%       fwM - the front tracked measurement struct
 %       tVidName - the full file name of an avi from the top video. Used to
 %          get the basepoint position so you can use any video from the set
 %       fVidName - same as tVidName, but front

@@ -1,7 +1,5 @@
-
 function [allWhisker,allWMeasure] = combineWhiskers(wFileName,saveTGL)
-%% function [allWhisker,allManip,allWMeasure,allMMeasure] = combineWhiskers([filename,saveTGL])
-% error('Nick has to refactor this to not deal with manipulators, as the manipultor code has been rewritten')
+%% function [allWhisker,allWMeasure] = combineWhiskers([filename,saveTGL])
 
 %% input handling
 narginchk(0,2)    

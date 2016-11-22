@@ -86,6 +86,7 @@ if copyTGL
         
     end
 end
+%%
 if convertTGL
     d = dir([seqPath '\*.seq']);
     % remove calibration seqs from consideration
@@ -169,10 +170,6 @@ end
 [TAGu,first] = unique(TAG);
 
 if trackTGL
-    %% Choose the basepoints and follicle
-    
-    
-    
     %% Track
     
     

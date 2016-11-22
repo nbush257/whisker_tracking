@@ -164,6 +164,9 @@ def frameSeek(fid, idx, Y0=[], Y1=[],notTracked=[]):
                 if int(uIn) < 0:
                     break
 
+                if idx >= nFrames:
+                	break
+
                 notTracked[:idx] = False
 
 
