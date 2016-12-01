@@ -63,7 +63,7 @@ switch extT
             cla
             imshow(It)
             hold on
-            plot(tW(ii).x+1,tW(ii).y+1,'-o')
+            plot(tW(ii).x+1,tW(ii).y+1,'c')
             
             
             subplot(222)
@@ -71,7 +71,7 @@ switch extT
             cla
             imshow(If)
             hold on
-            plot(fW(ii).x+1,fW(ii).y+1,'-o')
+            plot(fW(ii).x+1,fW(ii).y+1,'c')
             
             
             subplot(223)
@@ -80,7 +80,7 @@ switch extT
             cla
             imshow(It)
             hold on
-            plot(tW(ii).x+1,tW(ii).y+1,'-o')
+            plot(tW(ii).x+1,tW(ii).y+1,'c')
             axx(tPos(1),tPos(3))
             axy(tPos(2),tPos(4))
             
@@ -90,7 +90,7 @@ switch extT
             cla
             imshow(If)
             hold on
-            plot(fW(ii).x+1,fW(ii).y+1,'-o')
+            plot(fW(ii).x+1,fW(ii).y+1,'c')
             
             axx(fPos(1),fPos(3))
             axy(fPos(2),fPos(4))
