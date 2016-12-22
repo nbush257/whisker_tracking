@@ -3,4 +3,5 @@ genSettings2D*
 *.asv
 *.ppt*
 .*
+*.pyc
 calibration/fullAuto*
