@@ -2,5 +2,6 @@ README_NB_whiskerTrack*
 genSettings2D*
 *.asv
 *.ppt*
-.*
+.gitignore
+*.pyc
 calibration/fullAuto*
