@@ -1,5 +1,5 @@
-function [I,points] = autoExtractCorners(vFnameTop,vFnameFront,numPts,varargin)
-%% function[I,points] = autoExtractCorners(vFNameTop,vFNameFront,numPts,[firstFrame],[lastFrame])
+function [I,points] = autoExtractCorners(vFnameTop,vFnameFront,numPts,stride,varargin)
+%% function[I,points] = autoExtractCorners(vFNameTop,vFNameFront,numPts,stride,[firstFrame],[lastFrame])
 % ======================================================
 % This function goes through both calibration videos to find the
 % calibration image. This function is called by 'fullAutoCalib'. This
@@ -13,6 +13,8 @@ function [I,points] = autoExtractCorners(vFnameTop,vFnameFront,numPts,varargin)
 %           numPts      - number of points to look for in the automatic
 %                           in the automatic checkerboard detection. The
 %                           2mm grid has 42 points.
+%           stride      - Number of frames to skip when looking for
+%                           checkerboard
 %           [firstFrame]- if you want to only use a subset of the frames,
 %                           input the first frame to use here
 %           [lastFrame] - as above, the last frame. The function will look
@@ -32,7 +34,7 @@ plotting = 1; % Show the images as the checkerboard is being detected
 
 % set the number of frames to skip between detecting checkerboard. We dont
 % want to detect on every frame because that would be overkill.
-stride  = 100;
+
 
 % determine the format of the video file
 [~,~,extT] = fileparts(vFnameTop);
@@ -86,11 +88,11 @@ for i = firstFrame:stride:lastFrame
         case '.seq'
             vTop.seek(i-1);
             Itop = vTop.getframe();
-            vFront.seek(i-2);
+            vFront.seek(i-1);
             Ifront = vFront.getframe();
             
         case '.avi'
-            Itop = read(vTop,i);
+            Itop = read(vTop,i-1);
             Ifront = read(vFront,i);
     end
     
