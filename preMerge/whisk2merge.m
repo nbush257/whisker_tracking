@@ -52,14 +52,19 @@ end
 
 
 %% Trim to the basepoint
+
+[mask_t,BP_t] = getMaskAndBP(It);
+close all force
+[mask_f,BP_f] = getMaskAndBP(If);
+
 fprintf('Trimming top basepoint...')
-tws = applyMaskToWhisker(It,tw);
-[~,tws] = extendBP(tws,It);
+tws = applyMaskToWhisker(tw,mask_t);
+[~,tws] = extendBP(tws,BP_t);
 clear tW
 fprintf('done.\n')
 fprintf('Trimming Front basepoint...')
-fws = applyMaskToWhisker(If,fw);
-[~,fws] = extendBP(fws,If);
+fws = applyMaskToWhisker(fw,mask_f);
+[~,fws] = extendBP(fws,BP_f);
 clear fW
 fprintf('done.\n')
 fprintf('saving...\n')

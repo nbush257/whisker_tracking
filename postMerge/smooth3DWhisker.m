@@ -32,6 +32,7 @@ function [wOut,coefs] = smooth3DWhisker(wIn,varargin)
 % NB 2016_04_27
 % Issue with row or column vectors. need to rewrite some other code to get
 % the 3d struct back as a  column.
+gcp;
 %% Input handling
 
 numvargs = length(varargin);
@@ -42,7 +43,7 @@ optargs(1:numvargs) = varargin;
 [mode,numNodes,extend] = optargs{:};
 coefs = nan(length(wIn),2*numNodes^2);
 wOut = wIn;
-fprintf('Smoothing')
+fprintf('Smoothing using method: %s\n\t Num Nodes: %i\n' ,mode,numNodes)
 %% Loop over frames
 parfor ii = 1:length(wIn)
     
@@ -65,8 +66,8 @@ parfor ii = 1:length(wIn)
         % implement robust lowess smoothing
         case 'linear'
             try
-                wOut(ii).y = smooth(wIn(ii).x,wIn(ii).y,'rlowess',.3);
-                wOut(ii).z = smooth(wIn(ii).x,wIn(ii).z,'rlowess',.3);
+                wOut(ii).y = smooth(wIn(ii).x,wIn(ii).y,'rlowess',0.25);
+                wOut(ii).z = smooth(wIn(ii).x,wIn(ii).z,'rlowess',0.25);
             catch
                 disp('error')
             end
@@ -81,8 +82,8 @@ parfor ii = 1:length(wIn)
                 yIn = yIn';
                 zIn = zIn';
             end
-            PP = splinefit(xIn,[yIn;zIn],numNodes,'r');
-            coefs(ii,:) = PP.coefs(:);
+            PP = splinefit(xIn(1:end-2),[yIn(1:end-2);zIn(1:end-2)],numNodes,.8,'r');
+%             coefs(ii,:) = PP.coefs(:);
             xx = min(wIn(ii).x):.1:(max(wIn(ii).x))+abs(extend*max(wIn(ii).x));
             pts = ppval(PP,xx);
             wOut(ii).x = xx;
@@ -94,12 +95,12 @@ parfor ii = 1:length(wIn)
     
     
     %% verbosity
-    if mod(ii,round(length(wIn)/100)) == 0
-        fprintf('.')
-    end
-    if mod(ii,round(length(wIn)/10)) == 0
-        fprintf('\n')
-    end
+%     if mod(ii,round(length(wIn)/100)) == 0
+%         fprintf('.')
+%     end
+%     if mod(ii,round(length(wIn)/10)) == 0
+%         fprintf('\n')
+%     end
     
 end % end parfor over frames
 

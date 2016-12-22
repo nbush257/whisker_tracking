@@ -35,7 +35,7 @@ if medfiltWin < 3
     medfiltWin = 3;
 end
 
-if ~mod(medfiltWin,2) &&
+if ~mod(medfiltWin,2)
     medfiltWin = medfiltWin-1;
 end
 
