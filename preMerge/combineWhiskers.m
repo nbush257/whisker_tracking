@@ -1,19 +1,21 @@
 function [allWhisker,allWMeasure] = combineWhiskers(wFileName,saveTGL)
-%% function [allWhisker,allManip,allWMeasure,allMMeasure] = combineWhiskers([filename,saveTGL])
-% error('Nick has to refactor this to not deal with manipulators, as the manipultor code has been rewritten')
+%% function [allWhisker,allWMeasure] = combineWhiskers([filename,saveTGL])
 
 %% input handling
 narginchk(0,2)    
 if nargin == 2
     [wPathName,wFileName,ext] = fileparts(wFileName);
-if nargin == 1
+elseif nargin == 1
     saveTGL = false;% default to not saving
     [wPathName,wFileName,ext] = fileparts(wFileName);
     
 elseif nargin == 0
     saveTGL = false;
     [wFileName,wPathName] = uigetfile('*.whiskers','Select one file of the whisker that you want to combine');
+
     [~,wFileName] = fileparts(wFileName);
+else 
+    error('Wrong number of inputs')
 end
 
 %% Get all clips from a particular trial

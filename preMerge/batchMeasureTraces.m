@@ -16,7 +16,7 @@ for ii = 1:length(d)
         reclassifyStr = sprintf('reclassify %s %s -n 1',measurementsFileName,measurementsFileName);
         
         system(classifyStr);
-%         system(reclassifyStr);
+        system(reclassifyStr);
     end
 end
 parfor ii = 2:length(d)
