@@ -15,13 +15,13 @@
 % NEB 2016_07_07
 %% init workspace 
 clearvars -except tracked_3D manip calibInfo
-fname = 'rat2016_53_SEP01_VG_C4_t01_toE3D.mat'; % either manually give the output name here, or in a uinput
+fname = []; % either manually give the output name here, or in a uinput
 p1 = pwd;
 %%
 if isempty(fname)
-    fname = input('Type the filename you want to save the data to.');
+    fname = input('Type the filename you want to save the data to.','s');
 end
-fname_temp = [p1 '\' t1 '_temp.mat'];
+fname_temp = [p1 '\' fname '_temp.mat'];
 
 %% start parallel pool
 gcp
