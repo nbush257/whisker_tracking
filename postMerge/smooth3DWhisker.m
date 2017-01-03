@@ -91,6 +91,9 @@ parfor ii = 1:length(wIn)
             wOut(ii).z = pts(2,:);
             
             warning('on')
+        otherwise
+                error('not a method')
+                
     end
     
     

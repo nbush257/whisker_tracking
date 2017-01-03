@@ -32,7 +32,7 @@ t3d = sort3Dwhisker(tracked_3D);
 
 % smooth the whisker
 % disp('Smoothing 3D whisker...')
-t3d = smooth3DWhisker(t3d);
+t3d = smooth3DWhisker(t3d,'linear');
 save(fname_temp,'t3d','calibInfo')
 
 % get contact manually
