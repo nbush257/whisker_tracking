@@ -14,7 +14,11 @@
 % ============================
 % NEB 2016_07_07
 %% init workspace 
-clearvars -except tracked_3D manip calibInfo
+clearvars -except tracked_3D manip calibInfo C
+if ~exist('C','var')
+    C = false(tracked_3D,1);
+end
+
 fname = []; % either manually give the output name here, or in a uinput
 p1 = pwd;
 %%
@@ -36,7 +40,7 @@ t3d = smooth3DWhisker(t3d,'linear');
 save(fname_temp,'t3d','calibInfo')
 
 % get contact manually
-C = getContact_from3D(t3d);
+C = getContact_from3D(t3d,C);
 save(fname_temp,'t3d','calibInfo')
 
 % Find the contact point and extend whisker where needed

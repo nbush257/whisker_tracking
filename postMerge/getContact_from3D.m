@@ -18,9 +18,10 @@ function C = getContact_from3D(w,varargin)
 %% varargin handling
 narginchk(1,3)
 numvargs = length(varargin);
-optargs = {false(length(w),1),5000;};
+optargs = {false(length(w),1),1000;};
 optargs(1:numvargs) = varargin;
 [C,winsize] = optargs{:};
+starts = 1;
 
 %%
 close all
@@ -32,15 +33,22 @@ tip_clean = clean3D_tip(w);
 [~,b] = pca(featureScaling(tip_clean));
 bb = b(:,1);
 plot(bb)
+% get first point
+if ~any(C)
+    zoom on
+    title('click on first contact frame')
+    pause
+    [xInit,~] = ginput(1);
+    starts = round(xInit);
+end
 
 % this might need fixing. It is a workaround to make everythin positive
-[~,y] = ginput(1);
-bb = abs(b(:,1)-y);
+% [~,y] = ginput(1);
+% bb = abs(b(:,1)-y);
 %% Manual input
 close all
 
 % init windowing
-starts = 1;
 if numvargs >= 1 && sum(C)>0
     starts = find(C,1,'last');
 end
@@ -50,7 +58,7 @@ longfig
 
 % set window in which to look for the minimum value of abs(bb). This makes
 % it easier to click quickly.
-slop = 10;
+slop = 0;
 %try statement so that you don't lose all your work if something stupid
 %happens
 try
@@ -67,7 +75,7 @@ try
         % stay on this window until no inputs.
         while ~isempty(x)
             clf
-            plot(scale(bb(starts:stops)),'k');ln2;
+            plot(bb(starts:stops),'k');ln2;
             shadeVector(C(starts:stops))
             
             % get user inputs
