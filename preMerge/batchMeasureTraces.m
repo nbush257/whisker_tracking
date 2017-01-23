@@ -1,5 +1,5 @@
-function batchMeasureTraces(pathspec,bp,fol,direction)
-%% function batchMeasureTraces(pathspec,bp,fol,direction)
+function batchMeasureTraces(pathspec,bp,fol,direction,n)
+%% function batchMeasureTraces(pathspec,bp,fol,direction,n)
 bp = round(bp);
 fol = round(fol);
 d = dir([pathspec '*.whiskers']);
@@ -12,8 +12,8 @@ for ii = 1:length(d)
         measureStr = sprintf('measure --face %i %i %s %s %s',bp(1),bp(2),direction,d(ii).name,measurementsFileName);
         system(measureStr)
         
-        classifyStr = sprintf('classify %s %s %i %i %s --px2mm .04 --follicle %i -n 1',measurementsFileName,measurementsFileName,bp(1),bp(2),direction,fol);
-        reclassifyStr = sprintf('reclassify %s %s -n 1',measurementsFileName,measurementsFileName);
+        classifyStr = sprintf('classify %s %s %i %i %s --px2mm .04 --follicle %i -n %i',measurementsFileName,measurementsFileName,bp(1),bp(2),direction,fol,n);
+        reclassifyStr = sprintf('reclassify %s %s -n %i',measurementsFileName,measurementsFileName,n);
         
         system(classifyStr);
         system(reclassifyStr);
