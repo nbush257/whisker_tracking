@@ -15,6 +15,8 @@ function [BPout,wStructOut] = cleanBP(wStruct,r)
 %                   smoothed basepoint
 % =====================================================
 % Nick Bush 12/18/2015
+%%
+kalman_TGL = 0;
 %% Get Basepoint
 % preallocate the Basepoint matrix (Nx2)
 BP = nan(length(wStruct),2);
@@ -45,79 +47,81 @@ pos = naninterp(BPf2);
 
 
 %% Kalman Filter
-% This code was adapted by NEB from the ekfukf toolbox examples.
-
-% position must be a 2 x N time series of points.
-if size(pos,2)<size(pos,1)
-    pos = pos';
-end
-% create state matrix
-vel = [[0;0] diff(pos')'];
-acc = [[0;0] diff(vel')'];
-state = [pos;vel;acc];
-
-
-
-% Measurement model.
-H = [1     0     0     0     0     0;
-    0     1     0     0     0     0];
-
-% Variance in the measurements.
-if nargin ~=2
-    r = var(pos');
-end
-R = diag([r(1) r(2)]);
-
-% Transition matrix for the continous-time system.
-F = [0 0 1 0 0 0;
-    0 0 0 1 0 0;
-    0 0 0 0 1 0;
-    0 0 0 0 0 1;
-    0 0 0 0 0 0;
-    0 0 0 0 0 0];
-
-% Noise effect matrix for the continous-time system.
-L =  [0 0;
-    0 0;
-    0 0;
-    0 0;
-    1 0;
-    0 1];
-%Stepsize
-dt = 0.5;
-
-% Process noise variance
-q = 0.2;
-Qc = diag([q q]);
-
-% Discretization of the continous-time system.
-[A,Q] = lti_disc(F,L,Qc,dt);
-
-% Initial guesses for the state mean and covariance.
-m = state(:,1);
-P = diag([0.1 0.1 0.1 0.1 0.5 0.5]);
-
-MM = zeros(size(m,1), size(state,2));
-PP = zeros(size(m,1), size(m,1), size(state,2));
-
-% Filtering steps.
-h = waitbar(0,'filtering');
-for i = 1:size(state,2)
-    waitbar(i/size(state,2),h);
+if kalman_TGL
+    % This code was adapted by NEB from the ekfukf toolbox examples.
     
-    [m,P] = kf_predict(m,P,A,Q);
-    [m,P] = kf_update(m,P,pos(:,i),H,R);
-    MM(:,i) = m;
-    PP(:,:,i) = P;
+    % position must be a 2 x N time series of points.
+    if size(pos,2)<size(pos,1)
+        pos = pos';
+    end
+    % create state matrix
+    vel = [[0;0] diff(pos')'];
+    acc = [[0;0] diff(vel')'];
+    state = [pos;vel;acc];
+    
+    
+    
+    % Measurement model.
+    H = [1     0     0     0     0     0;
+        0     1     0     0     0     0];
+    
+    % Variance in the measurements.
+    if nargin ~=2
+        r = var(pos');
+    end
+    R = diag([r(1) r(2)]);
+    
+    % Transition matrix for the continous-time system.
+    F = [0 0 1 0 0 0;
+        0 0 0 1 0 0;
+        0 0 0 0 1 0;
+        0 0 0 0 0 1;
+        0 0 0 0 0 0;
+        0 0 0 0 0 0];
+    
+    % Noise effect matrix for the continous-time system.
+    L =  [0 0;
+        0 0;
+        0 0;
+        0 0;
+        1 0;
+        0 1];
+    %Stepsize
+    dt = 0.5;
+    
+    % Process noise variance
+    q = 0.2;
+    Qc = diag([q q]);
+    
+    % Discretization of the continous-time system.
+    [A,Q] = lti_disc(F,L,Qc,dt);
+    
+    % Initial guesses for the state mean and covariance.
+    m = state(:,1);
+    P = diag([0.1 0.1 0.1 0.1 0.5 0.5]);
+    
+    MM = zeros(size(m,1), size(state,2));
+    PP = zeros(size(m,1), size(m,1), size(state,2));
+    
+    % Filtering steps.
+    h = waitbar(0,'filtering');
+    for i = 1:size(state,2)
+        waitbar(i/size(state,2),h);
+        
+        [m,P] = kf_predict(m,P,A,Q);
+        [m,P] = kf_update(m,P,pos(:,i),H,R);
+        MM(:,i) = m;
+        PP(:,:,i) = P;
+    end
+    close all force
+    
+    % Smoothing step.
+    [SM,SP] = rts_smooth(MM,PP,A,Q);
+    [SM2,SP2] = tf_smooth(MM,PP,pos,A,Q,H,R,1);
+    xo = SM(1,:);
+    yo = SM(2,:);
+    BPout = [xo;yo]';
 end
-close all force
-
-% Smoothing step.
-[SM,SP] = rts_smooth(MM,PP,A,Q);
-[SM2,SP2] = tf_smooth(MM,PP,pos,A,Q,H,R,1);
-xo = SM(1,:);
-yo = SM(2,:);
-BPout = [xo;yo]';
 
 % replace first point of all whiskers with the filtered basepoint.
 wStructOut = wStruct;
