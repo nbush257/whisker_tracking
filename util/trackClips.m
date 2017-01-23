@@ -10,18 +10,17 @@ function trackClips(avi_path)
 whisker_path = avi_path;
 
 avis = dir([avi_path '\*F*F*.avi']);
-if track_TGL
-    cd(avi_path)
-    ii=1;% initialize with the first whisker file so default.parameters file can be written
 
+cd(avi_path)
+ii=1;% initialize with the first whisker file so default.parameters file can be written
+
+whiskers_name = [whisker_path '\' avis(ii).name(1:end-4) '.whiskers'];
+fprintf('tracing whiskers on %s',whiskers_name)
+system(['trace ' avi_path '\' avis(ii).name ' ' whiskers_name ' &']);
+pause(30) % pause is necesarry to allow for the default parameters file to be written
+
+parfor ii = 2:length(avis)
     whiskers_name = [whisker_path '\' avis(ii).name(1:end-4) '.whiskers'];
     fprintf('tracing whiskers on %s',whiskers_name)
-    system(['trace ' avi_path '\' avis(ii).name ' ' whiskers_name ' &']);
-    pause(30) % pause is necesarry to allow for the default parameters file to be written
-    
-    parfor ii = 2:length(avis)
-        whiskers_name = [whisker_path '\' avis(ii).name(1:end-4) '.whiskers'];
-        fprintf('tracing whiskers on %s',whiskers_name)
-        system(['trace ' avi_path '\' avis(ii).name ' ' whiskers_name ]);
-    end
+    system(['trace ' avi_path '\' avis(ii).name ' ' whiskers_name ]);
 end
