@@ -16,7 +16,7 @@
 %% init workspace 
 clearvars -except tracked_3D manip calibInfo C
 if ~exist('C','var')
-    C = false(tracked_3D,1);
+    C = false(length(tracked_3D),1);
 end
 
 fname = []; % either manually give the output name here, or in a uinput
@@ -34,20 +34,20 @@ gcp
 disp('Sorting whisker...')
 t3d = sort3Dwhisker(tracked_3D);
 
-% smooth the whisker
+%% smooth the whisker
 % disp('Smoothing 3D whisker...')
 t3d = smooth3DWhisker(t3d,'linear');
 save(fname_temp,'t3d','calibInfo')
 
-% get contact manually
+%% get contact manually
 C = getContact_from3D(t3d,C);
-save(fname_temp,'t3d','calibInfo')
+save(fname_temp,'t3d','calibInfo','C')
 
-% Find the contact point and extend whisker where needed
+%% Find the contact point and extend whisker where needed
 [CPraw,~,t3d] = get3DCP_hough(manip,t3d,calib,C);
-save(fname_temp,'t3d','calibInfo')
+save(fname_temp,'t3d','calibInfo','C')
 
-% smooth the contact point
+%% smooth the contact point
 CP = cleanCP(CPraw);
 
 % In case the contact point is not on the whisker after smoothing, put it
