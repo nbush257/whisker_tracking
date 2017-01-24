@@ -127,7 +127,8 @@ def frameSeek(fid, idx, Y0=[], Y1=[],notTracked=[]):
     # If you have given a bool vector of frames that have not been tracked, skips the manual portion and goes to the next untracked frame
     if len(notTracked) > 0:
         idx += int(np.where(notTracked[idx:])[0][0])
-
+    else:
+        notTracked = np.ones(nFrames,dtype='bool')
 
     # if you are past the last frame, set n to the last frame.
 	if idx > nFrames:
