@@ -13,6 +13,7 @@ from sys import stdout
 
 
 def manualTrack(image, bckMean, idx=-1, plotTGL=0):
+    contrast = 25
     plt.close('all')
 
     stopTrack = False
@@ -37,7 +38,7 @@ def manualTrack(image, bckMean, idx=-1, plotTGL=0):
         #
         imROI = 255 * np.ones_like(image)
         imROI[roiRow, roiCol] = image[roiRow, roiCol]
-        BW = imROI < (bckMean - 50)
+        BW = imROI < (bckMean - contrast)
 
         h, theta, d = hough_line(BW)
 
@@ -95,10 +96,9 @@ def getBW(y0, y1, image):
     bounds = 15
 
     rows, cols = image.shape
-    try:
-        rr, cc = polygon(np.array([y0[0], y0[0], y1[0], y1[0]]), np.array([0, 0, cols - bounds, cols + bounds]), (rows, cols))
-    except:
-        import pdb; pdb.set_trace()  # breakpoint 055b4901 //
+
+    rr, cc = polygon(np.array([y0[0], y0[0], y1[0], y1[0]]), np.array([0, 0, cols - bounds, cols + bounds]), (rows, cols))
+
 
     BW = np.zeros_like(image, dtype='bool')
     BW[rr, cc] = 1
@@ -126,9 +126,7 @@ def frameSeek(fid, idx, Y0=[], Y1=[],notTracked=[]):
     plt.cla()
     # If you have given a bool vector of frames that have not been tracked, skips the manual portion and goes to the next untracked frame
     if len(notTracked) > 0:
-        idx += int(np.where(notTracked[idx:])[0][0])
-    else:
-        notTracked = np.ones(nFrames,dtype='bool')
+        idx += int(np.where(notTracked[idx-1:])[0][0])
 
     # if you are past the last frame, set n to the last frame.
 	if idx > nFrames:
@@ -153,36 +151,44 @@ def frameSeek(fid, idx, Y0=[], Y1=[],notTracked=[]):
             try:
                 if len(uIn) == 0:
                     uIn = 100
-                    idx += uIn
-
-                else:
-                    idx += int(uIn)
-
-
-                if uIn == '0':
+                    
+                    
+                elif uIn == '0':
                     cont = True
-                    break
-                if int(uIn) < 0:
-                    break
-
-                if idx >= nFrames:
-                	break
-
-                notTracked[:idx] = False
-
-
-                if len(notTracked) > 0:
-                    idx += int(np.where(notTracked[idx:])[0][0])
-                    break
+                    
+                else:
+                    uIn = int(uIn)
 
             except:
                 print 'Invalid input try again'
+                break
             
-        if idx > nFrames:
-            idx = nFrames - 1
-            return idx
-            break
-            plt.cla()
+            # If we go backward, mark anything between last index and new index as not tracked
+            if uIn < 0:
+                notTracked[idx+uIn:idx] = True
+
+            # add uIn to current frame index                
+            idx += int(uIn)-1
+            
+            # boundary conditions on the index
+            if idx >= nFrames:
+                idx = nFrames-1
+                plt.cla()
+                return idx
+                break
+
+            if idx<=0:
+                idx = 0
+                break
+
+            # mark all points up to the current index as tracked
+            notTracked[:idx+1] = False
+
+            # skip to next not tracked section if it exists
+            if len(notTracked) > 0:
+                idx += int(np.where(notTracked[idx:])[0][0])
+                break
+
         image = fid.get_frame(idx)
         plt.cla()
         plt.imshow(image, cmap='gray')
@@ -242,6 +248,8 @@ def trackFirstView(fname):
     need to write another script that takes into account previously
     tracked frames from the other view.
     '''
+    plt.close('all')
+    contrast = 25
     outFName = fname[:-4] + '_manip.mat'
 
     fid = pims.open(fname)
@@ -271,7 +279,7 @@ def trackFirstView(fname):
         overwriteTGL = raw_input('Overwrite old tracking? ([y],n)')
 
         if loadTGL == 'n':
-            idx = frameSeek(fid, 0)
+            idx = frameSeek(fid, 0, notTracked=np.ones(nFrames,dtype='bool'))
         else:
             fOld = sio.loadmat(outFName)
             D = fOld['D'][0]
@@ -280,8 +288,10 @@ def trackFirstView(fname):
             Y1 = fOld['Y1'][0]
             
             idx = int(np.where(np.isfinite(D))[0][-1])
+            notTracked = np.ones(nFrames,dtype='bool')
+            notTracked[0:idx] = False
             print 'loaded data in. Index is at Frame %i\n' % idx
-            idx = frameSeek(fid, idx, Y0, Y1)
+            idx = frameSeek(fid, idx, Y0, Y1,notTracked=notTracked)
             Y0, Y1, Th, D = eraseFuture(Y0, Y1, Th, D, idx)
 
         if overwriteTGL == 'n':
@@ -290,6 +300,7 @@ def trackFirstView(fname):
                 suffix += 1
                 outFName = fname[:-4] + '_manip(%i).mat' % suffix
     else:
+        notTracked = np.ones(nFrames,dtype='bool')
         idx = frameSeek(fid, 0)
 
     # Get your image
@@ -313,42 +324,54 @@ def trackFirstView(fname):
     print '\nTracking manipulator\n\n ==================\n'
 
     while idx < nFrames:
-        manTrack = False
-        image = fid.get_frame(idx)
-        image[~mask] = 255
-        BW = getBW(y0, y1, image)
-        T = BW < (b - 30)
-
-        y0, y1, th, d = manipExtract(T, th)
-
-        # exception handling
-        if (len(d) == 0):
-            print '\nNo edge detected, retrack'
-            manTrack = True
-            y0, y1, th, d, stopTrack = manualTrack(image, b, idx=idx, plotTGL=0)
-        elif(np.mean(abs(d0 - d)) > 35): # Play with this condition if tracking is problematic
-            print '\nLarge distance detected, Retrack'
-            manTrack = True
-            y0, y1, th, d, stopTrack = manualTrack(image, b, idx=idx, plotTGL=0)
-
-        while stopTrack:
-            idx = frameSeek(fid, idx, Y0, Y1)
-            if idx >= (nFrames - 1):
-                d = np.NaN
-                y0 = np.NaN
-                y1 = np.NaN
-                th = np.NaN
-                break
-            Y0, Y1, Th, D = eraseFuture(Y0, Y1, Th, D, idx)
+        try:
+            manTrack = False
             image = fid.get_frame(idx)
-            manTrack = True
+            image[~mask] = 255
+            BW = getBW(y0, y1, image)
+            T = BW < (b - contrast)
+
+            y0, y1, th, d = manipExtract(T, th)
+
+            # exception handling
+            if (len(d) == 0):
+                print '\nNo edge detected, retrack'
+                manTrack = True
+                y0, y1, th, d, stopTrack = manualTrack(image, b, idx=idx, plotTGL=0)
+            elif(abs(D[idx-1] - d) > 75): # Play with this condition if tracking is problematic
+                print '\nLarge distance detected, Retrack'
+                manTrack = True
+                y0, y1, th, d, stopTrack = manualTrack(image, b, idx=idx, plotTGL=0)
+
+            while stopTrack:
+                idx = frameSeek(fid, idx, Y0, Y1,notTracked=notTracked)
+                # end of video condition
+                if idx >= (nFrames - 1):
+                    d = np.NaN
+                    y0 = np.NaN
+                    y1 = np.NaN
+                    th = np.NaN
+                    break
+
+                Y0, Y1, Th, D = eraseFuture(Y0, Y1, Th, D, idx)
+                image = fid.get_frame(idx)
+                manTrack = True
+                y0, y1, th, d, stopTrack = manualTrack(image, b, idx=idx, plotTGL=0)
+
+            d0 = d
+            D[idx] = d
+            Y0[idx] = y0
+            Y1[idx] = y1
+            Th[idx] = th
+            # If user throws a ctrl-c then get a new mask and manual track
+        except KeyboardInterrupt:
+            idx = frameSeek(fid, idx, Y0, Y1,notTracked=notTracked)
+            Y0, Y1, Th, D = eraseFuture(Y0, Y1, Th, D, idx)
+            mask = getMask(image)
+            b = getBckgd(image)
+            image = fid.get_frame(idx)
             y0, y1, th, d, stopTrack = manualTrack(image, b, idx=idx, plotTGL=0)
 
-        d0 = d
-        D[idx] = d
-        Y0[idx] = y0
-        Y1[idx] = y1
-        Th[idx] = th
 
       
         # Verbose
@@ -527,7 +550,7 @@ def trackSecondView(fname, otherView):
             y0, y1, th, d, stopTrack = manualTrack(image, b, idx=idx, plotTGL=0)
 
 
-        elif(np.mean(abs(d0 - d)) > 35):
+        elif(abs(D[idx-1] - d) > 75):
             print '\nLarge distance detected, Retrack'
             manTrack = True
             sio.savemat(outFName, {'D': D, 'Y0': Y0, 'Th': Th, 'Y1': Y1, 'mask': mask, 'b': b})
