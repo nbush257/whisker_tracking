@@ -1,5 +1,5 @@
 function [tip_out, wstruct3D_out] = clean3D_tip(wstruct3D,varargin)
-%% function wStruct3D_out = clean3D_tip(wstruct3D,[nanFill],[medfiltWin],[outlierThresh])
+%% function wStruct3D_out = clean3D_tip(wstruct3D,[kalman_TGL,[nanFill],[medfiltWin],[outlierThresh])
 % =================================================
 % Applies a series of smoothing algorithms to make the 3D tip position a
 % smooth and reliable indicator of contact. This should prevent small
@@ -21,11 +21,10 @@ function [tip_out, wstruct3D_out] = clean3D_tip(wstruct3D,varargin)
 % =================================================
 % NEB 2016_07_07
 %% Input handling and defaults
-kalman_TGL = 0;
 numvargs = length(varargin);
-optargs = {20,5,0.0001}; % 
+optargs = {0,20,5,0.0001}; % 
 optargs(1:numvargs) = varargin;
-[nanFill,medfiltWin,outlierThresh] = optargs{:};
+[kalman_TGL,nanFill,medfiltWin,outlierThresh] = optargs{:};
 
 medfiltWin = round(medfiltWin);
 nanFill = round(nanFill);
@@ -75,7 +74,7 @@ if kalman_TGL
     
     % preallocate the tip output
     tip_out = nan(size(tip_f));
-    r = nanvar(tip_f);
+    r = nanvar(tip_f)*10;
     
     % loop over all the contact periods
     for ii = 1:length(cStart)

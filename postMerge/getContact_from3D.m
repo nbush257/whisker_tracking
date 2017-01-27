@@ -32,7 +32,16 @@ tip_clean = clean3D_tip(w);
 % decompose the tip location into a 1D vector.
 [~,b] = pca(featureScaling(tip_clean));
 bb = b(:,1);
-plot(bb)
+
+
+%
+for ii = 1:3
+    tip_clean(:,ii) = scale(tip_clean(:,ii));
+end
+f = figure;
+f.Units = 'normalized';
+f.Position = [0 0 1 1];
+plot(tip_clean)
 % get first point
 if ~any(C)
     zoom on
@@ -41,7 +50,7 @@ if ~any(C)
     [xInit,~] = ginput(1);
     starts = round(xInit);
 end
-
+close all
 % this might need fixing. It is a workaround to make everythin positive
 % [~,y] = ginput(1);
 % bb = abs(b(:,1)-y);
@@ -54,11 +63,11 @@ if numvargs >= 1 && sum(C)>0
 end
 
 stops = winsize+starts;
-longfig
+f = figure;
+f.Units = 'normalized';
+f.Position = [0 0 1 1];
 
-% set window in which to look for the minimum value of abs(bb). This makes
-% it easier to click quickly.
-slop = 0;
+
 %try statement so that you don't lose all your work if something stupid
 %happens
 try
@@ -75,7 +84,7 @@ try
         % stay on this window until no inputs.
         while ~isempty(x)
             clf
-            plot(bb(starts:stops),'k');ln2;
+            plot(tip_clean(starts:stops,:),'k.-','linewidth',2);
             shadeVector(C(starts:stops))
             
             % get user inputs
@@ -88,18 +97,12 @@ try
                 continue
             end
             
-            % find the minimum within a window the size of slop for the contact onset. May want
-            % to switch to a local min somehow.
-            [~,t1] = min(bb(x(1)-slop:x(1)+slop));
-            xy(1) = x(1)-slop-1+t1;
-            xy(2) = x(2);
-            
             % If left click, add the region to contact. If right click,
             % remove the region from contact
             if but ==1
-                C(xy(1):xy(2)) = 1;
+                C(x(1):x(2)) = 1;
             elseif but==3
-                C(xy(1):xy(2)) = 0;
+                C(x(1):x(2)) = 0;
             end
         end
         

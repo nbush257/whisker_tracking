@@ -40,7 +40,7 @@ t3d = smooth3DWhisker(t3d,'linear');
 save(fname_temp,'t3d','calibInfo')
 
 %% get contact manually
-C = getContact_from3D(t3d,C);
+C = semisupervisedContact(t3d);
 save(fname_temp,'t3d','calibInfo','C')
 
 %% Find the contact point and extend whisker where needed
