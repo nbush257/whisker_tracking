@@ -1,5 +1,5 @@
 function [tip_out, wstruct3D_out] = clean3D_tip(wstruct3D,varargin)
-%% function wStruct3D_out = clean3D_tip(wstruct3D,[nanFill],[medfiltWin],[outlierThresh])
+%% function wStruct3D_out = clean3D_tip(wstruct3D,[kalman_TGL,[nanFill],[medfiltWin],[outlierThresh])
 % =================================================
 % Applies a series of smoothing algorithms to make the 3D tip position a
 % smooth and reliable indicator of contact. This should prevent small
@@ -22,9 +22,9 @@ function [tip_out, wstruct3D_out] = clean3D_tip(wstruct3D,varargin)
 % NEB 2016_07_07
 %% Input handling and defaults
 numvargs = length(varargin);
-optargs = {20,5,0.0001}; % 
+optargs = {0,20,5,0.0001}; % 
 optargs(1:numvargs) = varargin;
-[nanFill,medfiltWin,outlierThresh] = optargs{:};
+[kalman_TGL,nanFill,medfiltWin,outlierThresh] = optargs{:};
 
 medfiltWin = round(medfiltWin);
 nanFill = round(nanFill);
@@ -64,30 +64,34 @@ for ii = 1:3
     tip_f(:,ii) = InterpolateOverNans(tip_f(:,ii),nanFill);
 end
 
-%% Apply Kalman filter to the contact periods (i.e., the tip movement is constrained within a contact period)
-cpt = all(~isnan(tip_f'))'; % first find where it is not a NaN
-ccomp = [0; cpt; 0]; % add these for easier diffing (and force first frame to be a start)
-difc = diff(ccomp);
-cStart = find(difc == 1);  % mark where all contacts START
-cEnd = find(difc == -1) - 1; % mark where all contacts START
-
-% preallocate the tip output
-tip_out = nan(size(tip_f));
-r = nanvar(tip_f);
-
-% loop over all the contact periods
-for ii = 1:length(cStart)
-    % If the contact period is less than 3 bins long, skip it.
-    if (cEnd(ii)-cStart(ii))<3
-        continue
+if kalman_TGL
+    %% Apply Kalman filter to the contact periods (i.e., the tip movement is constrained within a contact period)
+    cpt = all(~isnan(tip_f'))'; % first find where it is not a NaN
+    ccomp = [0; cpt; 0]; % add these for easier diffing (and force first frame to be a start)
+    difc = diff(ccomp);
+    cStart = find(difc == 1);  % mark where all contacts START
+    cEnd = find(difc == -1) - 1; % mark where all contacts START
+    
+    % preallocate the tip output
+    tip_out = nan(size(tip_f));
+    r = nanvar(tip_f)*10;
+    
+    % loop over all the contact periods
+    for ii = 1:length(cStart)
+        % If the contact period is less than 3 bins long, skip it.
+        if (cEnd(ii)-cStart(ii))<3
+            continue
+        end
+        
+        % apply the kalman filter
+        [x,y,z] = applyKalman(tip_f(cStart(ii):cEnd(ii),:),r);
+        tip_out(cStart(ii):cEnd(ii),:) = [x' y' z'];
     end
     
-    % apply the kalman filter
-    [x,y,z] = applyKalman(tip_f(cStart(ii):cEnd(ii),:),r);
-    tip_out(cStart(ii):cEnd(ii),:) = [x' y' z'];
+    tip_out(all(tip_out'==0),:) = NaN;
+else
+    tip_out = tip_f;
 end
-
-tip_out(all(tip_out'==0),:) = NaN;
 
 %% replace the tip of the whisker with the smoothed whisker.
 if nargout == 2

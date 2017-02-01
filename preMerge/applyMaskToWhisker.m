@@ -2,6 +2,8 @@ function wStructOut = applyMaskToWhisker(wStruct,mask)
 
 wStructOut = wStruct;
 fprintf('\nApplying mask...')
+width = size(mask,2);
+height = size(mask,1);
 for ii = 1:length(wStruct)
     if mod(ii,10000)==0
         fprintf('Frame %i\n',ii)
@@ -10,8 +12,8 @@ for ii = 1:length(wStruct)
     if ~isempty(wStruct(ii).x)
         pt = true(length(wStruct(ii).x),1);
         a = round([wStruct(ii).x wStruct(ii).y]);
-        a(a(:,1)>640,1) = 640;
-        a(a(:,2)>480,2) = 480;
+        a(a(:,1)>width,1) = width;
+        a(a(:,2)>height,2) = height;
         
         a(a(:,1)<=0,1) = 1;
         a(a(:,2)<=0,2) = 1;

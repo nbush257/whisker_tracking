@@ -43,7 +43,8 @@ optargs(1:numvargs) = varargin;
 [mode,numNodes,extend] = optargs{:};
 coefs = nan(length(wIn),2*numNodes^2);
 wOut = wIn;
-fprintf('Smoothing using method: %s\n\t Num Nodes: %i\n' ,mode,numNodes)
+fprintf('Smoothing using method: %s%n',mode)
+if strcmp(mode,'spline');fprintf('%t Num Nodes: %i',numNodes);end
 %% Loop over frames
 parfor ii = 1:length(wIn)
     
@@ -91,6 +92,9 @@ parfor ii = 1:length(wIn)
             wOut(ii).z = pts(2,:);
             
             warning('on')
+        otherwise
+                error('not a method')
+                
     end
     
     

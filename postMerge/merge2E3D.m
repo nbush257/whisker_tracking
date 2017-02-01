@@ -14,14 +14,18 @@
 % ============================
 % NEB 2016_07_07
 %% init workspace 
-clearvars -except tracked_3D manip calibInfo
-fname = 'rat2016_53_SEP01_VG_C4_t01_toE3D.mat'; % either manually give the output name here, or in a uinput
+clearvars -except tracked_3D manip calibInfo C
+if ~exist('C','var')
+    C = false(length(tracked_3D),1);
+end
+
+fname = []; % either manually give the output name here, or in a uinput
 p1 = pwd;
 %%
 if isempty(fname)
-    fname = input('Type the filename you want to save the data to.');
+    fname = input('Type the filename you want to save the data to.','s');
 end
-fname_temp = [p1 '\' t1 '_temp.mat'];
+fname_temp = [p1 '\' fname '_temp.mat'];
 
 %% start parallel pool
 gcp
@@ -30,20 +34,20 @@ gcp
 disp('Sorting whisker...')
 t3d = sort3Dwhisker(tracked_3D);
 
-% smooth the whisker
+%% smooth the whisker
 % disp('Smoothing 3D whisker...')
-t3d = smooth3DWhisker(t3d);
+t3d = smooth3DWhisker(t3d,'linear');
 save(fname_temp,'t3d','calibInfo')
 
-% get contact manually
-C = getContact_from3D(t3d);
-save(fname_temp,'t3d','calibInfo')
+%% get contact manually
+C = semisupervisedContact(t3d);
+save(fname_temp,'t3d','calibInfo','C')
 
-% Find the contact point and extend whisker where needed
+%% Find the contact point and extend whisker where needed
 [CPraw,~,t3d] = get3DCP_hough(manip,t3d,calib,C);
-save(fname_temp,'t3d','calibInfo')
+save(fname_temp,'t3d','calibInfo','C')
 
-% smooth the contact point
+%% smooth the contact point
 CP = cleanCP(CPraw);
 
 % In case the contact point is not on the whisker after smoothing, put it
