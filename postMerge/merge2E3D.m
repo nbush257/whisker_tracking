@@ -41,11 +41,11 @@ save(fname_temp,'t3d','calibInfo')
 
 %% get contact manually
 C = semisupervisedContact(t3d);
-save(fname_temp,'t3d','calibInfo','C')
+save(fname_temp,'C','-append')
 
 %% Find the contact point and extend whisker where needed
-[CPraw,~,t3d] = get3DCP_hough(manip,t3d,calib,C);
-save(fname_temp,'t3d','calibInfo','C')
+[CPraw,~,t3d] = get3DCP_hough(manip,t3d,calibInfo,C);
+save(fname_temp,'t3d','CPraw','-append')
 
 %% smooth the contact point
 CP = cleanCP(CPraw);
@@ -69,11 +69,12 @@ C(isnan(C)) = 0;
 C = logical(C);
 assert(isvector(C));
 C = C(:);
+%% GET REF
 
 save(fname,'*w3d','CP','BP','C')
 %% data QC
 figure
-for ii = find(C,1):1000:length(t3d)
+for ii = find(C,1):10:length(t3d)
     ho
     cla
     plot3(tracked_3D(ii).x,tracked_3D(ii).y,tracked_3D(ii).z,'k.-')
@@ -83,7 +84,8 @@ for ii = find(C,1):1000:length(t3d)
     plot3(CP(ii,1),CP(ii,2),CP(ii,3),'r*')
     
     plot3(BP(ii,1),BP(ii,2),BP(ii,3),'b^')
-    
+    grid on
+    axis equal
     drawnow
     pause(.05)
     

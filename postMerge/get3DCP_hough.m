@@ -171,7 +171,7 @@ node_spacing = median(diff(tracked3D.x));
 PP = splinefit(tracked3D.x,tracked3D.y,num_nodes,'r');
 
 
-xx = [tracked3D.x(1:end-1) [tracked3D.x(end):node_spacing:(tracked3D.x(end)+node_spacing*extPts)]];
+xx = [tracked3D.x(1:end-1);[tracked3D.x(end):node_spacing:(tracked3D.x(end)+node_spacing*extPts)]'];
 yy = ppval(PP,xx);
 
 
