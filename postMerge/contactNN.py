@@ -149,8 +149,8 @@ def visFilters(model_fid,model_weights_fid,node=0):
 if __name__ == '__main__':
     fid = sys.argv[1]#input('\nFull Path to matfile: ')
     data = sio.loadmat(fid)
-    model_fid = '/home/nbush257/Documents/hartmannLab/proc/contactNN/contact_model.json'
-    weights_fid = '/home/nbush257/Documents/hartmannLab/proc/contactNN/contact_model.h5'
+    model_fid = 'contact_model.json'
+    weights_fid = 'contact_model.h5'
     C,tip_scale = findC(fid,model_fid,weights_fid)
     data['C'] = C
     data['tip_scale'] = tip_scale

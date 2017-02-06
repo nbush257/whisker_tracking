@@ -40,8 +40,25 @@ t3d = smooth3DWhisker(t3d,'linear');
 save(fname_temp,'t3d','calibInfo')
 
 %% get contact manually
-C = semisupervisedContact(t3d);
-save(fname_temp,'C','-append')
+tip_clean = clean3D_tip(t3d);
+bsStim = basisFactory.makeNonlinearRaisedCos(8,1,[0 50],1);
+X = basisFactory.convBasis(tip_clean,bsStim);
+X2 = basisFactory.convBasis(flipud(tip_clean),bsStim);
+X2 = flipud(X2);
+X = [X X2];
+X_d = nan(size(X));
+for ii = 1:size(X,2)
+    X_d(:,ii) = cdiff(X(:,ii));
+end
+X = [X X_d];
+X(1:150,:) = repmat(nanmean(X),150,1);
+
+X(end-149:end,:) = repmat(nanmean(X),150,1);
+
+X = featureScaling(X);
+
+save(fname_temp,'X','-append')
+% NOW USE PYTHON C FINDING CODE.
 
 %% Find the contact point and extend whisker where needed
 [CPraw,~,t3d] = get3DCP_hough(manip,t3d,calibInfo,C);
