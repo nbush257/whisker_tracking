@@ -28,19 +28,10 @@ close all
 %get a smoothed estimate of tip position
 tip_clean = clean3D_tip(w);
 
-% decompose the tip location into a 1D vector.
-[~,b] = pca(featureScaling(tip_clean));
-bb = b(:,1);
-
-
 %
 for ii = 1:3
     tip_clean(:,ii) = scale(tip_clean(:,ii));
 end
-f = figure;
-f.Units = 'normalized';
-f.Position = [0 0 1 1];
-plot(tip_clean)
 % get first point
 if ~any(C)
     zoom on
@@ -50,9 +41,7 @@ if ~any(C)
     starts = round(xInit);
 end
 close all
-% this might need fixing. It is a workaround to make everythin positive
-% [~,y] = ginput(1);
-% bb = abs(b(:,1)-y);
+
 %% Manual input
 close all
 
@@ -62,9 +51,6 @@ if numvargs >= 1 && sum(C)>0
 end
 
 stops = winsize+starts;
-f = figure;
-f.Units = 'normalized';
-f.Position = [0 0 1 1];
 
 
 %try statement so that you don't lose all your work if something stupid

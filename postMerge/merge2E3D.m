@@ -62,7 +62,8 @@ save(fname_temp,'X','-append')
 system(['python contactNN.py ' fname_temp]) 
 load(fname_temp,'C')
 
-
+% manually clean the contact variable
+C = getContact_from3D(t3d,C);
 
 %% Find the contact point and extend whisker where needed
 [CPraw,~,t3d] = get3DCP_hough(manip,t3d,calibInfo,C);
