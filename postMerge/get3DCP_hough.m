@@ -1,5 +1,5 @@
 function [CP,CPidx,tracked3D] = get3DCP_hough(manip,tracked3D,calibInfo,C)
-%% function CP = get3DCP_hough(Y0,Y1,tracked3D,calibInfo)
+%% function CP = get3DCP_hough(Y0,Y1,tracked3D,calibInfo,C)
 % Calculates the 3D contact point by backprojecting the tracked 3D whisker
 % into 2D and finding the intersection. Will change C from 1 to 0 if no
 % manipulator is tracked when contact is indicated
@@ -29,13 +29,14 @@ Y1_f = manip.Y1_f;
 Y1_t = manip.Y1_t;
 
 %% Initialize variables
+plotTGL = 1;
 CP = nan(length(tracked3D),3);
 CPidx = nan(length(tracked3D),1);
 l_thresh = 10; % fewest number of points allowed in the whisker for CP calculation
-num_nodes = 5; % nodes used in splinefit
-ext_pct = .1; % length of the whisker that we want to extend beyond the CP.
+num_nodes = 1; % nodes used in splinefit
+ext_pct = .05; % length of the whisker that we want to extend beyond the CP.
 %% loop over every frame
-parfor ii = 1:length(tracked3D)
+for ii = 1:length(tracked3D)
     % Prevent intersections from being annoying
     warning('off')
     
@@ -95,7 +96,7 @@ parfor ii = 1:length(tracked3D)
 %             fprintf('Extending iteration %i on frame %i\n',count,ii)
             [tempTracked,idx] = LOCAL_extend(tempTracked,num_nodes,calibInfo,px,py,useFront);
             count = count+1;
-            if count>5
+            if count>2
                 break
             end
             
@@ -104,7 +105,6 @@ parfor ii = 1:length(tracked3D)
         
         %         plot is always turned off during normal code running. These lines
         % are here to remind you what to plot
-        plotTGL = 0;
         if plotTGL
             close all
             [wskrFront,wskrTop] = BackProject3D(tracked3D(ii),calibInfo(5:8),calibInfo(1:4),calibInfo(9:10));
@@ -123,6 +123,9 @@ parfor ii = 1:length(tracked3D)
             plot3(tracked3D(ii).x,tracked3D(ii).y,tracked3D(ii).z,'.')
             ho
             plot3(tempTracked.x,tempTracked.y,tempTracked.z,'go')
+            title(['Frame: ' num2str(ii)])
+            axis equal
+            grid on
             pause
             close all
             pause(.01)
@@ -165,22 +168,41 @@ extPts = round(length(tracked3D.x)*0.1);
 %
 node_spacing = median(diff(tracked3D.x));
 
-
-
+segment_length = 0.3;
+mode = 'full';
 % splinefit
-PP = splinefit(tracked3D.x,tracked3D.y,num_nodes,'r');
+switch mode
+    case 'full'
+        PP = splinefit(tracked3D.x,tracked3D.y,num_nodes,'r');
+        
+        
+        xx = [tracked3D.x(1:end-1);[tracked3D.x(end):node_spacing:(tracked3D.x(end)+node_spacing*extPts)]'];
+        yy = ppval(PP,xx);
+        
+        
+        PP = splinefit(tracked3D.x,tracked3D.z,num_nodes,'r');
+        zz = ppval(PP,xx);
+        wskr3D.x = xx;
+        wskr3D.y = yy;
+        wskr3D.z = zz;
 
+    case 'segment'
+        segment = round(length(tracked3D.x)*(1-segment_length)):length(tracked3D.x)-1;
+        PP = splinefit(tracked3D.x(segment),tracked3D.y(segment),num_nodes,'r');
+        
+        
+        xx = [tracked3D.x(1:end-1);[tracked3D.x(end):node_spacing:(tracked3D.x(end)+node_spacing*extPts)]'];
+        yy = ppval(PP,xx);
+        
+        
+        PP = splinefit(tracked3D.x(segment),tracked3D.z(segment),num_nodes,'r');
+        zz = ppval(PP,xx);
+        
+        wskr3D.x = [tracked3D.x; xx(length(tracked3D.x+1):end)];
+        wskr3D.y = [tracked3D.y; yy(length(tracked3D.y+1):end)];
+        wskr3D.z = [tracked3D.z; zz(length(tracked3D.z+1):end)];
+end
 
-xx = [tracked3D.x(1:end-1);[tracked3D.x(end):node_spacing:(tracked3D.x(end)+node_spacing*extPts)]'];
-yy = ppval(PP,xx);
-
-
-PP = splinefit(tracked3D.x,tracked3D.z,num_nodes,'r');
-zz = ppval(PP,xx);
-
-wskr3D.x = xx;
-wskr3D.y = yy;
-wskr3D.z = zz;
 
 if useFront
     [wskr,~] = BackProject3D(wskr3D,calibInfo(5:8),calibInfo(1:4),calibInfo(9:10));
