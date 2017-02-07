@@ -60,6 +60,10 @@ X = featureScaling(X);
 save(fname_temp,'X','-append')
 % NOW USE PYTHON C FINDING CODE.
 system(['python contactNN.py ' fname_temp]) 
+load(fname_temp,'C')
+
+
+
 %% Find the contact point and extend whisker where needed
 [CPraw,~,t3d] = get3DCP_hough(manip,t3d,calibInfo,C);
 save(fname_temp,'t3d','CPraw','-append')

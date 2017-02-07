@@ -1,4 +1,3 @@
-%%
 function C = getContact_from3D(w,varargin)
 %% function C = getContact_from3D(w,[C],[winsize])
 % takes a 3D whisker structure as input and asks the user to manually find
