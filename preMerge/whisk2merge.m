@@ -50,6 +50,11 @@ switch extT
         If = fVid.getframe();
 end
 
+frame_size_top = size(It);
+frame_size_front = size(If);
+
+assert(all(frame_size_top == frame_size_front),'Videos from Front camera and Top camera do not have the same frame size');
+frame_size = frame_size_top;
 
 %% Trim to the basepoint
 
