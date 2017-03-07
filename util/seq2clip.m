@@ -1,4 +1,4 @@
-function seq2clip(seq_path,avi_path)
+function seq2clip(seq_path,avi_path,step)
 %% function seq2clip(seq_path)
 % takes all the seqs in a path and converts them to clips using the Norpix
 % Batch processor and ffmpeg. This function is pulled from the old

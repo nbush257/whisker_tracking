@@ -10,7 +10,7 @@ function getBPandFol(avi_path)
 % ===================
 % NEB 2017_01_23
 %% 
-avis = dir([avi_path '*.avi']);
+avis = dir([avi_path '\*.avi']);
 avi_name_list = {avis.name};
 TAG_idx = regexp(avi_name_list,'_F\d{6}F\d{6}');
 TAG = {};
