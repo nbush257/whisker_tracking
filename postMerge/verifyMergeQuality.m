@@ -2,7 +2,7 @@
 basename = 'rat2016_45_AUG04_VG_B1_t01';
 f_num = 115155;
 t3d =t3d;
-CP = CPraw;
+CP = CP;
 %% convert f_num to clip read
 close all
 d_vid_front = dir([basename '*Front*.avi']);
@@ -54,21 +54,21 @@ subplot(121)
 imshow(im_t)
 hold on
 % plotv(t+1,'r-.')
-plotv(backproject_top+1,'b-.')
+plotv(backproject_top+1,'b-.');ln2
 
 px = [0;size(im_t,2)];
-py = [manip.Y0_t(f_num);manip.Y1_t(f_num)];
+% py = [manip.Y0_t(f_num);manip.Y1_t(f_num)];
 plot(px,py)
-plotv(CP_t+1,'go')
+plotv(CP_t+1,'ro');ln3
 
 subplot(122)
 imshow(im_f)
 hold on
 % plotv(f+1,'r-.')
 px = [0;size(im_t,2)];
-py = [manip.Y0_f(f_num);manip.Y1_f(f_num)];
+% py = [manip.Y0_f(f_num);manip.Y1_f(f_num)];
 plot(px,py)
-plotv(backproject_front+1,'b-.')
-plotv(CP_f+1,'go')
+plotv(backproject_front+1,'b-.');ln2
+plotv(CP_f+1,'ro');ln3
 
 

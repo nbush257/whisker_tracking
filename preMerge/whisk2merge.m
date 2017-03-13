@@ -74,17 +74,17 @@ clear fW
 fprintf('done.\n')
 fprintf('saving...\n')
 lastFinishedStep = 'bptrim';
-save(outfilename,'tws','fws','lastFinishedStep','frame_size');
+% save(outfilename,'tws','fws','lastFinishedStep','frame_size');
 close all
 %% Smooth basepoint
 fprintf('Smooth basepoint...\n')
 warning('off')
-[fBP,fws] = cleanBP(fws);
-[tBP,tws] = cleanBP(tws);
+[~,fws] = cleanBP(fws);
+[~,tws] = cleanBP(tws);
 warning('on')
 fprintf('saving...\n')
 lastFinishedStep = 'bpsmooth';
-save(outfilename,'-append','tws','fws','lastFinishedStep');
+% save(outfilename,'-append','tws','fws','lastFinishedStep');
 
 %% Smooth whisker shape
 % this step takes forever
@@ -98,5 +98,5 @@ fws = smooth2Dwhisker(fws);
 toc
 lastFinishedStep = 'whisker_smooth';
 fprintf('Saving last step...\n')
-save(outfilename,'-append','tws','fws','lastFinishedStep');
+save(outfilename,'-v7.3','tws','fws','lastFinishedStep','frame_size');
 fprintf('whisk2merge complete!\n')
