@@ -1,5 +1,5 @@
-function [tws,fws] = whisk2merge(tw,fw,tVidName,fVidName,outfilename)
-%% function [tws,fws] = whisk2merge_v2(tw,fw,tVidName,fVidName,outfilename)
+function [tws,fws] = whisk2merge(tw,fw,tVidName,fVidName,mask_struct,outfilename)
+%% function [tws,fws] = whisk2merge_v2(tw,fw,tVidName,fVidName,mask_struct,outfilename)
 % takes relevant whisker and measurement file information to prepare the
 % data for merging.
 % ===========================================================
@@ -9,7 +9,10 @@ function [tws,fws] = whisk2merge(tw,fw,tVidName,fVidName,outfilename)
 %       tVidName - the full file name of an avi from the top video. Used to
 %          get the basepoint position so you can use any video from the set
 %       fVidName - same as tVidName, but front
+%       mask_struct - contains the information about the mask and BP for both views
+%           fields: mask_f, mask_t, BP_f, BP_t
 %       outfilename - filename where the ready to merge data goes.
+%
 %
 % OUTPUTS:
 %       tws - a smoothed version of the top whisker struct
@@ -58,33 +61,25 @@ frame_size = frame_size_top;
 
 %% Trim to the basepoint
 
-[mask_t,BP_t] = getMaskAndBP(It);
-close all force
-[mask_f,BP_f] = getMaskAndBP(If);
-
 fprintf('Trimming top basepoint...')
-tws = applyMaskToWhisker(tw,mask_t);
-[~,tws] = extendBP(tws,BP_t);
+tws = applyMaskToWhisker(tw,mask_struct.top);
+[~,tws] = extendBP(tws,mask_struct.BP_t);
 clear tW
 fprintf('done.\n')
+
 fprintf('Trimming Front basepoint...')
-fws = applyMaskToWhisker(fw,mask_f);
-[~,fws] = extendBP(fws,BP_f);
+fws = applyMaskToWhisker(fw,mask_struct.front);
+[~,fws] = extendBP(fws,mask_struct.BP_f);
 clear fW
 fprintf('done.\n')
-fprintf('saving...\n')
-lastFinishedStep = 'bptrim';
-save(outfilename,'tws','fws','lastFinishedStep','frame_size');
+
 close all
 %% Smooth basepoint
 fprintf('Smooth basepoint...\n')
 warning('off')
-[fBP,fws] = cleanBP(fws);
-[tBP,tws] = cleanBP(tws);
+[~,fws] = cleanBP(fws);
+[~,tws] = cleanBP(tws);
 warning('on')
-fprintf('saving...\n')
-lastFinishedStep = 'bpsmooth';
-save(outfilename,'-append','tws','fws','lastFinishedStep');
 
 %% Smooth whisker shape
 % this step takes forever
@@ -98,5 +93,5 @@ fws = smooth2Dwhisker(fws);
 toc
 lastFinishedStep = 'whisker_smooth';
 fprintf('Saving last step...\n')
-save(outfilename,'-append','tws','fws','lastFinishedStep');
+save(outfilename,'-v7.3','tws','fws','lastFinishedStep','frame_size');
 fprintf('whisk2merge complete!\n')
