@@ -1,4 +1,4 @@
-function [tws,fws] = whisk2merge(tw,fw,tVidName,fVidName,mask_struct,outfilename)
+function [tws,fws] = whisk2merge(tw,fw,frame_size,mask_struct,outfilename)
 %% function [tws,fws] = whisk2merge_v2(tw,fw,tVidName,fVidName,mask_struct,outfilename)
 % takes relevant whisker and measurement file information to prepare the
 % data for merging.
@@ -6,9 +6,7 @@ function [tws,fws] = whisk2merge(tw,fw,tVidName,fVidName,mask_struct,outfilename
 % INPUTS:
 %       tw - the top tracked whisker struct
 %       fw - the front tracked whisker struct
-%       tVidName - the full file name of an avi from the top video. Used to
-%          get the basepoint position so you can use any video from the set
-%       fVidName - same as tVidName, but front
+%       frame_size - size of the video
 %       mask_struct - contains the information about the mask and BP for both views
 %           fields: mask_f, mask_t, BP_f, BP_t
 %       outfilename - filename where the ready to merge data goes.
@@ -24,41 +22,6 @@ lastFinishedStep = '';
 close all
 % start parallel pool if not running
 gcp;
-% get representative images
-[~,~,extT] = fileparts(tVidName);
-[~,~,extF] = fileparts(fVidName);
-
-assert(strcmp(extT,extF),'Video files are not the same type');
-
-switch extT
-    case '.avi'
-        tVid = VideoReader(tVidName);
-        fVid = VideoReader(fVidName);
-        nFramesT = tVid.numberOfFrames;
-        nFramesF = fVid.numberOfFrames;
-        assert(nFramesT==nFramesF,'Number of frames is inconsistent')
-        
-        It = read(tVid,round(nFramesT/2));
-        If = read(fVid,round(nFramesT/2));
-        
-    case '.seq'
-        tVid = seqIo(tVidName,'r');
-        fVid = seqIo(fVidName,'r');
-        nFramesT = tVid.numFrames;
-        nFramesF = fVid.numFrames;
-        assert(nFramesT==nFramesF,'Number of frames is inconsistent')
-        tVid.seek(round(nFramesT/2));
-        fVid.seek(round(nFramesT/2));
-        It = tVid.getframe();
-        If = fVid.getframe();
-end
-
-frame_size_top = size(It);
-frame_size_front = size(If);
-
-assert(all(frame_size_top == frame_size_front),'Videos from Front camera and Top camera do not have the same frame size');
-frame_size = frame_size_top;
-
 %% Trim to the basepoint
 
 fprintf('Trimming top basepoint...')
