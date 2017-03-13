@@ -10,7 +10,7 @@ d_names = {d.name};
 
 for ii = 1:length(d)
     load(d(ii).name)
-    whisk2merge(tW,fW,avi_top,avi_front,[d(ii).name(1:27) 'toMerge.mat'],mask_struct);
+    whisk2merge(tW,fW,avi_top,avi_front,mask_struct,[d(ii).name(1:27) 'toMerge.mat']);
     clear mask_struct *W avi_* 
 end
 
