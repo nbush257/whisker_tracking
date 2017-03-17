@@ -11,7 +11,9 @@ optargs(1:numvargs) = varargin;
 %%
 
 close all
-
+figure;
+subplot(3,1,1:2);
+subplot(313);
 onset = find(diff([0;C])==1);
 offset = find(diff([0;C])==-1);
 try
@@ -19,6 +21,7 @@ try
         if strcmp(on_off,'off')
             break
         end
+        subplot(3,1,1:2);
         cla
         start = onset(ii)-winsize;
         stop = onset(ii)+winsize;
@@ -28,16 +31,25 @@ try
         title(title_string);
         [xx,~,but] = ginput(1);
         if isempty(xx) || but==3
+            subplot(313);
+            cla
+            plot(tip_scale(start:stop,:))
+            shadeVector(C(start:stop))
+            title('Previous Contact')
             continue
         end
         
         xx = floor(xx);
-        if C(start+xx)
-            C(onset(ii):xx+start)=0;
+        if C(start+xx-1)
+            C(onset(ii):xx+start-1)=0;
         else
-            C(xx+start:onset(ii))=1;
+            C(xx+start-1:onset(ii))=1;
         end
-        
+        subplot(313);
+        cla
+        plot(tip_scale(start:stop,:))
+        shadeVector(C(start:stop))
+        title('Previous Contact')
         
     end
 catch
@@ -49,6 +61,8 @@ end
 %% offsets
 try
     for ii = start_deflection:length(offset)
+        subplot(3,1,1:2);
+        
         cla
         start = offset(ii)-winsize;
         stop = offset(ii)+winsize;
@@ -58,6 +72,11 @@ try
         title(title_string);
         [xx,~,but] = ginput(1);
         if isempty(xx) || but==3
+            subplot(313);
+            cla
+            plot(tip_scale(start:stop,:))
+            shadeVector(C(start:stop))
+            title('Previous Contact')
             continue
         end
         
@@ -67,7 +86,11 @@ try
         else
             C(offset(ii):xx+start)=1;
         end
-        
+        subplot(313);
+        cla
+        plot(tip_scale(start:stop,:))
+        shadeVector(C(start:stop))
+        title('Previous Contact')
     end
 catch
     fprintf(repmat('=',20,1))
