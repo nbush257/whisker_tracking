@@ -33,22 +33,16 @@ for ii = 1:3
     tip_clean(:,ii) = scale(tip_clean(:,ii));
 end
 % get first point
-if ~any(C)
-    zoom on
-    title('click on first contact frame')
-    pause
-    [xInit,~] = ginput(1);
-    starts = round(xInit);
-end
-close all
+plot(tip_clean)
+zoom on
+title('click on first contact frame')
+pause
+[xInit,~] = ginput(1);
+starts = round(xInit);
+C(1:starts) = 0;
 
 %% Manual input
 close all
-
-% init windowing
-if numvargs >= 1 && sum(C)>0
-    starts = find(C,1,'last');
-end
 
 stops = winsize+starts;
 
@@ -69,7 +63,7 @@ try
         % stay on this window until no inputs.
         while ~isempty(x)
             clf
-            plot(tip_clean(starts:stops,:),'k.-','linewidth',2);
+            plot(tip_clean(starts:stops,:));
             shadeVector(C(starts:stops))
             
             % get user inputs

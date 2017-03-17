@@ -11,7 +11,7 @@ function tip = getTip(varargin)
 if length(varargin) == 1 
     if isstr(varargin{1}) & exist(varargin{1},'file')
         mode = 'file_append';
-        fname = varargin{1}
+        fname = varargin{1};
     elseif isstruct(varargin{1}) & isfield(varargin{1},'z')
         mode = '3D_workspace';
         t3d = varargin{1};
@@ -20,7 +20,7 @@ if length(varargin) == 1
     end
     
 elseif length(varargin) == 2
-    if istruct(varargin{1}) & isstruct(varargin{2})
+    if isstruct(varargin{1}) & isstruct(varargin{2})
         mode = '2D_workspace';
         fw = varargin{1};
         tw = varargin{2};

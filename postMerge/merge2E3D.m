@@ -18,15 +18,19 @@ clearvars -except tracked_3D manip calibInfo C
 if ~exist('C','var')
     C = false(length(tracked_3D),1);
 end
-
-fname = []; % either manually give the output name here, or in a uinput
-p1 = pwd;
 %%
+fname = '/media/nbush257/GanglionData/rat2016_45_AUG04_VG_B1_t01_toE3D'; % either manually give the output name here, or in a uinput
+
 if isempty(fname)
     fname = input('Type the filename you want to save the data to.','s');
-end
-fname_temp = [p1 '\' fname '_temp.mat'];
+    p1 = pwd;
+    fname_temp = [p1 '\' fname '_temp.mat'];
+else
+    fname_temp = [fname '_temp.mat'];
 
+end
+%% get manipulator from tracked mat files
+manip = reformatManip();
 %% start parallel pool
 gcp
 
@@ -40,10 +44,10 @@ t3d = smooth3DWhisker(t3d,'linear');
 save(fname_temp,'t3d','calibInfo')
 
 %% get contact manually
-tip_clean = clean3D_tip(t3d);
+tip = clean3D_tip(t3d);
 bsStim = basisFactory.makeNonlinearRaisedCos(8,1,[0 50],1);
-X = basisFactory.convBasis(tip_clean,bsStim);
-X2 = basisFactory.convBasis(flipud(tip_clean),bsStim);
+X = basisFactory.convBasis(tip,bsStim);
+X2 = basisFactory.convBasis(flipud(tip),bsStim);
 X2 = flipud(X2);
 X = [X X2];
 X_d = nan(size(X));
@@ -57,10 +61,14 @@ X(end-149:end,:) = repmat(nanmean(X),150,1);
 
 X = featureScaling(X);
 
-save(fname_temp,'X','-append')
+save(fname_temp,'X','tip','-append')
 % NOW USE PYTHON C FINDING CODE.
-system(['python contactNN.py ' fname_temp]) 
-load(fname_temp,'C')
+%system(['python contactNN.py ' fname_temp]) 
+%%
+load(fname_temp,'C','tip_scale')
+C = medfilt1(C,3);
+
+C = logical(C);
 
 % manually clean the contact variable
 C = getContact_from3D(t3d,C);
