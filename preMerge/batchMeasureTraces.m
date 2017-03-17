@@ -14,7 +14,7 @@ for ii = 1:length(d)
         
         classifyStr = sprintf('classify %s %s %i %i %s --px2mm .04 --follicle %i -n %i',measurementsFileName,measurementsFileName,bp(1),bp(2),direction,fol,n);
         reclassifyStr = sprintf('reclassify %s %s -n %i',measurementsFileName,measurementsFileName,n);
-        
+
         system(classifyStr);
         system(reclassifyStr);
     end

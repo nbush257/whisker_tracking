@@ -45,6 +45,7 @@ if any(isnan(BPf2(1,:)))
 end
 pos = naninterp(BPf2);
 
+BPout = pos;
 
 %% Kalman Filter
 if kalman_TGL
