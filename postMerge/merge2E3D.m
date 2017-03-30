@@ -41,6 +41,10 @@ fname_out = [tracked3D_fname(1:regexp(tracked3D_fname,'_t\d\d_','end')) 'toE3D.m
 
 fname_out_temp = [fname_out(1:end-4) '_temp.mat'];
 
+
+end
+%% get manipulator from tracked mat files
+manip = reformatManip();
 %% start parallel pool
 gcp
 
@@ -55,7 +59,6 @@ t3d = rmPt3DWhisker(t3d);
 % disp('Smoothing 3D whisker...')
 t3d = smooth3DWhisker(t3d,'spline',5);
 save(fname_temp,'t3d','calibInfo')
-
 
 %% Find the contact point and extend whisker where needed
 t3d = makeColumnVectorStruct(t3d);

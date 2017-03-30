@@ -47,17 +47,8 @@ for ii = 1:length(d)
         warning('Mask and BP already found in file %s',d(ii).name)
     end
     %% get the framesize
-    frame_size_top = size(It);
-    frame_size_front = size(If);
-    try
-        assert(all(frame_size_top == frame_size_front),'Videos from Front camera and Top camera do not have the same frame size');
-        frame_size = frame_size_top;
-    catch
-        frame_size = [];
-    end
-    
-        
-        
+    frame_size.top = size(It);
+    frame_size.front = size(If);
     
     %% save the outputs
     
