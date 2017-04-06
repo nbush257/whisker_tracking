@@ -55,6 +55,7 @@ tic
 fws = smooth2Dwhisker(fws);
 toc
 lastFinishedStep = 'whisker_smooth';
-fprintf('Saving last step...\n')
+pwd
+fprintf('Saving last step %s ...\n',outfilename)
 save(outfilename,'-v7.3','tws','fws','lastFinishedStep','frame_size');
 fprintf('whisk2merge complete!\n')
