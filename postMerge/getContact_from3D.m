@@ -1,4 +1,3 @@
-%%
 function C = getContact_from3D(w,varargin)
 %% function C = getContact_from3D(w,[C],[winsize])
 % takes a 3D whisker structure as input and asks the user to manually find
@@ -29,43 +28,23 @@ close all
 %get a smoothed estimate of tip position
 tip_clean = clean3D_tip(w);
 
-% decompose the tip location into a 1D vector.
-[~,b] = pca(featureScaling(tip_clean));
-bb = b(:,1);
-
-
 %
 for ii = 1:3
     tip_clean(:,ii) = scale(tip_clean(:,ii));
 end
-f = figure;
-f.Units = 'normalized';
-f.Position = [0 0 1 1];
-plot(tip_clean)
 % get first point
-if ~any(C)
-    zoom on
-    title('click on first contact frame')
-    pause
-    [xInit,~] = ginput(1);
-    starts = round(xInit);
-end
-close all
-% this might need fixing. It is a workaround to make everythin positive
-% [~,y] = ginput(1);
-% bb = abs(b(:,1)-y);
+plot(tip_clean)
+zoom on
+title('click on first contact frame')
+pause
+[xInit,~] = ginput(1);
+starts = round(xInit);
+C(1:starts) = 0;
+
 %% Manual input
 close all
 
-% init windowing
-if numvargs >= 1 && sum(C)>0
-    starts = find(C,1,'last');
-end
-
 stops = winsize+starts;
-f = figure;
-f.Units = 'normalized';
-f.Position = [0 0 1 1];
 
 
 %try statement so that you don't lose all your work if something stupid
@@ -84,7 +63,7 @@ try
         % stay on this window until no inputs.
         while ~isempty(x)
             clf
-            plot(tip_clean(starts:stops,:),'k.-','linewidth',2);
+            plot(tip_clean(starts:stops,:));
             shadeVector(C(starts:stops))
             
             % get user inputs

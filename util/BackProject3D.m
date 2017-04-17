@@ -1,22 +1,22 @@
 function [frontWhskr,topWhskr] = BackProject3D(Whskr,A_camera,B_camera,A2B_transform)
 %% function [frontWhskr,topWhskr] = BackProject3D(Whskr,A_camera,B_camera,A2B_transform)
-
+% assumes left is front camera
 % A_camera = {fc_left,cc_left,kc_left,alpha_c_left};
 % B_camera= {fc_right,cc_right,kc_right,alpha_c_right};
 % A2B_transform = {om,T};
 
 for ii = 1:length(Whskr.x)
     % Compute Camera A projection
-    [topWhskr(ii,1),topWhskr(ii,2)] = Get_3DtoCameraProjection(Whskr.x(ii),Whskr.y(ii),Whskr.z(ii), ...
-        'proj',B_camera);
+    [frontWhskr(ii,1),frontWhskr(ii,2)] = Get_3DtoCameraProjection(Whskr.x(ii),Whskr.y(ii),Whskr.z(ii), ...
+        'proj',A_camera);
     
     % Convert 3D point in A coordinate frame to B coordinate frame
     % ->  Y = rigid_motion(X,om,T)
     r = rigid_motion([Whskr.x(ii),Whskr.y(ii),Whskr.z(ii)]',A2B_transform{1},A2B_transform{2});
     
     % Compute Camera B projection
-    [frontWhskr(ii,1),frontWhskr(ii,2)] = Get_3DtoCameraProjection(r(1),r(2),r(3), ...
-        'proj',A_camera);
+    [topWhskr(ii,1),topWhskr(ii,2)] = Get_3DtoCameraProjection(r(1),r(2),r(3), ...
+        'proj',B_camera);
     
     % % REF output
     % REF.bp_Ap = [uf;vf];

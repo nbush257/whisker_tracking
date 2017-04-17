@@ -25,7 +25,7 @@ function [wOut,coefs] = smooth3DWhisker(wIn,varargin)
 
 %           [extend] - Tells splinefit how much to extend the whisker by
 %               (as a percentage of the x coordinate extent). e.g. .1 extends
-%               the whisker by 10%. Default is 0.1
+%               the whisker by 10%. Default is 0.0
 % OUTPUTS:
 %           wOut - a 3D whisker structure that has been smoothed
 % =======================================
@@ -37,14 +37,15 @@ gcp;
 
 numvargs = length(varargin);
 % set defaults
-optargs = {'spline', 4, 0.1};
+optargs = {'spline', 4, 0.0};
 % overwrite user supplied args
 optargs(1:numvargs) = varargin;
 [mode,numNodes,extend] = optargs{:};
 coefs = nan(length(wIn),2*numNodes^2);
 wOut = wIn;
-fprintf('Smoothing using method: %s%n',mode)
-if strcmp(mode,'spline');fprintf('%t Num Nodes: %i',numNodes);end
+fprintf('Smoothing using method: %s\n',mode)
+if strcmp(mode,'spline');fprintf('\t Num Nodes: %i\n',numNodes);end
+pause(.1)
 %% Loop over frames
 parfor ii = 1:length(wIn)
     
@@ -83,9 +84,9 @@ parfor ii = 1:length(wIn)
                 yIn = yIn';
                 zIn = zIn';
             end
-            PP = splinefit(xIn(1:end-2),[yIn(1:end-2);zIn(1:end-2)],numNodes,.8,'r');
+            PP = splinefit(xIn(1:end-2),[yIn(1:end-2);zIn(1:end-2)],numNodes,.5,'r');
 %             coefs(ii,:) = PP.coefs(:);
-            xx = min(wIn(ii).x):.1:(max(wIn(ii).x))+abs(extend*max(wIn(ii).x));
+            xx = min(wIn(ii).x):.5:(max(wIn(ii).x))+abs(extend*max(wIn(ii).x));
             pts = ppval(PP,xx);
             wOut(ii).x = xx;
             wOut(ii).y = pts(1,:);
