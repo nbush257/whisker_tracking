@@ -27,13 +27,13 @@ gcp;
 fprintf('Trimming top basepoint...')
 tws = applyMaskToWhisker(tw,mask_struct.top);
 [~,tws] = extendBP(tws,mask_struct.BP_t);
-clear tW
+clear tw
 fprintf('done.\n')
 
 fprintf('Trimming Front basepoint...')
 fws = applyMaskToWhisker(fw,mask_struct.front);
 [~,fws] = extendBP(fws,mask_struct.BP_f);
-clear fW
+clear fw
 fprintf('done.\n')
 
 close all
