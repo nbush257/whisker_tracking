@@ -26,7 +26,7 @@ function [smoothed,PP] = smooth2Dwhisker(wStruct,varargin)
 
 narginchk(1,3)
 numvargs = length(varargin);
-optargs = {'splinefit',0};
+optargs = {'linear',0};
 optargs(1:numvargs) = varargin;
 [method,extend] = optargs{:};
 
@@ -39,7 +39,7 @@ PP(length(wStruct)+1) = splinefit(1:10,1:10,6,'r');
 % PP = PP(length(wStruct));
 
 %% smooth in a parallel loop over each frame.
-parfor ii = 1:length(wStruct)
+for ii = 1:length(wStruct)
     if isempty(wStruct(ii).x) || length(wStruct(ii).x)<lenThresh
         smoothed(ii).x = [];
         smoothed(ii).y = [];
