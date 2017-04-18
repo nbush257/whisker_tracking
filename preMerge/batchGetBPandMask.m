@@ -51,8 +51,7 @@ for ii = 1:length(d)
     clear frame_size
     frame_size.top = size(It);
     frame_size.front = size(If);
-        
-        
+
     
     %% save the outputs
     

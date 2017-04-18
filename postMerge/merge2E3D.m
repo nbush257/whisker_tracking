@@ -1,5 +1,9 @@
+function merge2E3D(tracked3D_fname,front_manip_fname,top_manip_fname)
 %% Merge2E23D
 % ===========================
+% THIS VERSION IS OPTIMIZED FOR RUNNING IMMEDIATELY AFTER MERGING ON QUEST.
+% ===========================
+%
 % This is a simple, step by step 'README' like script. You should load in a
 % file that has the following variables:
 %
@@ -14,25 +18,33 @@
 % ============================
 % NEB 2016_07_07
 %% init workspace 
-clearvars -except tracked_3D manip calibInfo C frame_size
+load(tracked3D_fname);
+manip = reformatManip(front_manip_fname,top_manip_fname);
 
-C(isnan(C)) = 0;
+assert(isstruct('tracked_3D','var'),'No 3D whisker found');
+assert(exist('C','var'),'No contact variable found');
+assert(iscell('calibInfo'),'No calibration info found');
+assert(exist('frame_size','var'),'No frame size found; please save information about frame when tracking 3D');
+
+assert(length(tracked_3D)==length(C),'Contact variable and 3D whisker do not have the same number of frames')
+assert(~any(isnan(C)),'Contact variable has NaNs, make sure it was computed correctly')
+
+
 C = logical(C);
-assert(isvector(C));
+assert(isvector(C), 'Contact variable is not a vector');
+% Make C a column vector
 C = C(:);
 
-if ~exist('C','var')
-    C = false(length(tracked_3D),1);
-end
 
-fname = []; % either manually give the output name here, or in a uinput
-p1 = pwd;
-%%
-if isempty(fname)
-    fname = input('Type the filename you want to save the data to.','s');
-end
-fname_temp = [p1 '\' fname '_temp.mat'];
+%% get output filename
+fname_out = [tracked3D_fname(1:regexp(tracked3D_fname,'_t\d\d_','end')) 'toE3D.mat'];
 
+fname_out_temp = [fname_out(1:end-4) '_temp.mat'];
+
+
+end
+%% get manipulator from tracked mat files
+manip = reformatManip();
 %% start parallel pool
 gcp
 
@@ -47,7 +59,6 @@ t3d = rmPt3DWhisker(t3d);
 % disp('Smoothing 3D whisker...')
 t3d = smooth3DWhisker(t3d,'spline',5);
 save(fname_temp,'t3d','calibInfo')
-
 
 %% Find the contact point and extend whisker where needed
 t3d = makeColumnVectorStruct(t3d);
@@ -69,34 +80,8 @@ zw3d = {t3d.z};
 
 % extract the basepoint
 BP = get3DBP(t3d);
-save(fname_temp)
-
 %% Output
-%% GET REF
-
 save(fname,'*w3d','CP','BP','C')
 delete(fname_temp)
-%% data QC
-figure
-for ii = find(C,1):10:length(t3d)
-    ho
-    cla
-    plot3(tracked_3D(ii).x,tracked_3D(ii).y,tracked_3D(ii).z,'k.-')
-    
-    plot3(xw3d{ii},yw3d{ii},zw3d{ii},'.','color','c')
-    
-    plot3(CP(ii,1),CP(ii,2),CP(ii,3),'r*')
-    
-    plot3(BP(ii,1),BP(ii,2),BP(ii,3),'b^')
-  
-    grid on
-    axis equal
-      axx(-60,0)
-    axy(5,35)
-    axz(410,460)
-    drawnow
-    
-    
-end
 
 
