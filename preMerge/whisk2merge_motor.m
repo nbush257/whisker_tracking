@@ -18,16 +18,16 @@ tws = sort2Dwhisker(tws,'y');
 fws = sort2Dwhisker(fws,'x');
 
 %%
-fprintf('Smooth basepoint...\n')
-warning('off')
-[~,fws] = cleanBP(fws);
-[~,tws] = cleanBP(tws);
-warning('on')
+% fprintf('Smooth basepoint...\n')
+% warning('off')
+% [~,fws] = cleanBP(fws);
+% [~,tws] = cleanBP(tws);
+% warning('on')
 
 %% Smooth whisker shape
 % this step takes forever
 fprintf('Smoothing the top whisker...\n')
-tws = smooth2Dwhisker(tws);
+tws = smooth2Dwhisker(tws,'linear','v');
 
 fprintf('Smoothing the front whisker...\n')
 fws = smooth2Dwhisker(fws);
