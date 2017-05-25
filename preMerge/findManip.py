@@ -1,5 +1,7 @@
 import pims
 import numpy as np
+import matplotlib
+matplotlib.use('GTkAgg')
 import matplotlib.pyplot as plt
 from skimage.transform import (hough_line, hough_line_peaks)
 
@@ -7,9 +9,9 @@ from skimage.filters import canny
 from skimage.draw import circle, polygon
 import scipy.io.matlab as sio
 from os.path import isfile
+import os
 from sys import stdout
 import sys
-
 
 def manualTrack(image, bckMean, idx=-1, plotTGL=0):
     contrast = 25
@@ -28,7 +30,8 @@ def manualTrack(image, bckMean, idx=-1, plotTGL=0):
         stopTrack = True
         return y0, y1, thetaInit, d, stopTrack
     else:
-        plt.show()
+        plt.draw()
+        plt.pause(.001)
 
         roiRow, roiCol = circle(manip[0, 1], manip[0, 0], 30)
         # make sure the roi is not too big
@@ -122,7 +125,6 @@ def sanityCheck(y0, y1, image, frameNum=0):
 
 def frameSeek(fid, idx, Y0=[], Y1=[],notTracked=[]):
     nFrames= len(fid)
-
     plt.cla()
     # If you have given a bool vector of frames that have not been tracked, skips the manual portion and goes to the next untracked frame
     if len(notTracked) > 0:
@@ -148,6 +150,7 @@ def frameSeek(fid, idx, Y0=[], Y1=[],notTracked=[]):
         plt.plot((0, cols), (Y0[idx], Y1[idx]), '-r')
     plt.title('Frame: %i' % idx)
     plt.draw()
+    plt.pause(0.001)
 
     while not cont:
         while True:
@@ -209,6 +212,7 @@ def frameSeek(fid, idx, Y0=[], Y1=[],notTracked=[]):
 
         plt.title('Frame: %i' % idx)
         plt.draw()
+        plt.pause(0.001)
 
     return idx
 
@@ -220,11 +224,14 @@ def getMask(image):
     plt.gca().invert_yaxis()
 
     plt.title('Outline the Mask.')
+    plt.draw()
+    plt.pause(0.001)
 
     ii = 0
     pts = np.asarray(plt.ginput(1))[0]
     plt.plot(pts[0], pts[1], 'r*')
     plt.draw()
+    plt.pause(.01)
     cont = True
     while cont:
         ii += 1
@@ -261,18 +268,21 @@ def trackFirstView(fname):
     plt.close('all')
     contrast = 25
     outFName = fname[:-4] + '_manip.mat'
+    fname_ext = os.path.splitext(fname)[-1]
 
-    if fname_ext == 'seq':
+    print 'Loading Video...'
+
+    if fname_ext == '.seq':
         fid = pims.NorpixSeq(fname)
         nFrames = fid.header_dict['allocated_frames']
         ht = fid.height
         wd = fid.width
     else:
         fid = pims.Video(fname)
-        ht = fid.frame_shape[0]
         ht = fid.frame_shape[1]
+        wd = fid.frame_shape[0]
         nFrames= len(fid)
-
+    print 'Loaded!'
 
     print 'ht: %i \nwd: %i \nNumber of Frames: %i' % (ht, wd, nFrames)
     # init output vars
@@ -319,7 +329,7 @@ def trackFirstView(fname):
                 outFName = fname[:-4] + '_manip(%i).mat' % suffix
     else:
         notTracked = np.ones(nFrames,dtype='bool')
-        idx = frameSeek(fid, 0)
+        idx = frameSeek(fid, 0,notTracked=np.ones(nFrames,dtype='bool'))
 
     # Get your image
     image = fid.get_frame(idx)
@@ -472,7 +482,8 @@ def trackSecondView(fname, otherView):
         return
 
     # Load data files
-    if fname_ext == 'seq':
+    print 'Loading Video...'
+    if fname_ext == '.seq':
         fid = pims.NorpixSeq(fname)
         nFrames = fid.header_dict['allocated_frames']
         ht = fid.height
@@ -480,8 +491,9 @@ def trackSecondView(fname, otherView):
     else:
         fid = pims.Video(fname)
         ht = fid.frame_shape[0]
-        ht = fid.frame_shape[1]
+        wd = fid.frame_shape[1]
         nFrames= len(fid)
+    print 'Video Loaded!'
 
     f_previous_track = sio.loadmat(otherView, squeeze_me=True, variable_names='D')
     tracked_previous_view = np.isfinite(f_previous_track['D'])
@@ -644,5 +656,5 @@ def trackSecondView(fname, otherView):
 if __name__ == '__main__':
     if len(sys.argv)==2:
         trackFirstView(sys.argv[1])
-    elif len(sys.argv)==2:
+    elif len(sys.argv)==3:
         trackSecondView(sys.argv[1], sys.argv[2])
