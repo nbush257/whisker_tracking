@@ -8,6 +8,7 @@ from skimage.draw import circle, polygon
 import scipy.io.matlab as sio
 from os.path import isfile
 from sys import stdout
+import sys
 
 
 def manualTrack(image, bckMean, idx=-1, plotTGL=0):
@@ -120,7 +121,8 @@ def sanityCheck(y0, y1, image, frameNum=0):
 
 
 def frameSeek(fid, idx, Y0=[], Y1=[],notTracked=[]):
-    nFrames = fid.header_dict['allocated_frames']
+    nFrames= len(fid)
+
     plt.cla()
     # If you have given a bool vector of frames that have not been tracked, skips the manual portion and goes to the next untracked frame
     if len(notTracked) > 0:
@@ -132,7 +134,11 @@ def frameSeek(fid, idx, Y0=[], Y1=[],notTracked=[]):
         idx = nFrames - 1
         print 'Reached the end of the video'
     cont = False
+
     image = fid.get_frame(idx)
+    if len(image.shape) == 3:
+        image = image[:,:,0]
+
     rows, cols = image.shape
 
     plt.imshow(image, cmap='gray')
@@ -191,6 +197,9 @@ def frameSeek(fid, idx, Y0=[], Y1=[],notTracked=[]):
             break # break the while loop to update the image
 
         image = fid.get_frame(idx)
+        if len(image.shape) == 3:
+            image = image[:,:,0]
+
         plt.cla()
         plt.imshow(image, cmap='gray')
         plt.axis([0, cols, 0, rows])
@@ -253,10 +262,18 @@ def trackFirstView(fname):
     contrast = 25
     outFName = fname[:-4] + '_manip.mat'
 
-    fid = pims.open(fname)
-    nFrames = fid.header_dict['allocated_frames']
-    ht = fid.height
-    wd = fid.width
+    if fname_ext == 'seq':
+        fid = pims.NorpixSeq(fname)
+        nFrames = fid.header_dict['allocated_frames']
+        ht = fid.height
+        wd = fid.width
+    else:
+        fid = pims.Video(fname)
+        ht = fid.frame_shape[0]
+        ht = fid.frame_shape[1]
+        nFrames= len(fid)
+
+
     print 'ht: %i \nwd: %i \nNumber of Frames: %i' % (ht, wd, nFrames)
     # init output vars
     D = np.empty(nFrames, dtype='float32')
@@ -306,6 +323,8 @@ def trackFirstView(fname):
 
     # Get your image
     image = fid.get_frame(idx)
+    if len(image.shape) == 3:
+        image = image[:,:,0]
 
     # if there is not a precomputed mask, get one now
     if len(mask) == 0:
@@ -327,7 +346,11 @@ def trackFirstView(fname):
     while idx < nFrames:
         try:
             manTrack = False
+            
             image = fid.get_frame(idx)
+            if len(image.shape) == 3:
+                image = image[:,:,0]
+
             image[~mask] = 255
             BW = getBW(y0, y1, image)
             T = BW < (b - contrast)
@@ -356,6 +379,8 @@ def trackFirstView(fname):
 
                 Y0, Y1, Th, D = eraseFuture(Y0, Y1, Th, D, idx)
                 image = fid.get_frame(idx)
+                if len(image.shape) == 3:
+                    image = image[:,:,0]
                 manTrack = True
                 y0, y1, th, d, stopTrack = manualTrack(image, b, idx=idx, plotTGL=0)
 
@@ -371,6 +396,8 @@ def trackFirstView(fname):
             mask = getMask(image)
             b = getBckgd(image)
             image = fid.get_frame(idx)
+            if len(image.shape) == 3:
+                image = image[:,:,0]
             y0, y1, th, d, stopTrack = manualTrack(image, b, idx=idx, plotTGL=0)
 
 
@@ -445,15 +472,20 @@ def trackSecondView(fname, otherView):
         return
 
     # Load data files
-    fid = pims.open(fname)
+    if fname_ext == 'seq':
+        fid = pims.NorpixSeq(fname)
+        nFrames = fid.header_dict['allocated_frames']
+        ht = fid.height
+        wd = fid.width
+    else:
+        fid = pims.Video(fname)
+        ht = fid.frame_shape[0]
+        ht = fid.frame_shape[1]
+        nFrames= len(fid)
+
     f_previous_track = sio.loadmat(otherView, squeeze_me=True, variable_names='D')
     tracked_previous_view = np.isfinite(f_previous_track['D'])
 
-    # Init Vars
-
-    nFrames = fid.header_dict['allocated_frames']
-    ht = fid.height
-    wd = fid.width
     print 'ht: %i \nwd: %i \nNumber of Frames: %i' % (ht, wd, nFrames)
     # init output vars
     D = np.empty(nFrames, dtype='float32')
@@ -510,6 +542,8 @@ def trackSecondView(fname, otherView):
 
     # Get your image
     image = fid.get_frame(idx)
+    if len(image.shape) == 3:
+        image = image[:,:,0]
 
     # if there is not a precomputed mask, get one now
     if len(mask) == 0:
@@ -529,11 +563,15 @@ def trackSecondView(fname, otherView):
             man_track = True
             idx += int(np.where(not_tracked_either_view[idx:])[0][0])
             image = fid.get_frame(idx)
+            if len(image.shape) == 3:
+                image = image[:,:,0]
             sio.savemat(outFName, {'D': D, 'Y0': Y0, 'Th': Th, 'Y1': Y1, 'mask': mask, 'b': b,'not_tracked_either_view':not_tracked_either_view})
             y0, y1, th, d, stopTrack = manualTrack(image, b, idx=idx, plotTGL=0)
         else:# if the current frame has not been tracked, track it
             man_track = False
             image = fid.get_frame(idx)
+            if len(image.shape) == 3:
+                image = image[:,:,0]
             image[~mask] = 255
             BW = getBW(y0, y1, image)
             T = BW < (b - contrast)
@@ -570,6 +608,8 @@ def trackSecondView(fname, otherView):
             Y0, Y1, Th, D = eraseFuture(Y0, Y1, Th, D, idx)
 
             image = fid.get_frame(idx)
+            if len(image.shape) == 3:
+                image = image[:,:,0]
             man_track = True
             y0, y1, th, d, stopTrack = manualTrack(image, b, idx=idx, plotTGL=0)
 
@@ -601,3 +641,8 @@ def trackSecondView(fname, otherView):
     sio.savemat(outFName, {'D': D, 'Y0': Y0, 'Th': Th, 'Y1': Y1, 'mask': mask, 'b': b,'not_tracked_either_view':not_tracked_either_view})
     plt.close('all')
 
+if __name__ == '__main__':
+    if len(sys.argv)==2:
+        trackFirstView(sys.argv[1])
+    elif len(sys.argv)==2:
+        trackSecondView(sys.argv[1], sys.argv[2])
