@@ -4,7 +4,7 @@ import scipy.io.matlab as sio
 import sys
 from keras.models import Sequential
 from keras.layers import Dense,Convolution1D,Dropout,MaxPooling1D,AtrousConv1D,Flatten,AveragePooling1D,UpSampling1D
-from keras.layers.recurrent import GRU
+from keras.layers.recurrent import LSTM
 from keras.callbacks import EarlyStopping
 from keras.regularizers import l2,l1
 from keras.models import model_from_json
@@ -17,7 +17,7 @@ import sys
 def make_conv_mdl(X, 
     filter_length=8,
     n_layers=10,
-    penalty=0,
+    penalty=0.,
     nb_filter=16,
     nb_fully_connected=256,
     drop_pct=0.2,
@@ -78,6 +78,26 @@ def make_tensor(timeseries, window_size=16):
     for ii in xrange(window_size,timeseries.shape[0]-window_size):
         X[ii,:,:] = timeseries[ii-window_size:ii+window_size,:]
     return X
+
+def make_RNN(X,nb_units=64,penalty=0.,drop_pct=0.):
+    input_shape = X.shape[1:3]
+    model = Sequential()
+
+    for ii in xrange(n_layers):
+        model.add(LSTM(nb_units,input_shape=input_shape,recurrent_activation='relu'))
+        model.add(Dense(nb_units,activation='relu',kernel_regularizer=l2(penalty)))
+    
+    model.add(Dense(nb_units,activation='relu'))
+    model.add(Dropout(drop_pct))
+
+
+    model.add(Dense(1, activation='sigmoid'))
+    # model.compile(loss='mse', optimizer='adam', metrics=['mae'])
+    # To perform (binary) classification instead:
+    model.compile(loss='binary_crossentropy',
+                  optimizer='rmsprop',
+                  metrics=['accuracy'])
+    return model
 
 
 def fit(X,C,mdl,epochs=2,batch_size=128,validation_split=0.0):
