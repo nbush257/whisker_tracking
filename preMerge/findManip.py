@@ -223,27 +223,10 @@ def getMask(image):
     plt.axis([0, cols, 0, rows])
     plt.gca().invert_yaxis()
 
-    plt.title('Outline the Mask.')
+    plt.title('Outline the Mask. Left to add, right to remove, middle to continue')
     plt.draw()
     plt.pause(0.001)
-
-    ii = 0
-    pts = np.asarray(plt.ginput(1))[0]
-    plt.plot(pts[0], pts[1], 'r*')
-    plt.draw()
-    plt.pause(.01)
-    cont = True
-    while cont:
-        ii += 1
-        pt = np.asarray(plt.ginput(1))
-        if len(pt) == 0:
-            cont = False
-        else:
-            pt = pt[0]
-            pts = np.vstack([pts, pt])
-            plt.plot(pt[0], pt[1], 'r*')
-            plt.draw()
-    print 'Calculating mask'
+    pts = np.asarray(plt.ginput(-1,timeout=0,show_clicks=True))
     rr, cc = polygon(pts[:, 1], pts[:, 0], (rows, cols))
     mask = np.zeros_like(image, dtype='bool')
     mask[rr, cc] = 1
