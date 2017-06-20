@@ -49,7 +49,6 @@ def create_basic_conv_model(x):
     model.fit(X,C,epochs=5,batch_size=32,validation_split=0.33)
     return model
 
-
 def make_conv_mdl(X, 
     filter_length=8,
     n_layers=10,
@@ -124,12 +123,6 @@ def make_conv_mdl(X,
                   optimizer='rmsprop',
                   metrics=['accuracy'])
     return model
-def make_merge_mdl(X)
-    num_feats = X.shape[-1]
-    for ii in xrange(num_feats):
-        x = X[:,:,ii]
-        model[ii] =create_basic_conv_model(x)
-
 
 def make_tensor(timeseries, window_size=16):
     X = np.empty((timeseries.shape[0],window_size*2,timeseries.shape[-1]))
