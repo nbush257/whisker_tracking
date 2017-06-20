@@ -12,6 +12,7 @@ from sklearn.preprocessing import scale, Imputer
 from scipy.signal import detrend
 import scipy.signal as signal
 import sys
+from keras.layers.wrappers import Bidirectional
 
 
 def make_conv_mdl(X, 
@@ -21,43 +22,160 @@ def make_conv_mdl(X,
     nb_filter=16,
     nb_fully_connected=256,
     drop_pct=0.2,
-    pool_length=3,
+    pool_size=3,
     ):
     
     input_shape = X.shape[1:3]
     model = Sequential()
 
-    for ii in xrange(n_layers):
-        model.add(
-            Convolution1D(
-                filters=nb_filter,
-                kernel_size=filter_length, 
-                padding='same',
-                input_shape=input_shape,
-                kernel_regularizer=l2(penalty),
-                activation='relu'
-            )
+    # for ii in xrange(n_layers):
+    nb_filter = 16
+    filter_length=64
+    model.add(
+        Convolution1D(
+            filters=nb_filter,
+            kernel_size=filter_length, 
+            padding='same',
+            input_shape=input_shape,
+            kernel_regularizer=l2(penalty)
         )
-        
-        model.add(
-            Convolution1D(
-                filters=nb_filter,
-                kernel_size=filter_length, 
-                padding='same',
-                input_shape=input_shape,
-                kernel_regularizer=l2(penalty),
-                activation='relu'
-            )
+    )
+    
+    model.add(
+        Convolution1D(
+            filters=nb_filter,
+            kernel_size=filter_length, 
+            padding='same',
+            kernel_regularizer=l2(penalty)
         )
-        
+    )
+    
 
-        model.add(
-            MaxPooling1D(
-                pool_size=pool_length,
-                strides=1,
-                padding='same'
-            )
+    model.add(
+        MaxPooling1D(
+            pool_size=pool_size,
+            strides=1,
+            padding='same'
         )
+    )
+# ==================================
+    nb_filter = 32
+    filter_length=32
+    model.add(
+        Convolution1D(
+            filters=nb_filter,
+            kernel_size=filter_length, 
+            padding='same',
+            kernel_regularizer=l2(penalty)
+        )
+    )
+    
+    model.add(
+        Convolution1D(
+            filters=nb_filter,
+            kernel_size=filter_length, 
+            padding='same',
+            kernel_regularizer=l2(penalty)
+        )
+    )
+    
+
+    model.add(
+        MaxPooling1D(
+            pool_size=pool_size,
+            strides=1,
+            padding='same'
+        )
+    )
+# ==================================
+    nb_filter = 64
+    filter_length = 16
+    model.add(
+        Convolution1D(
+            filters=nb_filter,
+            kernel_size=filter_length, 
+            padding='same',
+            kernel_regularizer=l2(penalty)
+        )
+    )
+    
+    model.add(
+        Convolution1D(
+            filters=nb_filter,
+            kernel_size=filter_length, 
+            padding='same',
+            kernel_regularizer=l2(penalty)
+        )
+    )
+    
+
+    model.add(
+        MaxPooling1D(
+            pool_size=pool_size,
+            strides=1,
+            padding='same'
+        )
+    )
+# ==================================
+
+    nb_filter = 128
+    filter_length = 8
+    model.add(
+        Convolution1D(
+            filters=nb_filter,
+            kernel_size=filter_length, 
+            padding='same',
+            kernel_regularizer=l2(penalty)
+        )
+    )
+    
+    model.add(
+        Convolution1D(
+            filters=nb_filter,
+            kernel_size=filter_length, 
+            padding='same',
+            kernel_regularizer=l2(penalty)
+        )
+    )
+    
+
+    model.add(
+        MaxPooling1D(
+            pool_size=pool_size,
+            strides=1,
+            padding='same'
+        )
+    )
+# ===========================
+    nb_filter = 256
+    filter_length = 4
+    model.add(
+        Convolution1D(
+            filters=nb_filter,
+            kernel_size=filter_length, 
+            padding='same',
+            kernel_regularizer=l2(penalty)
+        )
+    )
+    
+    model.add(
+        Convolution1D(
+            filters=nb_filter,
+            kernel_size=filter_length, 
+            padding='same',
+            kernel_regularizer=l2(penalty)
+        )
+    )
+    
+
+    model.add(
+        MaxPooling1D(
+            pool_size=pool_size,
+            strides=1,
+            padding='same'
+        )
+    )
+# ==================================
 
     model.add(Dense(nb_fully_connected,activation='relu'))
     model.add(Dropout(drop_pct))
@@ -79,16 +197,49 @@ def make_tensor(timeseries, window_size=16):
         X[ii,:,:] = timeseries[ii-window_size:ii+window_size,:]
     return X
 
-def make_RNN(X,nb_units=64,penalty=0.,drop_pct=0.):
+def make_tensor_RNN(timeseries,window_size=16):
+    X = np.empty((timeseries.shape[0],window_size,timeseries.shape[-1]))
+    for ii in xrange(window_size,timeseries.shape[0]-window_size):
+        X[ii,:,:] = timeseries[ii-window_size:ii,:]
+    return X
+
+def makeRNN(X,batch_size,n_layers=5,nb_units=64,penalty=0.,drop_pct=0.,pool_size=3):
     input_shape = X.shape[1:3]
     model = Sequential()
 
-    for ii in xrange(n_layers):
-        model.add(LSTM(nb_units,input_shape=input_shape,recurrent_activation='relu'))
-        model.add(Dense(nb_units,activation='relu',kernel_regularizer=l2(penalty)))
+    model.add(Bidirectional(LSTM(nb_units,stateful=True,return_sequences=False),input_shape=input_shape,batch_size=batch_size))
+    # model.add(LSTM(nb_units,input_shape=input_shape,return_sequences=True))
+    # model.add(
+    #     MaxPooling1D(
+    #         pool_size=pool_size,
+    #         strides=1,
+    #         padding='same'
+    #     )
+    # )
+
+    # model.add(Bidirectional(LSTM(nb_units,return_sequences=True,stateful=True)))#,return_sequences=True,stateful=False)))
+
+    # model.add(
+    #     MaxPooling1D(
+    #         pool_size=pool_size,
+    #         strides=1,
+    #         padding='same'
+    #     )
+    # )
+
+    # model.add(Bidirectional(LSTM(nb_units)))
+
+    # model.add(MaxPooling1D(pool_size=pool_size,strides=1,padding='same'))
+    # # 
+    # model.add(LSTM(32,return_sequences=True,stateful=True))
+    # model.add(MaxPooling1D(pool_size=pool_size,strides=1,padding='same'))
     
-    model.add(Dense(nb_units,activation='relu'))
-    model.add(Dropout(drop_pct))
+    # model.add(LSTM(32,return_sequences=True,stateful=True))
+
+    # model.add(Dense(nb_units,activation='relu',kernel_regularizer=l2(penalty)))
+    # model.add(Dropout(drop_pct))
+    # model.add(Dense(nb_units,activation='relu'))
+    # model.add(Dropout(drop_pct))
 
 
     model.add(Dense(1, activation='sigmoid'))
@@ -100,7 +251,7 @@ def make_RNN(X,nb_units=64,penalty=0.,drop_pct=0.):
     return model
 
 
-def fit(X,C,mdl,epochs=2,batch_size=128,validation_split=0.0):
+def fit(X,C,mdl,epochs=2,batch_size=128,validation_split=0.3):
     C = make_tensor(C,X.shape[1]/2)
     # if (valid_X is None) != (valid_y is None):
     #     raise ValueError('validation data are not correct')
@@ -110,7 +261,8 @@ def fit(X,C,mdl,epochs=2,batch_size=128,validation_split=0.0):
     mdl.fit(X,C,
         epochs=epochs,
         batch_size=batch_size,
-        validation_split=validation_split
+        validation_split=validation_split,
+        shuffle=False
         )
     return mdl
 
@@ -137,7 +289,7 @@ def loadModel(model_fid):
     loaded_model.load_weights(model_fid+'.h5')
 
     loaded_model.compile(loss='binary_crossentropy',
-                  optimizer='rmsprop',
+                  optimizer='adagrad',
                   metrics=['accuracy'])
     return loaded_model
 
