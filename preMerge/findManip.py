@@ -36,7 +36,7 @@ def manualTrack(image, bckMean, idx=-1):
         stopTrack = True
         return y0, y1, thetaInit, d, stopTrack
     else:
-            
+
         roiRow, roiCol = circle(manip[0, 1], manip[0, 0], radius)
         # make sure the roi is not too big
         roiRow[roiRow >= rows] = rows - 1
@@ -70,11 +70,14 @@ def getBckgd(image):
     # get background measure
     plt.imshow(image, cmap='gray')
     plt.title('Click on background near manip')
+    plt.draw()
+    plt.pause(0.001)
     bckgd = np.asarray(plt.ginput(1))
     plt.draw()
+    plt.pause(0.001)
     bckgdR, bckgdC = circle(bckgd[0, 1], bckgd[0, 0], 5)
     bckMean = np.mean(image[bckgdR, bckgdC])
-    plt.cla()
+    plt.clf()
     return bckMean
 
 
@@ -145,9 +148,10 @@ def frameSeek(fid, idx, Y0=[], Y1=[],notTracked=[],Th=[],D=[]):
             idx += int(np.where(notTracked[idx:])[0][0])
 
     # if you are past the last frame, set n to the last frame.
-    if idx > nFrames:
-        idx = nFrames - 1
+    if idx >= nFrames:
+        idx = nFrames
         print 'Reached the end of the video'
+        return idx
     cont = False
 
     image = fid.get_frame(idx)
@@ -201,7 +205,7 @@ def frameSeek(fid, idx, Y0=[], Y1=[],notTracked=[],Th=[],D=[]):
             
             # boundary conditions on the index
             if idx >= nFrames:
-                idx = nFrames-1
+                idx = nFrames
                 plt.cla()
                 return idx
                 break
@@ -218,7 +222,7 @@ def frameSeek(fid, idx, Y0=[], Y1=[],notTracked=[],Th=[],D=[]):
         if len(image.shape) == 3:
             image = image[:,:,0]
 
-        plt.cla()
+        plt.clf()
         plt.imshow(image, cmap='gray')
         plt.axis([0, cols, 0, rows])
         plt.gca().invert_yaxis()
@@ -245,7 +249,7 @@ def getMask(image):
     rr, cc = polygon(pts[:, 1], pts[:, 0], (rows, cols))
     mask = np.zeros_like(image, dtype='bool')
     mask[rr, cc] = 1
-    plt.close('all')
+    plt.clf()
     return mask
 
 
@@ -291,6 +295,7 @@ def trackFirstView(fname):
 
     Th = np.empty(nFrames, dtype='float32')
     Th[:] = np.nan
+    b = []
 
     mask = []
     # if the output file is found, check to load it in and start where you left off
@@ -330,6 +335,12 @@ def trackFirstView(fname):
     if len(image.shape) == 3:
         image = image[:,:,0]
 
+    if idx >= nFrames:
+        plt.close('all')
+        sio.savemat(outFName, {'D': D, 'Y0': Y0, 'Th': Th, 'Y1': Y1, 'mask': mask, 'b': b})
+        print 'Tracking Done!\n'
+        exit()
+
     # if there is not a precomputed mask, get one now
     if len(mask) == 0:
         mask = getMask(image)
@@ -341,8 +352,7 @@ def trackFirstView(fname):
     y0, y1, th, d, stopTrack = manualTrack(image, b, idx=idx)
 
     d0 = d
-    plt.close('all')
-    plt.figure()
+    plt.clf()
     plt.imshow(image, cmap='gray')
     plt.draw()
     print '\nTracking manipulator\n\n ==================\n'
