@@ -220,7 +220,7 @@ def frameSeek(fid, idx, Y0=[], Y1=[],notTracked=[],Th=[],D=[]):
             
             # boundary conditions on the index
             if idx >= nFrames:
-                idx = nFrames-1
+                idx = nFrames
                 plt.cla()
                 return idx
                 break
@@ -356,7 +356,7 @@ def trackFirstView(fname):
     if len(image.shape) == 3:
         image = image[:,:,0]
 
-    if idx == nFrames-1:
+    if idx >= nFrames:
         plt.close('all')
         sio.savemat(outFName, {'D': D, 'Y0': Y0, 'Th': Th, 'Y1': Y1, 'mask': mask, 'b': b})
         print 'Tracking Done!\n'
