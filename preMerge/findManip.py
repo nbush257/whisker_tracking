@@ -428,6 +428,7 @@ def trackFirstView(fname):
     # save at the end of the tracking
 
     sio.savemat(outFName, {'D': D, 'Y0': Y0, 'Th': Th, 'Y1': Y1, 'mask': mask, 'b': b})
+    print 'Tracking Done!\n'
 
 
 def trackSecondView(fname, otherView):
@@ -652,6 +653,8 @@ def trackSecondView(fname, otherView):
 
 
     sio.savemat(outFName, {'D': D, 'Y0': Y0, 'Th': Th, 'Y1': Y1, 'mask': mask, 'b': b,'not_tracked_either_view':not_tracked_either_view})
+    print 'Tracking Done!\n'
+
     plt.close('all')
 
 if __name__ == '__main__':
