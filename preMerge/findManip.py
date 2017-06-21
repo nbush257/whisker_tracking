@@ -17,11 +17,24 @@ def manualTrack(image, bckMean, idx=-1, plotTGL=0):
     contrast = 25
     plt.cla()
 
+    def getROI_from_click(manip,radius=30):
+        roiRow, roiCol = circle(manip[0, 1], manip[0, 0], radius)
+        # make sure the roi is not too big
+        roiRow[roiRow >= rows] = rows - 1
+        roiCol[roiCol >= cols] = cols - 1
+        #
+        imROI = 255 * np.ones_like(image)
+        imROI[roiRow, roiCol] = image[roiRow, roiCol]
+        BW = imROI < (bckMean - contrast)
+        return BW
+
     stopTrack = False
     plt.imshow(image, cmap='gray')
     rows, cols = image.shape
     plt.title('Click on the manipulator; Frame: %i' % idx)
     manip = np.asarray(plt.ginput(1, timeout=0))
+
+
     if len(manip) == 0:
         y0 = []
         y1 = []
@@ -32,20 +45,16 @@ def manualTrack(image, bckMean, idx=-1, plotTGL=0):
     else:
         plt.draw()
         plt.pause(.001)
-
-        roiRow, roiCol = circle(manip[0, 1], manip[0, 0], 30)
-        # make sure the roi is not too big
-        roiRow[roiRow >= rows] = rows - 1
-        roiCol[roiCol >= cols] = cols - 1
-        #
-        imROI = 255 * np.ones_like(image)
-        imROI[roiRow, roiCol] = image[roiRow, roiCol]
-        BW = imROI < (bckMean - contrast)
+        BW = getROI_from_click(manip)
 
         h, theta, d = hough_line(BW)
+        try:
+            _, thetaInit, d = hough_line_peaks(h, theta, d, min_distance=1, num_peaks=1)
+        except:
+            print 'No manipulator found at click. Try again'
+            BW = getROI_from_click(manip,50)
 
-        _, thetaInit, d = hough_line_peaks(
-            h, theta, d, min_distance=1, num_peaks=1)
+
 
         y0 = (d - 0 * np.cos(thetaInit)) / np.sin(thetaInit)
         y1 = (d - cols * np.cos(thetaInit)) / np.sin(thetaInit)
@@ -83,17 +92,12 @@ def manipExtract(image, thetaInit, method='standard'):
 
     rows, cols = image.shape
 
-    h, theta, d = hough_line(
-        edge, theta=np.arange(thetaInit - .2, thetaInit + .2, .01))
-    try:
-    	_, angle, dist = hough_line_peaks(h, theta, d, min_distance=1, num_peaks=1)
-    	y0 = (dist - 0 * np.cos(angle)) / np.sin(angle)
-    	y1 = (dist - cols * np.cos(angle)) / np.sin(angle)
-    except IndexError: 
-    	y0 = np.NaN
-    	y1 = np.NaN
-    	angle = np.NaN
-    	dist = np.NaN
+    h, theta, d = hough_line(edge, theta=np.arange(thetaInit - .2, thetaInit + .2, .01))
+
+    _, angle, dist = hough_line_peaks(h, theta, d, min_distance=1, num_peaks=1)
+    y0 = (dist - 0 * np.cos(angle)) / np.sin(angle)
+    y1 = (dist - cols * np.cos(angle)) / np.sin(angle)
+
     return y0, y1, angle, dist
 
 
@@ -134,7 +138,7 @@ def eraseFuture(Y0, Y1, Th, D, idx):
 
 def frameSeek(fid, idx, Y0=[], Y1=[],notTracked=[],Th=[],D=[]):
     nFrames= len(fid)
-    plt.cla()
+    plt.clf()
     # If you have given a bool vector of frames that have not been tracked, skips the manual portion and goes to the next untracked frame
     if len(notTracked) > 0:
         if len(np.where(notTracked[idx:])[0]) > 0:
