@@ -22,17 +22,10 @@ def manualTrack(image, bckMean, idx=-1):
     plt.imshow(image, cmap='gray')
     rows, cols = image.shape
     plt.title('Click on the manipulator; Frame: %i' % idx)
-    manip = np.asarray(plt.ginput(1, timeout=0))
     plt.draw()
     plt.pause(0.001)
-    roiRow, roiCol = circle(manip[0, 1], manip[0, 0], radius)
-    # make sure the roi is not too big
-    roiRow[roiRow >= rows] = rows - 1
-    roiCol[roiCol >= cols] = cols - 1
-    #
-    imROI = 255 * np.ones_like(image)
-    imROI[roiRow, roiCol] = image[roiRow, roiCol]
-    BW = imROI < (bckMean - contrast)
+    manip = np.asarray(plt.ginput(1, timeout=0))
+    
 
 
     if len(manip) == 0:
@@ -43,6 +36,15 @@ def manualTrack(image, bckMean, idx=-1):
         stopTrack = True
         return y0, y1, thetaInit, d, stopTrack
     else:
+            
+        roiRow, roiCol = circle(manip[0, 1], manip[0, 0], radius)
+        # make sure the roi is not too big
+        roiRow[roiRow >= rows] = rows - 1
+        roiCol[roiCol >= cols] = cols - 1
+        #
+        imROI = 255 * np.ones_like(image)
+        imROI[roiRow, roiCol] = image[roiRow, roiCol]
+        BW = imROI < (bckMean - contrast)
         h, theta, d = hough_line(BW)
         try:
             _, thetaInit, d = hough_line_peaks(h, theta, d, min_distance=1, num_peaks=1)
