@@ -80,7 +80,7 @@ def getBckgd(image):
     plt.draw()
     bckgdR, bckgdC = circle(bckgd[0, 1], bckgd[0, 0], 5)
     bckMean = np.mean(image[bckgdR, bckgdC])
-    plt.close('all')
+    plt.cla()
     return bckMean
 
 
@@ -94,9 +94,15 @@ def manipExtract(image, thetaInit, method='standard'):
 
     h, theta, d = hough_line(edge, theta=np.arange(thetaInit - .2, thetaInit + .2, .01))
 
-    _, angle, dist = hough_line_peaks(h, theta, d, min_distance=1, num_peaks=1)
-    y0 = (dist - 0 * np.cos(angle)) / np.sin(angle)
-    y1 = (dist - cols * np.cos(angle)) / np.sin(angle)
+    try:
+        _, angle, dist = hough_line_peaks(h, theta, d, min_distance=1, num_peaks=1)
+        y0 = (dist - 0 * np.cos(angle)) / np.sin(angle)
+        y1 = (dist - cols * np.cos(angle)) / np.sin(angle)
+    except IndexError: # i think this error is being thrown if the manipulator is not found?
+        y0 = np.NaN
+        y1 = np.NaN
+        angle = np.NaN
+        dist = np.NaN
 
     return y0, y1, angle, dist
 
@@ -362,7 +368,7 @@ def trackFirstView(fname):
             y0, y1, th, d = manipExtract(T, th)
 
             # exception handling
-            if (len(d) == 0):
+            if (len(d) == 0) or np.isnan(d):
                 print '\nNo edge detected, retrack'
                 manTrack = True
                 y0, y1, th, d, stopTrack = manualTrack(image, b, idx=idx, plotTGL=0)
