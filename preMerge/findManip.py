@@ -13,6 +13,19 @@ import os
 from sys import stdout
 import sys
 
+key_pressed = ''
+listen_to_keyboard = False
+
+def get_input_event():
+#    print threading.currentThread().getName(), ' wants to get input.'
+    if not input_event.is_set():
+#       print threading.currentThread().getName(), ' is waiting for keypress event'
+        input_event.wait()
+        input_event.clear()
+#       print threading.currentThread().getName(), ' stopped waiting?'
+    input_event.clear()
+#    print threading.currentThread().getName(), ' locked the event.'
+
 def manualTrack(image, bckMean, idx=-1):
     contrast = 25.
     radius = 30.
@@ -140,6 +153,7 @@ def eraseFuture(Y0, Y1, Th, D, idx):
     return Y0, Y1, Th, D
 
 def frameSeek(fid, idx, Y0=[], Y1=[],notTracked=[],Th=[],D=[]):
+
     nFrames= len(fid)
     plt.clf()
     # If you have given a bool vector of frames that have not been tracked, skips the manual portion and goes to the next untracked frame
@@ -169,6 +183,7 @@ def frameSeek(fid, idx, Y0=[], Y1=[],notTracked=[],Th=[],D=[]):
     plt.draw()
     plt.pause(0.001)
 
+    get_input_event()
     while not cont:
         while True:
             # skip to next not tracked section if it exists
@@ -195,7 +210,7 @@ def frameSeek(fid, idx, Y0=[], Y1=[],notTracked=[],Th=[],D=[]):
             except:
                 print 'Invalid input try again'
                 break
-            
+
             # If we go backward, mark anything between last index and new index as not tracked
             if uIn < 0:
                 notTracked[idx+uIn:idx] = True
@@ -233,6 +248,7 @@ def frameSeek(fid, idx, Y0=[], Y1=[],notTracked=[],Th=[],D=[]):
         plt.draw()
         plt.pause(0.001)
 
+    input_event.set()
     return idx
 
 
@@ -257,11 +273,13 @@ def getMask(image):
 
 # these two are the functions to run from the shell:
 def trackFirstView(fname):
+    global listen_to_keyboard, key_pressed
     '''
     First Tracking
     need to write another script that takes into account previously
     tracked frames from the other view.
     '''
+    global key_pressed
     plt.close('all')
     contrast = 25
     outFName = fname[:-4] + '_manip.mat'
@@ -302,8 +320,11 @@ def trackFirstView(fname):
     # otherwise start from the beginning
 
     if isfile(outFName_temp):
+
+        get_input_event()
         loadTGL = raw_input('Load in previously computed manipulator? ([y]/n)')
         overwriteTGL = raw_input('Overwrite old tracking? ([y],n)')
+        input_event.set()
 
         if loadTGL == 'n':
             idx = frameSeek(fid, 0, notTracked=np.ones(nFrames,dtype='bool'))
@@ -358,7 +379,20 @@ def trackFirstView(fname):
     print '\nTracking manipulator\n\n ==================\n'
 
     while idx < nFrames:
+        listen_to_keyboard = True
         try:
+            if key_pressed == 'p':
+                print 'Tracking paused'
+                while key_pressed == 'p':
+                    continue
+                print 'Tracking continued!'
+            elif key_pressed == 'q':
+                break
+            elif key_pressed == 'm':
+                print 'Jumping to manual labelling'
+                stopTrack = True
+                listen_to_keyboard = False
+
             manTrack = False
             
             image = fid.get_frame(idx)
@@ -373,10 +407,12 @@ def trackFirstView(fname):
 
             # exception handling
             if np.isnan(d) or (len(d) == 0):
+                listen_to_keyboard = False
                 print '\nNo edge detected, retrack'
                 manTrack = True
                 y0, y1, th, d, stopTrack = manualTrack(image, b, idx=idx)
             elif(abs(D[idx-1] - d) > 75): # Play with this condition if tracking is problematic
+                listen_to_keyboard = False
                 print '\nLarge distance detected, Retrack'
                 manTrack = True
                 y0, y1, th, d, stopTrack = manualTrack(image, b, idx=idx)
@@ -461,7 +497,9 @@ def trackSecondView(fname, otherView):
         currentView = 'Top'
         currentBase = fname[:fname.find('Top')]
     else:
+        get_input_event()
         uIn = raw_input('It looks like this file is the wrong type. Continue anyhow? (y,[n])')
+        input_event.set()
 
     if uIn != 'y':
         return
@@ -475,14 +513,18 @@ def trackSecondView(fname, otherView):
         lastView = 'Top'
         lastBase = otherView[:otherView.find('Top')]
     else:
+        get_input_event()
         uIn = raw_input('It looks like this file is the wrong type. Continue anyhow? (y,[n])')
+        input_event.set()
 
     if uIn != 'y':
         return
 
     # check for consistency between basenames if front and top were found
     if (uIn != 'y') and (currentBase != lastBase) and (currentView != lastView):
+        get_input_event()
         uIn = raw_input('\nBase file names do not match:\n\n%s\n%s \n continue(y/[n])\n' % (currentBase, lastBase))
+        input_event.set()
 
     if uIn != 'y':
         return
@@ -527,8 +569,10 @@ def trackSecondView(fname, otherView):
     not_tracked_either_view = not_tracked_previous_view
         
     if isfile(outFName_temp):
+        get_input_event()
         load_TGL = raw_input('Load in previously computed manipulator? ([y]/n)')
         overwrite_TGL = raw_input('Overwrite old tracking? ([y],n)')
+        input_event.set()
         if load_TGL == 'n':
             idx = frameSeek(fid, idx, notTracked=not_tracked_either_view,Th=Th,D=D)
             not_tracked_either_view[:idx] = False
@@ -661,8 +705,33 @@ def trackSecondView(fname, otherView):
 
     plt.close('all')
 
+def check_key_presses():
+    global key_pressed, listen_to_keyboard
+    key_pressed = ''
+    # Give the Main thread a chance to run its initialization
+    time.sleep(1)
+    while True:
+        if not listen_to_keyboard:
+            time.sleep(0.1)
+            continue
+        get_input_event()
+        key_pressed = raw_input('Press any key to continue (or q=quit, p=pause, m=manual):\n')
+        if key_pressed == 'q':
+            break
+        input_event.set()
+
 if __name__ == '__main__':
+    import threading, time
+
+    input_event = threading.Event()
+    input_event.set()
+
+    key_press_check = threading.Thread(target=check_key_presses)
+    key_press_check.start()
+
     if len(sys.argv)==2:
         trackFirstView(sys.argv[1])
     elif len(sys.argv)==3:
         trackSecondView(sys.argv[1], sys.argv[2])
+
+    key_press_check.stop()
