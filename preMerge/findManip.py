@@ -733,5 +733,3 @@ if __name__ == '__main__':
         trackFirstView(sys.argv[1])
     elif len(sys.argv)==3:
         trackSecondView(sys.argv[1], sys.argv[2])
-
-    key_press_check.stop()
