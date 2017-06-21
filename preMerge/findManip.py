@@ -13,61 +13,53 @@ import os
 from sys import stdout
 import sys
 
-def manualTrack(image, bckMean, idx=-1, plotTGL=0):
-    contrast = 25
-    plt.cla()
+def manualTrack(image, bckMean, idx=-1):
+    contrast = 25.
+    radius = 30.
 
-    def getROI_from_click(manip,radius=30):
-        roiRow, roiCol = circle(manip[0, 1], manip[0, 0], radius)
-        # make sure the roi is not too big
-        roiRow[roiRow >= rows] = rows - 1
-        roiCol[roiCol >= cols] = cols - 1
-        #
-        imROI = 255 * np.ones_like(image)
-        imROI[roiRow, roiCol] = image[roiRow, roiCol]
-        BW = imROI < (bckMean - contrast)
-        return BW
-
+    plt.clf()
     stopTrack = False
     plt.imshow(image, cmap='gray')
     rows, cols = image.shape
     plt.title('Click on the manipulator; Frame: %i' % idx)
     manip = np.asarray(plt.ginput(1, timeout=0))
+    plt.draw()
+    plt.pause(0.001)
+    roiRow, roiCol = circle(manip[0, 1], manip[0, 0], radius)
+    # make sure the roi is not too big
+    roiRow[roiRow >= rows] = rows - 1
+    roiCol[roiCol >= cols] = cols - 1
+    #
+    imROI = 255 * np.ones_like(image)
+    imROI[roiRow, roiCol] = image[roiRow, roiCol]
+    BW = imROI < (bckMean - contrast)
 
 
     if len(manip) == 0:
-        y0 = []
-        y1 = []
-        thetaInit = []
-        d = []
+        y0 =np.NaN
+        y1 = np.NaN
+        thetaInit = np.NaN
+        d = np.NaN
         stopTrack = True
         return y0, y1, thetaInit, d, stopTrack
     else:
-        plt.draw()
-        plt.pause(.001)
-        BW = getROI_from_click(manip)
-
         h, theta, d = hough_line(BW)
         try:
             _, thetaInit, d = hough_line_peaks(h, theta, d, min_distance=1, num_peaks=1)
         except:
-            print 'No manipulator found at click. Try again'
-            BW = getROI_from_click(manip,50)
-
-
+            y0 =np.NaN
+            y1 = np.NaN
+            thetaInit = np.NaN
+            d = np.NaN
+            stopTrack = True
+            return y0, y1, thetaInit, d, stopTrack            
 
         y0 = (d - 0 * np.cos(thetaInit)) / np.sin(thetaInit)
         y1 = (d - cols * np.cos(thetaInit)) / np.sin(thetaInit)
         if len(y0) == 0:
             stopTrack = True
 
-        if plotTGL:
-            plt.imshow(image)
-            plt.plot((0, cols), (y0, y1), '-r')
-            plt.axis([0, 640, 0, 480])
-            plt.draw()
-            plt.close('all')
-        plt.close('all')
+        plt.clf()
         thetaInit = np.mean(thetaInit)
         return y0, y1, thetaInit, d, stopTrack
 
@@ -344,7 +336,7 @@ def trackFirstView(fname):
     b = getBckgd(image)
 
     # do initial tracking of manipulator
-    y0, y1, th, d, stopTrack = manualTrack(image, b, idx=idx, plotTGL=0)
+    y0, y1, th, d, stopTrack = manualTrack(image, b, idx=idx)
 
     d0 = d
     plt.close('all')
@@ -368,14 +360,14 @@ def trackFirstView(fname):
             y0, y1, th, d = manipExtract(T, th)
 
             # exception handling
-            if (len(d) == 0) or np.isnan(d):
+            if np.isnan(d) or (len(d) == 0):
                 print '\nNo edge detected, retrack'
                 manTrack = True
-                y0, y1, th, d, stopTrack = manualTrack(image, b, idx=idx, plotTGL=0)
+                y0, y1, th, d, stopTrack = manualTrack(image, b, idx=idx)
             elif(abs(D[idx-1] - d) > 75): # Play with this condition if tracking is problematic
                 print '\nLarge distance detected, Retrack'
                 manTrack = True
-                y0, y1, th, d, stopTrack = manualTrack(image, b, idx=idx, plotTGL=0)
+                y0, y1, th, d, stopTrack = manualTrack(image, b, idx=idx)
 
             while stopTrack:
                 idx = frameSeek(fid, idx, Y0, Y1,notTracked=notTracked,Th=Th,D=D)
@@ -392,7 +384,7 @@ def trackFirstView(fname):
                 if len(image.shape) == 3:
                     image = image[:,:,0]
                 manTrack = True
-                y0, y1, th, d, stopTrack = manualTrack(image, b, idx=idx, plotTGL=0)
+                y0, y1, th, d, stopTrack = manualTrack(image, b, idx=idx)
 
             d0 = d
             D[idx] = d
@@ -408,7 +400,7 @@ def trackFirstView(fname):
             image = fid.get_frame(idx)
             if len(image.shape) == 3:
                 image = image[:,:,0]
-            y0, y1, th, d, stopTrack = manualTrack(image, b, idx=idx, plotTGL=0)
+            y0, y1, th, d, stopTrack = manualTrack(image, b, idx=idx)
 
 
       
@@ -567,7 +559,7 @@ def trackSecondView(fname, otherView):
     b = getBckgd(image)
 
     # do initial tracking of manipulator
-    y0, y1, th, d, stopTrack = manualTrack(image, b, idx=idx, plotTGL=0)
+    y0, y1, th, d, stopTrack = manualTrack(image, b, idx=idx)
     d0 = d
 
     while idx < nFrames:
@@ -580,7 +572,7 @@ def trackSecondView(fname, otherView):
             if len(image.shape) == 3:
                 image = image[:,:,0]
             sio.savemat(outFName_temp, {'D': D, 'Y0': Y0, 'Th': Th, 'Y1': Y1, 'mask': mask, 'b': b,'not_tracked_either_view':not_tracked_either_view})
-            y0, y1, th, d, stopTrack = manualTrack(image, b, idx=idx, plotTGL=0)
+            y0, y1, th, d, stopTrack = manualTrack(image, b, idx=idx)
         else:# if the current frame has not been tracked, track it
             man_track = False
             image = fid.get_frame(idx)
@@ -599,7 +591,7 @@ def trackSecondView(fname, otherView):
             man_track = True
             sio.savemat(outFName_temp, {'D': D, 'Y0': Y0, 'Th': Th, 'Y1': Y1, 'mask': mask, 'b': b,'not_tracked_either_view':not_tracked_either_view})
 
-            y0, y1, th, d, stopTrack = manualTrack(image, b, idx=idx, plotTGL=0)
+            y0, y1, th, d, stopTrack = manualTrack(image, b, idx=idx)
 
 
         elif(abs(D[idx-1] - d) > d_thresh):
@@ -607,7 +599,7 @@ def trackSecondView(fname, otherView):
             man_track = True
             sio.savemat(outFName_temp, {'D': D, 'Y0': Y0, 'Th': Th, 'Y1': Y1, 'mask': mask, 'b': b,'not_tracked_either_view':not_tracked_either_view})
 
-            y0, y1, th, d, stopTrack = manualTrack(image, b, idx=idx, plotTGL=0)
+            y0, y1, th, d, stopTrack = manualTrack(image, b, idx=idx)
 
 
         while stopTrack:
@@ -625,7 +617,7 @@ def trackSecondView(fname, otherView):
             if len(image.shape) == 3:
                 image = image[:,:,0]
             man_track = True
-            y0, y1, th, d, stopTrack = manualTrack(image, b, idx=idx, plotTGL=0)
+            y0, y1, th, d, stopTrack = manualTrack(image, b, idx=idx)
 
 
         d0 = d
