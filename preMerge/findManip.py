@@ -85,11 +85,15 @@ def manipExtract(image, thetaInit, method='standard'):
 
     h, theta, d = hough_line(
         edge, theta=np.arange(thetaInit - .2, thetaInit + .2, .01))
-
-    _, angle, dist = hough_line_peaks(h, theta, d, min_distance=1, num_peaks=1)
-    y0 = (dist - 0 * np.cos(angle)) / np.sin(angle)
-    y1 = (dist - cols * np.cos(angle)) / np.sin(angle)
-
+    try:
+    	_, angle, dist = hough_line_peaks(h, theta, d, min_distance=1, num_peaks=1)
+    	y0 = (dist - 0 * np.cos(angle)) / np.sin(angle)
+    	y1 = (dist - cols * np.cos(angle)) / np.sin(angle)
+    except IndexError: 
+    	y0 = np.NaN
+    	y1 = np.NaN
+    	angle = np.NaN
+    	dist = np.NaN
     return y0, y1, angle, dist
 
 
@@ -166,7 +170,7 @@ def frameSeek(fid, idx, Y0=[], Y1=[],notTracked=[],Th=[],D=[]):
                     idx += int(np.where(notTracked[idx:])[0][0])
                     break
 
-            uIn = raw_input('\nAdvance/Rewind how many frames? Default = +100. 0 exits: ')
+            uIn = raw_input('\nAdvance/Rewind how many frames? Default = +100. 0 exits, \'e\' erases future tracking: ')
             stdout.flush()
             try:
                 if len(uIn) == 0:
@@ -175,8 +179,8 @@ def frameSeek(fid, idx, Y0=[], Y1=[],notTracked=[],Th=[],D=[]):
                 elif uIn == '0':
                     cont = True
                 elif uIn == 'e':
-                	eraseFuture(Y0, Y1, Th, D, idx)
-                    
+                    eraseFuture(Y0, Y1, Th, D, idx)
+                    uIn = 0
                 else:
                     uIn = int(uIn)
 
