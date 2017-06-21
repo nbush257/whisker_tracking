@@ -15,7 +15,7 @@ import sys
 
 def manualTrack(image, bckMean, idx=-1, plotTGL=0):
     contrast = 25
-    plt.close('all')
+    plt.cla()
 
     stopTrack = False
     plt.imshow(image, cmap='gray')
@@ -121,9 +121,14 @@ def sanityCheck(y0, y1, image, frameNum=0):
     plt.draw()
     plt.pause(.0001)
     lines.pop(0).remove()
+def eraseFuture(Y0, Y1, Th, D, idx):
+    Y0[idx:] = np.NaN
+    Y1[idx:] = np.NaN
+    D[idx:] = np.NaN
+    Th[idx:] = np.NaN
+    return Y0, Y1, Th, D
 
-
-def frameSeek(fid, idx, Y0=[], Y1=[],notTracked=[]):
+def frameSeek(fid, idx, Y0=[], Y1=[],notTracked=[],Th=[],D=[]):
     nFrames= len(fid)
     plt.cla()
     # If you have given a bool vector of frames that have not been tracked, skips the manual portion and goes to the next untracked frame
@@ -169,6 +174,8 @@ def frameSeek(fid, idx, Y0=[], Y1=[],notTracked=[]):
                     
                 elif uIn == '0':
                     cont = True
+                elif uIn == 'e':
+                	eraseFuture(Y0, Y1, Th, D, idx)
                     
                 else:
                     uIn = int(uIn)
@@ -234,12 +241,7 @@ def getMask(image):
     return mask
 
 
-def eraseFuture(Y0, Y1, Th, D, idx):
-    Y0[idx:] = np.NaN
-    Y1[idx:] = np.NaN
-    D[idx:] = np.NaN
-    Th[idx:] = np.NaN
-    return Y0, Y1, Th, D
+
 
 # these two are the functions to run from the shell:
 def trackFirstView(fname):
@@ -303,7 +305,7 @@ def trackFirstView(fname):
             notTracked = np.ones(nFrames,dtype='bool')
             notTracked[0:idx] = False
             print 'loaded data in. Index is at Frame %i\n' % idx
-            idx = frameSeek(fid, idx, Y0, Y1,notTracked=notTracked)
+            idx = frameSeek(fid, idx, Y0, Y1,notTracked=notTracked,Th=Th,D=D)
             Y0, Y1, Th, D = eraseFuture(Y0, Y1, Th, D, idx)
 
         if overwriteTGL == 'n':
@@ -362,7 +364,7 @@ def trackFirstView(fname):
                 y0, y1, th, d, stopTrack = manualTrack(image, b, idx=idx, plotTGL=0)
 
             while stopTrack:
-                idx = frameSeek(fid, idx, Y0, Y1,notTracked=notTracked)
+                idx = frameSeek(fid, idx, Y0, Y1,notTracked=notTracked,Th=Th,D=D)
                 # end of video condition
                 if idx >= (nFrames - 1):
                     d = np.NaN
@@ -385,7 +387,7 @@ def trackFirstView(fname):
             Th[idx] = th
             # If user throws a ctrl-c then get a new mask and manual track
         except KeyboardInterrupt:
-            idx = frameSeek(fid, idx, Y0, Y1,notTracked=notTracked)
+            idx = frameSeek(fid, idx, Y0, Y1,notTracked=notTracked,Th=Th,D=D)
             Y0, Y1, Th, D = eraseFuture(Y0, Y1, Th, D, idx)
             mask = getMask(image)
             b = getBckgd(image)
@@ -509,7 +511,7 @@ def trackSecondView(fname, otherView):
         load_TGL = raw_input('Load in previously computed manipulator? ([y]/n)')
         overwrite_TGL = raw_input('Overwrite old tracking? ([y],n)')
         if load_TGL == 'n':
-            idx = frameSeek(fid, idx, notTracked=not_tracked_either_view)
+            idx = frameSeek(fid, idx, notTracked=not_tracked_either_view,Th=Th,D=D)
             not_tracked_either_view[:idx] = False
         else:
             fOld = sio.loadmat(outFName_temp, squeeze_me=True)
@@ -595,7 +597,7 @@ def trackSecondView(fname, otherView):
 
         while stopTrack:
 
-            idx = frameSeek(fid, idx, Y0, Y1, notTracked=not_tracked_either_view)
+            idx = frameSeek(fid, idx, Y0, Y1, notTracked=not_tracked_either_view,Th=Th,D=D)
             if idx >= (nFrames - 1):
                 d = np.NaN
                 y0 = np.NaN
