@@ -388,7 +388,8 @@ def trackFirstView(fname):
                     continue
                 print 'Tracking continued!'
             elif key_pressed == 'q':
-                break
+                sio.savemat(outFName_temp, {'D': D, 'Y0': Y0, 'Th': Th, 'Y1': Y1, 'mask': mask, 'b': b})
+                return
             elif key_pressed == 'm':
                 print 'Jumping to manual labelling'
                 stopTrack = True
