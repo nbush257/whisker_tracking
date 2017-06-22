@@ -15,6 +15,7 @@ import sys
 
 key_pressed = ''
 listen_to_keyboard = False
+stop_all = False
 
 def get_input_event():
 #    print threading.currentThread().getName(), ' wants to get input.'
@@ -360,7 +361,7 @@ def trackFirstView(fname):
         plt.close('all')
         sio.savemat(outFName, {'D': D, 'Y0': Y0, 'Th': Th, 'Y1': Y1, 'mask': mask, 'b': b})
         print 'Tracking Done!\n'
-        exit()
+        return
 
     # if there is not a precomputed mask, get one now
     if len(mask) == 0:
@@ -469,6 +470,7 @@ def trackFirstView(fname):
 
     sio.savemat(outFName, {'D': D, 'Y0': Y0, 'Th': Th, 'Y1': Y1, 'mask': mask, 'b': b})
     print 'Tracking Done!\n'
+    listen_to_keyboard = True
 
 
 def trackSecondView(fname, otherView):
@@ -712,9 +714,13 @@ def check_key_presses():
     time.sleep(1)
     while True:
         if not listen_to_keyboard:
+            if stop_all:
+                break
             time.sleep(0.1)
             continue
         get_input_event()
+        if stop_all:
+           break
         key_pressed = raw_input('Press any key to continue (or q=quit, p=pause, m=manual):\n')
         if key_pressed == 'q':
             break
@@ -733,3 +739,7 @@ if __name__ == '__main__':
         trackFirstView(sys.argv[1])
     elif len(sys.argv)==3:
         trackSecondView(sys.argv[1], sys.argv[2])
+
+    listen_to_keyboard = True
+    stop_all = True
+    input_event.set()
