@@ -470,17 +470,6 @@ def trackFirstView(fname):
             Y0[idx] = y0
             Y1[idx] = y1
             Th[idx] = th
-            # If user throws a ctrl-c then get a new mask and manual track
-        except KeyboardInterrupt:
-            idx = frameSeek(fid, idx, Y0, Y1,notTracked=notTracked,Th=Th,D=D)
-            Y0, Y1, Th, D = eraseFuture(Y0, Y1, Th, D, idx)
-            mask = getMask(image)
-            b = getBckgd(image)
-            image = fid.get_frame(idx)
-            if len(image.shape) == 3:
-                image = image[:,:,0]
-            y0, y1, th, d, stopTrack = manualTrack(image, b, idx=idx)
-
 
       
         # Verbose
