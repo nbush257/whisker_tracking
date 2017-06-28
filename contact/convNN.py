@@ -37,7 +37,6 @@ def create_basic_conv_model(x):
     model.add(MaxPooling1D(3,1))
     model.add(Dropout(0.25))
 
-    model.add(Flatten())
     model.add(Dense(512))
     model.add(Activation('relu'))
     model.add(Dropout(0.5))
@@ -58,69 +57,65 @@ def make_conv_mdl(X,
     drop_pct=0.2,
     pool_size=3
     ):
-    
-    input_shape = X.shape[1:3]
+    nb_filter = [256,256,256]#,128,128]#[32,64,128,256,512]
+    filter_length =[8,8,8]#8,8]
+    input_shape = X.shape[1:]
+    stride = 1
     model = Sequential()
 
-    nb_filter = 16
-    filter_length=64
-    model.add(Convolution1D(nb_filter,filter_length,input_shape=input_shape))
+    model.add(Convolution1D(nb_filter[0],filter_length[0],input_shape=input_shape))
     model.add(Activation('relu'))
-    model.add(Convolution1D(nb_filter,filter_length))
+    model.add(Convolution1D(nb_filter[0],filter_length[0]))
     model.add(Activation('relu'))
-    model.add(MaxPooling1D(pool_size,1))
+    model.add(MaxPooling1D(pool_size,stride))
     model.add(Dropout(drop_pct))
     # ==================================
-    nb_filter = 32
-    filter_length=32
-    model.add(Convolution1D(nb_filter,filter_length))
+    model.add(Convolution1D(nb_filter[1],filter_length[1]))
     model.add(Activation('relu'))
-    model.add(Convolution1D(nb_filter,filter_length))
+    model.add(Convolution1D(nb_filter[1],filter_length[1]))
     model.add(Activation('relu'))
-    model.add(MaxPooling1D(pool_size,1))
+    model.add(MaxPooling1D(pool_size,stride))
     model.add(Dropout(drop_pct))
-    # ==================================
-    nb_filter = 64
-    filter_length = 16
-    model.add(Convolution1D(nb_filter,filter_length))
+    # # ==================================
+    model.add(Convolution1D(nb_filter[2],filter_length[2]))
     model.add(Activation('relu'))
-    model.add(Convolution1D(nb_filter,filter_length))
-    model.add(Activation('relu'))
-    model.add(MaxPooling1D(pool_size,1))
+    # model.add(Convolution1D(nb_filter[2],filter_length[2]))
+    # model.add(Activation('relu'))
+    # model.add(MaxPooling1D(pool_size,stride))
     model.add(Dropout(drop_pct))
+    # # ==================================
+
+    # model.add(Convolution1D(nb_filter[3],filter_length[3]))
+    # model.add(Activation('relu'))
+    # model.add(Convolution1D(nb_filter[3],filter_length[3]))
+    # model.add(Activation('relu'))
+    # model.add(MaxPooling1D(pool_size,1))
+    # model.add(Dropout(drop_pct))
+
+    # # ===========================
+    
+    # model.add(Convolution1D(nb_filter[4],filter_length[4]))
+    # model.add(Activation('relu'))
+    # model.add(Convolution1D(nb_filter[4],filter_length[4]))
+    # model.add(Activation('relu'))
+    # model.add(MaxPooling1D(pool_size,1))
+    # model.add(Dropout(drop_pct))
     # ==================================
 
-    nb_filter = 128    
-    filter_length = 8
-    model.add(Convolution1D(nb_filter,filter_length))
-    model.add(Activation('relu'))
-    model.add(Convolution1D(nb_filter,filter_length))
-    model.add(Activation('relu'))
-    model.add(MaxPooling1D(pool_size,1))
-    model.add(Dropout(drop_pct))
+    # model.add(Dense(nb_fully_connected))
+    # model.add(Activation('relu'))
+    # model.add(Dropout(0.5))
 
-    # ===========================
-    nb_filter = 256
-    filter_length = 4
-    model.add(Convolution1D(nb_filter,filter_length))
-    model.add(Activation('relu'))
-    model.add(Convolution1D(nb_filter,filter_length))
-    model.add(Activation('relu'))
-    model.add(MaxPooling1D(pool_size,1))
-    model.add(Dropout(drop_pct))
-    # ==================================
-
-    model.add(Flatten())
     model.add(Dense(nb_fully_connected))
     model.add(Activation('relu'))
     model.add(Dropout(0.5))
-
+    
+    model.add(Flatten())
     model.add(Dense(1))
     model.add(Activation('sigmoid'))
-    # model.compile(loss='mse', optimizer='adam', metrics=['mae'])
-    # To perform (binary) classification instead:
+    
     model.compile(loss='binary_crossentropy',
-                  optimizer='rmsprop',
+                  optimizer='adadelta',
                   metrics=['accuracy'])
     return model
 
@@ -140,40 +135,7 @@ def make_RNN(X,batch_size,n_layers=5,nb_units=64,penalty=0.,drop_pct=0.,pool_siz
     input_shape = X.shape[1:3]
     model = Sequential()
 
-    model.add(Bidirectional(LSTM(nb_units,stateful=True,return_sequences=False),input_shape=input_shape,batch_size=batch_size))
-    # model.add(LSTM(nb_units,input_shape=input_shape,return_sequences=True))
-    # model.add(
-    #     MaxPooling1D(
-    #         pool_size=pool_size,
-    #         strides=1,
-    #         padding='same'
-    #     )
-    # )
-
-    # model.add(Bidirectional(LSTM(nb_units,return_sequences=True,stateful=True)))#,return_sequences=True,stateful=False)))
-
-    # model.add(
-    #     MaxPooling1D(
-    #         pool_size=pool_size,
-    #         strides=1,
-    #         padding='same'
-    #     )
-    # )
-
-    # model.add(Bidirectional(LSTM(nb_units)))
-
-    # model.add(MaxPooling1D(pool_size=pool_size,strides=1,padding='same'))
-    # # 
-    # model.add(LSTM(32,return_sequences=True,stateful=True))
-    # model.add(MaxPooling1D(pool_size=pool_size,strides=1,padding='same'))
-    
-    # model.add(LSTM(32,return_sequences=True,stateful=True))
-
-    # model.add(Dense(nb_units,activation='relu',kernel_regularizer=l2(penalty)))
-    # model.add(Dropout(drop_pct))
-    # model.add(Dense(nb_units,activation='relu'))
-    # model.add(Dropout(drop_pct))
-
+    model.add(Bidirectional(LSTM(nb_units,stateful=True),input_shape=input_shape,batch_size=batch_size))
 
     model.add(Dense(1, activation='sigmoid'))
     # model.compile(loss='mse', optimizer='adam', metrics=['mae'])
