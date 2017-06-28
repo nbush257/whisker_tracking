@@ -4,10 +4,10 @@ import matplotlib
 matplotlib.use('GTkAgg')
 import matplotlib.pyplot as plt
 from skimage.transform import (hough_line, hough_line_peaks)
-
 from skimage.feature import canny
 from skimage.draw import circle, polygon
 from skimage.morphology import dilation,disk,skeletonize
+from skimage.segmentation import mark_boundaries
 import scipy.io.matlab as sio
 from os.path import isfile
 import os
@@ -203,7 +203,8 @@ def frameSeek(fid, idx, Y0=[], Y1=[],notTracked=[],Th=[],D=[]):
                     idx += int(np.where(notTracked[idx:])[0][0])
                     break
 
-            uIn = raw_input('\nAdvance/Rewind how many frames? Default = +100. 0 exits, \'e\' erases future tracking: ')
+            uIn = raw_input('\nAdvance/Rewind how many frames? Default = +100. 0 exits, \'e\' erases future tracking'
+                            ': ')
             stdout.flush()
             try:
                 if len(uIn) == 0:
@@ -262,7 +263,12 @@ def frameSeek(fid, idx, Y0=[], Y1=[],notTracked=[],Th=[],D=[]):
     return idx
 
 
-def getMask(image):
+def getMask(image, mask=None):
+    if mask is not None:
+        image = mark_boundaries(image, mask)
+        if len(image.shape) == 3:
+            image = image[:, :, 0]
+
     rows, cols = image.shape
     plt.imshow(image, cmap='gray')
     plt.axis([0, cols, 0, rows])
@@ -279,17 +285,15 @@ def getMask(image):
     return mask
 
 
-
-
 # these two are the functions to run from the shell:
 def trackFirstView(fname):
-    global listen_to_keyboard, key_pressed
     '''
     First Tracking
     need to write another script that takes into account previously
     tracked frames from the other view.
     '''
-    global key_pressed
+
+    global listen_to_keyboard, key_pressed, stop_all
     plt.close('all')
     contrast = 15
     outFName = fname[:-4] + '_manip.mat'
@@ -311,7 +315,8 @@ def trackFirstView(fname):
     print 'Loaded!'
 
     print 'ht: %i \nwd: %i \nNumber of Frames: %i' % (ht, wd, nFrames)
-    # init output vars
+    #
+    #  init output vars
     D = np.empty(nFrames, dtype='float32')
     D[:] = np.nan
 
@@ -397,11 +402,18 @@ def trackFirstView(fname):
                     continue
                 print 'Tracking continued!'
             elif key_pressed == 'q':
-                break
+                sio.savemat(outFName_temp, {'D': D, 'Y0': Y0, 'Th': Th, 'Y1': Y1, 'mask': mask, 'b': b})
+                return
             elif key_pressed == 'm':
                 print 'Jumping to manual labelling'
                 stopTrack = True
                 listen_to_keyboard = False
+                key_pressed = ''
+            elif key_pressed == 'b':
+                listen_to_keyboard = False
+                image = fid.get_frame(idx)
+                mask = getMask(image, mask)
+                key_pressed = ''
 
             manTrack = False
             
@@ -444,6 +456,14 @@ def trackFirstView(fname):
                     image = image[:,:,0]
                 manTrack = True
                 y0, y1, th, d, stopTrack = manualTrack(image, b, idx=idx)
+                if not stopTrack:
+                    redefine_mask = raw_input('Redefine mask? ([y]/n)')
+                    if redefine_mask == 'y':
+                        image = fid.get_frame(idx)
+                        if len(image.shape) == 3:
+                            image = image[:, :, 0]
+                        mask = getMask(image, mask)
+                        redefine_mask = ''
 
             d0 = d
             D[idx] = d
@@ -481,6 +501,7 @@ def trackFirstView(fname):
     sio.savemat(outFName, {'D': D, 'Y0': Y0, 'Th': Th, 'Y1': Y1, 'mask': mask, 'b': b})
     print 'Tracking Done!\n'
     listen_to_keyboard = True
+    stop_all = True
 
 
 def trackSecondView(fname, otherView):
@@ -714,7 +735,7 @@ def trackSecondView(fname, otherView):
 
     sio.savemat(outFName, {'D': D, 'Y0': Y0, 'Th': Th, 'Y1': Y1, 'mask': mask, 'b': b,'not_tracked_either_view':not_tracked_either_view})
     print 'Tracking Done!\n'
-
+    stop_all = True
     plt.close('all')
 
 def check_key_presses():
@@ -731,7 +752,7 @@ def check_key_presses():
         get_input_event()
         if stop_all:
            break
-        key_pressed = raw_input('Press any key to continue (or q=quit, p=pause, m=manual):\n')
+        key_pressed = raw_input('Press any key to continue (or q=quit, p=pause, m=manual, b=new background/mask):\n')
         if key_pressed == 'q':
             break
         input_event.set()
