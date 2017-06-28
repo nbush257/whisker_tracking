@@ -91,6 +91,9 @@ def manualTrack(image, bckMean, idx=-1):
 
 def getBckgd(image):
     # get background measure
+    if len(image.shape) == 3:
+        image = image[:, :, 0] 
+        
     plt.imshow(image, cmap='gray')
     plt.title('Click on background near manip')
     plt.draw()
@@ -395,81 +398,87 @@ def trackFirstView(fname):
 
     while idx < nFrames:
         listen_to_keyboard = True
-        try:
-            if key_pressed == 'p':
-                print 'Tracking paused'
-                while key_pressed == 'p':
-                    continue
-                print 'Tracking continued!'
-            elif key_pressed == 'q':
-                sio.savemat(outFName_temp, {'D': D, 'Y0': Y0, 'Th': Th, 'Y1': Y1, 'mask': mask, 'b': b})
-                return
-            elif key_pressed == 'm':
-                print 'Jumping to manual labelling'
-                stopTrack = True
-                listen_to_keyboard = False
-                key_pressed = ''
-            elif key_pressed == 'b':
-                listen_to_keyboard = False
-                image = fid.get_frame(idx)
-                mask = getMask(image, mask)
-                key_pressed = ''
 
-            manTrack = False
-            
+        if key_pressed == 'p':
+            print 'Tracking paused'
+            while key_pressed == 'p':
+                continue
+            print 'Tracking continued!'
+        elif key_pressed == 'q':
+            sio.savemat(outFName_temp, {'D': D, 'Y0': Y0, 'Th': Th, 'Y1': Y1, 'mask': mask, 'b': b})
+            return
+        elif key_pressed == 'm':
+            print 'Jumping to manual labelling'
+            stopTrack = True
+            listen_to_keyboard = False
+            key_pressed = ''
+        elif key_pressed == 'b':
+            listen_to_keyboard = False
+            image = fid.get_frame(idx)
+            mask = getMask(image, mask)
+            key_pressed = ''
+        elif key_pressed == 'c':
+            b = getBckgd(image)
+            key_pressed = ''
+
+
+
+        manTrack = False
+        
+        image = fid.get_frame(idx)
+        if len(image.shape) == 3:
+            image = image[:,:,0]
+
+        image[~mask] = 255
+        BW = getBW(y0, y1, image)
+        T = BW < (b - contrast)
+        T = dil_skel(T,2)
+
+        y0, y1, th, d = manipExtract(T, th)
+
+        # exception handling
+        if np.isnan(d) or (len(d) == 0):
+            listen_to_keyboard = False
+            print '\nNo edge detected, retrack'
+            manTrack = True
+            y0, y1, th, d, stopTrack = manualTrack(image, b, idx=idx)
+        elif(abs(D[idx-1] - d) > 75): # Play with this condition if tracking is problematic
+            listen_to_keyboard = False
+            print '\nLarge distance detected, Retrack'
+            manTrack = True
+            y0, y1, th, d, stopTrack = manualTrack(image, b, idx=idx)
+
+        while stopTrack:
+            idx = frameSeek(fid, idx, Y0, Y1,notTracked=notTracked,Th=Th,D=D)
+            # end of video condition
+            if idx >= (nFrames - 1):
+                d = np.NaN
+                y0 = np.NaN
+                y1 = np.NaN
+                th = np.NaN
+                break
+
+            Y0, Y1, Th, D = eraseFuture(Y0, Y1, Th, D, idx)
             image = fid.get_frame(idx)
             if len(image.shape) == 3:
                 image = image[:,:,0]
+            manTrack = True
+            y0, y1, th, d, stopTrack = manualTrack(image, b, idx=idx)
+            if not stopTrack:
+                redefine_mask = raw_input('Redefine mask? ([y]/n)')
+                if redefine_mask == 'y':
+                    image = fid.get_frame(idx)
+                    if len(image.shape) == 3:
+                        image = image[:, :, 0]
+                    mask = getMask(image, mask)
+                    redefine_mask = ''
 
-            image[~mask] = 255
-            BW = getBW(y0, y1, image)
-            T = BW < (b - contrast)
-            T = dil_skel(T,2)
+        d0 = d
+        D[idx] = d
+        Y0[idx] = y0
+        Y1[idx] = y1
+        Th[idx] = th
 
-            y0, y1, th, d = manipExtract(T, th)
-
-            # exception handling
-            if np.isnan(d) or (len(d) == 0):
-                listen_to_keyboard = False
-                print '\nNo edge detected, retrack'
-                manTrack = True
-                y0, y1, th, d, stopTrack = manualTrack(image, b, idx=idx)
-            elif(abs(D[idx-1] - d) > 75): # Play with this condition if tracking is problematic
-                listen_to_keyboard = False
-                print '\nLarge distance detected, Retrack'
-                manTrack = True
-                y0, y1, th, d, stopTrack = manualTrack(image, b, idx=idx)
-
-            while stopTrack:
-                idx = frameSeek(fid, idx, Y0, Y1,notTracked=notTracked,Th=Th,D=D)
-                # end of video condition
-                if idx >= (nFrames - 1):
-                    d = np.NaN
-                    y0 = np.NaN
-                    y1 = np.NaN
-                    th = np.NaN
-                    break
-
-                Y0, Y1, Th, D = eraseFuture(Y0, Y1, Th, D, idx)
-                image = fid.get_frame(idx)
-                if len(image.shape) == 3:
-                    image = image[:,:,0]
-                manTrack = True
-                y0, y1, th, d, stopTrack = manualTrack(image, b, idx=idx)
-                if not stopTrack:
-                    redefine_mask = raw_input('Redefine mask? ([y]/n)')
-                    if redefine_mask == 'y':
-                        image = fid.get_frame(idx)
-                        if len(image.shape) == 3:
-                            image = image[:, :, 0]
-                        mask = getMask(image, mask)
-                        redefine_mask = ''
-
-            d0 = d
-            D[idx] = d
-            Y0[idx] = y0
-            Y1[idx] = y1
-            Th[idx] = th
 
       
         # Verbose
