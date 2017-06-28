@@ -93,7 +93,7 @@ def getBckgd(image):
     # get background measure
     if len(image.shape) == 3:
         image = image[:, :, 0] 
-        
+
     plt.imshow(image, cmap='gray')
     plt.title('Click on background near manip')
     plt.draw()
@@ -115,7 +115,7 @@ def manipExtract(image, thetaInit, method='standard'):
 
     rows, cols = image.shape
 
-    h, theta, d = hough_line(edge, theta=np.arange(thetaInit - .1, thetaInit + .1, .01))
+    h, theta, d = hough_line(edge, theta=np.arange(thetaInit - .3, thetaInit + .3, .01))
 
     try:
         _, angle, dist = hough_line_peaks(h, theta, d, min_distance=1, num_peaks=1)
@@ -132,7 +132,7 @@ def manipExtract(image, thetaInit, method='standard'):
 
 def getBW(y0, y1, image):
     from skimage.draw import polygon
-    bounds = 15 # how big to make the box we look in to get the line
+    bounds = 45 # how big to make the box we look in to get the line
 
     rows, cols = image.shape
 
@@ -464,14 +464,14 @@ def trackFirstView(fname):
                 image = image[:,:,0]
             manTrack = True
             y0, y1, th, d, stopTrack = manualTrack(image, b, idx=idx)
-            if not stopTrack:
-                redefine_mask = raw_input('Redefine mask? ([y]/n)')
-                if redefine_mask == 'y':
-                    image = fid.get_frame(idx)
-                    if len(image.shape) == 3:
-                        image = image[:, :, 0]
-                    mask = getMask(image, mask)
-                    redefine_mask = ''
+            # if not stopTrack:
+            #     redefine_mask = raw_input('Redefine mask? ([y]/n)')
+            #     if redefine_mask == 'y':
+            #         image = fid.get_frame(idx)
+            #         if len(image.shape) == 3:
+            #             image = image[:, :, 0]
+            #         mask = getMask(image, mask)
+            #         redefine_mask = ''
 
         d0 = d
         D[idx] = d
