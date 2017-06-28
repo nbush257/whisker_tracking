@@ -135,8 +135,8 @@ def getBW(y0, y1, image):
     bounds = 45 # how big to make the box we look in to get the line
 
     rows, cols = image.shape
-
-    rr, cc = polygon(np.array([y0[0], y0[0], y1[0], y1[0]]), np.array([0, 0, cols - bounds, cols + bounds]), (rows, cols))
+    rr, cc = polygon(np.array([y0[0]+bounds,y0[0]-bounds,y1[0]-bounds,y1[0]+bounds]), np.array([0,0, int(cols),int(cols)]),(rows, cols))
+    
 
 
     BW = np.zeros_like(image, dtype='bool')
