@@ -7,6 +7,7 @@ from skimage.transform import (hough_line, hough_line_peaks)
 
 from skimage.feature import canny
 from skimage.draw import circle, polygon
+from skimage.morphology import dilation,disk,skeletonize
 import scipy.io.matlab as sio
 from os.path import isfile
 import os
@@ -16,6 +17,13 @@ import sys
 key_pressed = ''
 listen_to_keyboard = False
 stop_all = False
+
+def dil_skel(BW,radius=3):
+
+    selem = disk(radius)
+    BW = dilation(BW,selem)
+    BW = skeletonize(BW)
+    return BW
 
 def get_input_event():
 #    print threading.currentThread().getName(), ' wants to get input.'
@@ -28,7 +36,7 @@ def get_input_event():
 #    print threading.currentThread().getName(), ' locked the event.'
 
 def manualTrack(image, bckMean, idx=-1):
-    contrast = 25.
+    contrast = 17.
     radius = 30.
 
     plt.clf()
@@ -59,6 +67,7 @@ def manualTrack(image, bckMean, idx=-1):
         imROI = 255 * np.ones_like(image)
         imROI[roiRow, roiCol] = image[roiRow, roiCol]
         BW = imROI < (bckMean - contrast)
+        BW = dil_skel(BW)
         h, theta, d = hough_line(BW)
         try:
             _, thetaInit, d = hough_line_peaks(h, theta, d, min_distance=1, num_peaks=1)
@@ -103,7 +112,7 @@ def manipExtract(image, thetaInit, method='standard'):
 
     rows, cols = image.shape
 
-    h, theta, d = hough_line(edge, theta=np.arange(thetaInit - .2, thetaInit + .2, .01))
+    h, theta, d = hough_line(edge, theta=np.arange(thetaInit - .1, thetaInit + .1, .01))
 
     try:
         _, angle, dist = hough_line_peaks(h, theta, d, min_distance=1, num_peaks=1)
@@ -120,7 +129,7 @@ def manipExtract(image, thetaInit, method='standard'):
 
 def getBW(y0, y1, image):
     from skimage.draw import polygon
-    bounds = 15
+    bounds = 15 # how big to make the box we look in to get the line
 
     rows, cols = image.shape
 
@@ -282,7 +291,7 @@ def trackFirstView(fname):
     '''
     global key_pressed
     plt.close('all')
-    contrast = 25
+    contrast = 15
     outFName = fname[:-4] + '_manip.mat'
     outFName_temp = fname[:-4] + '_manip_temp.mat'
     fname_ext = os.path.splitext(fname)[-1]
@@ -403,6 +412,7 @@ def trackFirstView(fname):
             image[~mask] = 255
             BW = getBW(y0, y1, image)
             T = BW < (b - contrast)
+            T = dil_skel(T,2)
 
             y0, y1, th, d = manipExtract(T, th)
 
@@ -484,7 +494,7 @@ def trackSecondView(fname, otherView):
 
     '''
     # init local params
-    contrast = 25
+    contrast = 15
     d_thresh = 75
     # Set output
     outFName = fname[:-4] + '_manip.mat'
