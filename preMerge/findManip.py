@@ -5,8 +5,8 @@ matplotlib.use('GTkAgg')
 import matplotlib.pyplot as plt
 from skimage.transform import (hough_line, hough_line_peaks)
 from skimage.feature import canny
-from skimage.draw import circle, polygon
-from skimage.morphology import dilation,disk,skeletonize
+from skimage.draw import circle, polygon,line
+from skimage.morphology import dilation,disk,skeletonize,binary_dilation,rectangle
 from skimage.segmentation import mark_boundaries
 import scipy.io.matlab as sio
 from os.path import isfile
@@ -20,8 +20,8 @@ stop_all = False
 
 def dil_skel(BW,radius=3):
 
-    selem = disk(radius)
-    BW = dilation(BW,selem)
+    selem_disk = disk(radius)
+    BW = dilation(BW,selem_disk)
     BW = skeletonize(BW)
     return BW
 
@@ -131,25 +131,31 @@ def manipExtract(image, thetaInit, method='standard'):
 
 
 def getBW(y0, y1, image):
-    from skimage.draw import polygon
-    bounds = 45 # how big to make the box we look in to get the line
 
     rows, cols = image.shape
-    rr, cc = polygon(np.array([y0[0]+bounds,y0[0]-bounds,y1[0]-bounds,y1[0]+bounds]), np.array([0,0, int(cols),int(cols)]),(rows, cols))
+    # get a one pixel line where the manipulator is
+    rr,cc = line(int(y0),0,int(y1),cols)
     
+    # remove indices which are out of bounds of the image
+    idx = np.any(np.vstack(((rr < 0),(rr >= rows),(cc < 0),(cc >= cols))),0)
+    rr = rr[~idx]
+    cc = cc[~idx]
 
-
+    # create a mask for where the manipulator was 
     BW = np.zeros_like(image, dtype='bool')
     BW[rr, cc] = 1
+    BW = binary_dilation(BW,selem)
+
     imROI = 255 * np.ones_like(image)
     imROI[BW] = image[BW]
 
-    return imROI
+    return imROI,BW
 
 
-def sanityCheck(y0, y1, image, frameNum=0):
+def sanityCheck(y0, y1, image, frameNum=0,BW = []):
     plt.cla()
     plt.imshow(image, cmap='gray')
+    plt.imshow(BW)
     rows, cols = image.shape
     lines = plt.plot((0, cols), (y0, y1), '-r')
     plt.axis([0, cols, 0, rows])
@@ -296,9 +302,10 @@ def trackFirstView(fname):
     tracked frames from the other view.
     '''
 
-    global listen_to_keyboard, key_pressed, stop_all
+    global listen_to_keyboard, key_pressed, stop_all,selem
     plt.close('all')
     contrast = 15
+    bounds = 30
     outFName = fname[:-4] + '_manip.mat'
     outFName_temp = fname[:-4] + '_manip_temp.mat'
     fname_ext = os.path.splitext(fname)[-1]
@@ -334,6 +341,7 @@ def trackFirstView(fname):
     b = []
 
     mask = []
+    selem = rectangle(bounds,bounds)
     # if the output file is found, check to load it in and start where you left off
     # otherwise start from the beginning
 
@@ -430,12 +438,10 @@ def trackFirstView(fname):
             image = image[:,:,0]
 
         image[~mask] = 255
-        BW = getBW(y0, y1, image)
-        T = BW < (b - contrast)
-        T = dil_skel(T,2)
-
+        imROI,BW = getBW(y0, y1, image)
+        T = imROI < (b - contrast)
+        # T = dil_skel(T,2)
         y0, y1, th, d = manipExtract(T, th)
-
         # exception handling
         if np.isnan(d) or (len(d) == 0):
             listen_to_keyboard = False
@@ -487,7 +493,7 @@ def trackFirstView(fname):
             stdout.flush()
 
         if (idx % 100 == 0) or manTrack or (idx % 1000 == 1):
-            sanityCheck(y0, y1, image, idx)
+            sanityCheck(y0, y1, image, idx,BW=BW)
 
         # Refresh and save every 1000 frames
         if (idx % 1000 == 0):
@@ -503,6 +509,8 @@ def trackFirstView(fname):
 
 
 def trackSecondView(fname, otherView):
+    pass
+
     ''' Follows a similar flow as trackFirstView, but takes in a mat file
     of the previously tracked manipulator to find where we need to track in a
     second view. Should be much faster.
@@ -666,7 +674,7 @@ def trackSecondView(fname, otherView):
             if len(image.shape) == 3:
                 image = image[:,:,0]
             image[~mask] = 255
-            BW = getBW(y0, y1, image)
+            imROI,BW = getBW(y0, y1, image)
             T = BW < (b - contrast)
 
             y0, y1, th, d = manipExtract(T, th)
@@ -720,7 +728,7 @@ def trackSecondView(fname, otherView):
             stdout.flush()
 
         if (idx % 100 == 0) or man_track or (idx % 1000 == 1):
-            sanityCheck(y0, y1, image, idx)
+            sanityCheck(y0, y1, image, idx,BW=BW)
 
         # Refresh and save every 1000 frames
         if (idx % 1000 == 0):
@@ -763,7 +771,6 @@ if __name__ == '__main__':
 
     key_press_check = threading.Thread(target=check_key_presses)
     key_press_check.start()
-
     if len(sys.argv)==2:
         trackFirstView(sys.argv[1])
     elif len(sys.argv)==3:
