@@ -5,12 +5,14 @@ matplotlib.use('GTkAgg')
 import matplotlib.pyplot as plt
 from skimage.transform import (hough_line, hough_line_peaks)
 from skimage.feature import canny
-from cv2 import Canny as canny_cv
+# from cv2 import Canny as canny_cv
 from skimage.draw import circle, polygon,line
 from skimage.morphology import dilation,disk,skeletonize,rectangle
 from skimage.filters.rank import maximum
 from cv2 import dilate as dilate_cv
+import cv2
 from skimage.segmentation import mark_boundaries
+# from skimage.filters import 
 import scipy.io.matlab as sio
 from os.path import isfile
 import os
@@ -69,7 +71,11 @@ def manualTrack(image, bckMean, idx=-1):
         #
         imROI = 255 * np.ones_like(image)
         imROI[roiRow, roiCol] = image[roiRow, roiCol]
-        BW = imROI < (bckMean - contrast)
+
+        thresh = cv2.threshold(image[roiRow,roiCol],0,255,cv2.THRESH_BINARY+cv2.THRESH_OTSU)[0]
+        # BW = imROI < (bckMean - contrast)
+        BW = imROI<thresh
+
         # BW = dil_skel(BW)
         h, theta, d = hough_line(BW)
         try:
