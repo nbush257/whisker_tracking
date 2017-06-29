@@ -6,7 +6,10 @@ import matplotlib.pyplot as plt
 from skimage.transform import (hough_line, hough_line_peaks)
 from skimage.feature import canny
 from skimage.draw import circle, polygon,line
-from skimage.morphology import dilation,disk,skeletonize,binary_dilation,rectangle
+from skimage.morphology import dilation,disk,skeletonize,rectangle
+from skimage.filters.rank import maximum
+from scipy.ndimage import binary_dilation
+from cv2 import dilate as dilate_cv
 from skimage.segmentation import mark_boundaries
 import scipy.io.matlab as sio
 from os.path import isfile
@@ -142,10 +145,11 @@ def getBW(y0, y1, image):
     cc = cc[~idx]
 
     # create a mask for where the manipulator was 
-    BW = np.zeros_like(image, dtype='bool')
+    BW = np.zeros_like(image, dtype='uint8')
     BW[rr, cc] = 1
-    BW = binary_dilation(BW,selem)
-
+    # BW = maximum(BW,selem).astype('bool')
+    BW = dilate_cv(BW,selem,iterations=1)
+    BW = BW.astype('bool')
     imROI = 255 * np.ones_like(image)
     imROI[BW] = image[BW]
 
@@ -155,7 +159,7 @@ def getBW(y0, y1, image):
 def sanityCheck(y0, y1, image, frameNum=0,BW = []):
     plt.cla()
     plt.imshow(image, cmap='gray')
-    plt.imshow(BW)
+    plt.imshow(BW,alpha=0.2,cmap ='hot' )
     rows, cols = image.shape
     lines = plt.plot((0, cols), (y0, y1), '-r')
     plt.axis([0, cols, 0, rows])
@@ -342,6 +346,7 @@ def trackFirstView(fname):
 
     mask = []
     selem = rectangle(bounds,bounds)
+    # selem = selem.astype('bool')
     # if the output file is found, check to load it in and start where you left off
     # otherwise start from the beginning
 
