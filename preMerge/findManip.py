@@ -5,10 +5,10 @@ matplotlib.use('GTkAgg')
 import matplotlib.pyplot as plt
 from skimage.transform import (hough_line, hough_line_peaks)
 from skimage.feature import canny
+from cv2 import Canny as canny_cv
 from skimage.draw import circle, polygon,line
 from skimage.morphology import dilation,disk,skeletonize,rectangle
 from skimage.filters.rank import maximum
-from scipy.ndimage import binary_dilation
 from cv2 import dilate as dilate_cv
 from skimage.segmentation import mark_boundaries
 import scipy.io.matlab as sio
@@ -70,7 +70,7 @@ def manualTrack(image, bckMean, idx=-1):
         imROI = 255 * np.ones_like(image)
         imROI[roiRow, roiCol] = image[roiRow, roiCol]
         BW = imROI < (bckMean - contrast)
-        BW = dil_skel(BW)
+        # BW = dil_skel(BW)
         h, theta, d = hough_line(BW)
         try:
             _, thetaInit, d = hough_line_peaks(h, theta, d, min_distance=1, num_peaks=1)
@@ -114,7 +114,7 @@ def manipExtract(image, thetaInit, method='standard'):
     if np.issubdtype(image.dtype, 'bool'):
         edge = image
     else:
-        edge = canny(image)
+        edge = canny_cv(image)
 
     rows, cols = image.shape
 
@@ -147,7 +147,6 @@ def getBW(y0, y1, image):
     # create a mask for where the manipulator was 
     BW = np.zeros_like(image, dtype='uint8')
     BW[rr, cc] = 1
-    # BW = maximum(BW,selem).astype('bool')
     BW = dilate_cv(BW,selem,iterations=1)
     BW = BW.astype('bool')
     imROI = 255 * np.ones_like(image)
@@ -168,6 +167,7 @@ def sanityCheck(y0, y1, image, frameNum=0,BW = []):
     plt.draw()
     plt.pause(.0001)
     lines.pop(0).remove()
+
 def eraseFuture(Y0, Y1, Th, D, idx):
     Y0[idx:] = np.NaN
     Y1[idx:] = np.NaN
@@ -275,7 +275,6 @@ def frameSeek(fid, idx, Y0=[], Y1=[],notTracked=[],Th=[],D=[]):
     input_event.set()
     return idx
 
-
 def getMask(image, mask=None):
     if mask is not None:
         image = mark_boundaries(image, mask)
@@ -296,7 +295,6 @@ def getMask(image, mask=None):
     mask[rr, cc] = 1
     plt.clf()
     return mask
-
 
 # these two are the functions to run from the shell:
 def trackFirstView(fname):
@@ -493,11 +491,11 @@ def trackFirstView(fname):
 
       
         # Verbose
-        if (idx % 100 == 0):
+        if (idx % 50 == 0):
             stdout.write('\rFrame %i of %i' % (idx, nFrames))
             stdout.flush()
 
-        if (idx % 100 == 0) or manTrack or (idx % 1000 == 1):
+        if (idx % 50 == 0) or manTrack or (idx % 1000 == 1):
             sanityCheck(y0, y1, image, idx,BW=BW)
 
         # Refresh and save every 1000 frames
@@ -511,7 +509,6 @@ def trackFirstView(fname):
     print 'Tracking Done!\n'
     listen_to_keyboard = True
     stop_all = True
-
 
 def trackSecondView(fname, otherView):
     pass
