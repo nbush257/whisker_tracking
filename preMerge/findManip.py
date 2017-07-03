@@ -164,7 +164,8 @@ def getBW(y0, y1, image):
 def sanityCheck(y0, y1, image, frameNum=0,BW = []):
     plt.cla()
     plt.imshow(image, cmap='gray')
-    plt.imshow(BW,alpha=0.2,cmap ='hot' )
+    if len(BW) != 0:
+        plt.imshow(BW,alpha=0.2,cmap ='hot' )
     rows, cols = image.shape
     lines = plt.plot((0, cols), (y0, y1), '-r')
     plt.axis([0, cols, 0, rows])
@@ -172,7 +173,7 @@ def sanityCheck(y0, y1, image, frameNum=0,BW = []):
     plt.title('Frame: %i' % frameNum)
     plt.draw()
     plt.pause(.0001)
-    lines.pop(0).remove()
+    # lines.pop(0).remove()
 
 def eraseFuture(Y0, Y1, Th, D, idx):
     Y0[idx:] = np.NaN
@@ -771,6 +772,107 @@ def check_key_presses():
             break
         input_event.set()
 
+def viewer(vid_front_fid, vid_top_fid, manip_front_fid,manip_top_fid):
+    plt.figure()
+    global listen_to_keyboard, key_pressed
+
+    BASE_INCREMENT = 50
+
+    increment = BASE_INCREMENT
+    data_front = sio.loadmat(manip_front_fid)
+    Y0_front = data_front['Y0'][0]
+    Y1_front = data_front['Y1'][0]
+
+    data_top = sio.loadmat(manip_top_fid)
+    Y0_top = data_top['Y0'][0]
+    Y1_top = data_top['Y1'][0]
+
+    idx = 0
+    fname_ext = os.path.splitext(vid_front_fid)[-1]
+    print 'Loading Video...'
+
+    if fname_ext == '.seq':
+        fid_front = pims.NorpixSeq(vid_front_fid)
+        fid_top = pims.NorpixSeq(vid_top_fid)
+        nFrames = fid_front.header_dict['allocated_frames']
+        ht = fid_front.height
+        wd = fid_front.width
+    else:
+        fid_front = pims.Video(vid_front_fid)
+        fid_top = pims.Video(vid_top_fid)
+        ht = fid_front.frame_shape[1]
+        wd = fid_front.frame_shape[0]
+        nFrames = len(fid_front)
+    im1 = fid_front.get_frame(0)
+    im1 = fid_top.get_frame(0)
+
+    print 'Loaded!'
+
+    get_input_event()
+    input_event.set()
+
+    while True:
+        listen_to_keyboard = True
+
+        if key_pressed == 's':
+            print('speeding up')
+            if increment>0:
+                increment *=2
+            else:
+                increment = BASE_INCREMENT
+        elif key_pressed == 'a':
+            print('slowing down')
+            if increment<0:
+                increment*=2
+            else:
+                increment = -1*BASE_INCREMENT
+
+
+        elif key_pressed == ' ':
+            plt.waitforbuttonpress()
+            increment = BASE_INCREMENT
+        key_pressed = ''
+
+        idx+=increment
+
+        if idx<0:
+            idx = 0
+        elif idx>=nFrames:
+            idx = nFrames-1
+
+        image_front = fid_front.get_frame(idx)
+        if len(image_front.shape) == 3:
+            image_front = image_front[:,:,0]
+
+        image_top = fid_top.get_frame(idx)
+        if len(image_top.shape) == 3:
+            image_top = image_top[:,:,0]
+
+        plt.subplot(121)
+        plt.cla()
+        plt.imshow(image_front,cmap='gray')
+        rows, cols = image_front.shape
+        plt.plot((0, cols), (Y0_front[idx], Y1_front[idx]), '-g')
+        plt.axis([0, cols, 0, rows])
+        plt.gca().invert_yaxis()
+        plt.title('Frame: %i' % idx)
+
+        plt.subplot(122)
+        plt.cla()
+        plt.imshow(image_top, cmap='gray')
+        rows, cols = image_top.shape
+        plt.plot((0, cols), (Y0_top[idx], Y1_top[idx]), '-g')
+        plt.axis([0, cols, 0, rows])
+        plt.gca().invert_yaxis()
+        plt.title('Frame: %i' % idx)
+
+        plt.draw()
+        plt.pause(.005)
+
+
+
+
+
 if __name__ == '__main__':
     import threading, time
 
@@ -783,6 +885,9 @@ if __name__ == '__main__':
         trackFirstView(sys.argv[1])
     elif len(sys.argv)==3:
         trackSecondView(sys.argv[1], sys.argv[2])
+    elif len(sys.argv) == 5:
+        viewer(sys.argv[1],sys.argv[2],sys.argv[3],sys.argv[4])
+
 
     listen_to_keyboard = True
     stop_all = True
