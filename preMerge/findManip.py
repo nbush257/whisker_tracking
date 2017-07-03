@@ -183,7 +183,6 @@ def eraseFuture(Y0, Y1, Th, D, idx):
     return Y0, Y1, Th, D
 
 def frameSeek(fid, idx, Y0=[], Y1=[],notTracked=[],Th=[],D=[]):
-
     nFrames= len(fid)
     plt.clf()
     # If you have given a bool vector of frames that have not been tracked, skips the manual portion and goes to the next untracked frame
@@ -869,8 +868,161 @@ def viewer(vid_front_fid, vid_top_fid, manip_front_fid,manip_top_fid):
         plt.draw()
         plt.pause(.005)
 
+def editTracking(fname):
+    print 'Edit Mode...'
+    global listen_to_keyboard, key_pressed, stop_all,selem
+    plt.close('all')
+    contrast = 15
+    bounds = 30
+    outFName = fname[:-4] + '_manip.mat'
+    outFName_temp = fname[:-4] + '_manip_temp.mat'
+    fname_ext = os.path.splitext(fname)[-1]
+
+    print 'Loading Video...'
+
+    if fname_ext == '.seq':
+        fid = pims.NorpixSeq(fname)
+        nFrames = fid.header_dict['allocated_frames']
+        ht = fid.height
+        wd = fid.width
+    else:
+        fid = pims.Video(fname)
+        ht = fid.frame_shape[1]
+        wd = fid.frame_shape[0]
+        nFrames= len(fid)
+    print 'Loaded!'
+
+    print 'ht: %i \nwd: %i \nNumber of Frames: %i' % (ht, wd, nFrames)
+
+    selem = rectangle(bounds,bounds)
+    # selem = selem.astype('bool')
+    # if the output file is found, check to load it in and start where you left off
+    # otherwise start from the beginning
+    notTracked = np.ones(nFrames,dtype='bool')
+
+    if isfile(outFName):
+
+        get_input_event()
+        overwriteTGL = raw_input('Overwrite old tracking? ([y],n)')
+        input_event.set()
 
 
+        fOld = sio.loadmat(outFName)
+        D = fOld['D'][0]
+        Th = fOld['Th'][0]
+        Y0 = fOld['Y0'][0]
+        Y1 = fOld['Y1'][0]
+        b = fOld['b'][0]
+        mask = fOld['mask'][0]
+
+
+
+
+        if overwriteTGL == 'n':
+            suffix = 0
+            while isfile(outFName):
+                suffix += 1
+                outFName_temp = fname[:-4] + '_manip(%i).mat' % suffix
+                print 'loaded data in. Index is at Frame %i\n' % idx
+    else:
+        raise ValueError('No manipulator file found to edit.')
+
+        
+    idx = frameSeek(fid, 0, Y0, Y1,notTracked,Th=Th,D=D)
+    y0 = Y0[idx]
+    y1 = Y1[idx]
+    d = D[idx]
+
+    
+    while idx < nFrames:
+        listen_to_keyboard = True
+
+        if key_pressed == 'p':
+            print 'Tracking paused'
+            while key_pressed == 'p':
+                continue
+            print 'Tracking continued!'
+        elif key_pressed == 'q':
+            sio.savemat(outFName_temp, {'D': D, 'Y0': Y0, 'Th': Th, 'Y1': Y1, 'mask': mask, 'b': b})
+            return
+        elif key_pressed == 'm':
+            print 'Jumping to manual labelling'
+            stopTrack = True
+            listen_to_keyboard = False
+            key_pressed = ''
+        elif key_pressed == 'b':
+            listen_to_keyboard = False
+            image = fid.get_frame(idx)
+            mask = getMask(image, mask)
+            key_pressed = ''
+        elif key_pressed == 'c':
+            b = getBckgd(image)
+            key_pressed = ''
+        
+        manTrack = False
+
+        
+        image = fid.get_frame(idx)
+        if len(image.shape) == 3:
+            image = image[:,:,0]
+
+        if np.isnan(y0) or (len(d) == 0):
+            listen_to_keyboard = False
+            print '\nNo edge detected, retrack'
+            manTrack = True
+            y0, y1, th, d, stopTrack = manualTrack(image, b, idx=idx)
+        elif(abs(D[idx-1] - d) > 75): # Play with this condition if tracking is problematic
+            listen_to_keyboard = False
+            print '\nLarge distance detected, Retrack'
+            manTrack = True
+            y0, y1, th, d, stopTrack = manualTrack(image, b, idx=idx)
+
+
+        image[~mask] = 255
+        imROI,BW = getBW(y0, y1, image)
+        T = imROI < (b - contrast)
+        # T = dil_skel(T,2)
+        y0, y1, th, d = manipExtract(T, th)
+
+
+        while stopTrack:
+            idx = frameSeek(fid, idx, Y0, Y1,notTracked=notTracked,Th=Th,D=D)
+            # end of video condition
+            if idx >= (nFrames - 1):
+                d = np.NaN
+                y0 = np.NaN
+                y1 = np.NaN
+                th = np.NaN
+                break
+
+            image = fid.get_frame(idx)
+            if len(image.shape) == 3:
+                image = image[:,:,0]
+            manTrack = True
+            y0, y1, th, d, stopTrack = manualTrack(image, b, idx=idx)
+        d0 = d
+        D[idx] = d
+        Y0[idx] = y0
+        Y1[idx] = y1
+        Th[idx] = th
+
+        if (idx % 50 == 0):
+            stdout.write('\rFrame %i of %i' % (idx, nFrames))
+            stdout.flush()
+
+        if (idx % 50 == 0) or manTrack or (idx % 1000 == 1):
+            sanityCheck(y0, y1, image, idx,BW=BW)
+
+        # Refresh and save every 1000 frames
+        if (idx % 1000 == 0):
+            sio.savemat(outFName_temp, {'D': D, 'Y0': Y0, 'Th': Th, 'Y1': Y1, 'mask': mask, 'b': b})
+
+        idx += 1
+    # save at the end of the tracking
+    sio.savemat(outFName, {'D': D, 'Y0': Y0, 'Th': Th, 'Y1': Y1, 'mask': mask, 'b': b})
+    print 'Tracking Done!\n'
+    listen_to_keyboard = True
+    stop_all = True
 
 
 if __name__ == '__main__':
@@ -881,10 +1033,11 @@ if __name__ == '__main__':
 
     key_press_check = threading.Thread(target=check_key_presses)
     key_press_check.start()
+
     if len(sys.argv)==2:
         trackFirstView(sys.argv[1])
-    elif len(sys.argv)==3:
-        trackSecondView(sys.argv[1], sys.argv[2])
+    elif len(sys.argv)==3 and sys.argv[2] == '-e':
+        editTracking(sys.argv[1])
     elif len(sys.argv) == 5:
         viewer(sys.argv[1],sys.argv[2],sys.argv[3],sys.argv[4])
 
