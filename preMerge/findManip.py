@@ -851,19 +851,19 @@ def viewer(vid_front_fid, vid_top_fid, manip_front_fid,manip_top_fid):
         plt.cla()
         plt.imshow(image_front,cmap='gray')
         rows, cols = image_front.shape
-        plt.plot((0, cols), (Y0_front[idx], Y1_front[idx]), '-g')
+        plt.plot((0, cols), (Y0_front[idx], Y1_front[idx]), 'Aquamarine')
         plt.axis([0, cols, 0, rows])
         plt.gca().invert_yaxis()
-        plt.title('Frame: %i' % idx)
+        plt.title('Frame: %i of %i' % (idx, nFrames))
 
         plt.subplot(122)
         plt.cla()
         plt.imshow(image_top, cmap='gray')
         rows, cols = image_top.shape
-        plt.plot((0, cols), (Y0_top[idx], Y1_top[idx]), '-g')
+        plt.plot((0, cols), (Y0_top[idx], Y1_top[idx]), 'Aquamarine')
         plt.axis([0, cols, 0, rows])
         plt.gca().invert_yaxis()
-        plt.title('Frame: %i' % idx)
+        plt.title('Frame: %i of %i' % (idx, nFrames))
 
         plt.draw()
         plt.pause(.005)
