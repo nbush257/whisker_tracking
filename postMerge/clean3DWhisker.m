@@ -1,4 +1,4 @@
-function t3d = clean3DWhisker(t3d,varargin)
+function [t3d,l] = clean3DWhisker(t3d,varargin)
 %% function t3d = clean3DWhisker(t3d)
 % This function cleans a tracked 3D whisker by removing all whiskers
 % smaller than a certain threshold (marking them as empty), and removing
@@ -19,7 +19,7 @@ elseif length(varargin)>1
 else
     l_thresh = 2;
 end
-
+l = zeros(size(t3d));
 
 for ii = 1:length(t3d)
   if length(t3d(ii).x)<l_thresh
@@ -28,12 +28,12 @@ for ii = 1:length(t3d)
       t3d(ii).z = [];
       continue
   end
+  l(ii) = length(t3d(ii).x);
   t3d(ii).x = t3d(ii).x(1:end-1);
   t3d(ii).y = t3d(ii).y(1:end-1);
   t3d(ii).z = t3d(ii).z(1:end-1);
 end
 
-      
 
 
 
