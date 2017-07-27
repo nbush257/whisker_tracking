@@ -1,5 +1,5 @@
-function [tws,fws] = whisk2merge(tw,fw,frame_size,mask_struct,outfilename)
-%% function [tws,fws] = whisk2merge_v2(tw,fw,tVidName,fVidName,mask_struct,outfilename)
+function [fws,tws] = whisk2merge(fw,tw,frame_size,mask_struct,outfilename)
+%% function [tws,fws] = whisk2merge_v2(fw,tw,tVidName,fVidName,mask_struct,outfilename)
 % takes relevant whisker and measurement file information to prepare the
 % data for merging.
 % ===========================================================
