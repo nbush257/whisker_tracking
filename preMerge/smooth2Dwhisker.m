@@ -26,7 +26,7 @@ function [smoothed,PP] = smooth2Dwhisker(wStruct,varargin)
 
 narginchk(1,3)
 numvargs = length(varargin);
-optargs = {'splinefit',0};
+optargs = {'linear',0};
 optargs(1:numvargs) = varargin;
 [method,extend] = optargs{:};
 
