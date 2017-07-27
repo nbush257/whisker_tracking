@@ -17,7 +17,7 @@ if length(varargin)==1
 elseif length(varargin)>1
     error('Too many input arguments')
 else
-    l_thresh = 2;
+    l_thresh = 5;
 end
 l = zeros(size(t3d));
 
