@@ -33,17 +33,17 @@ for file_3D in d_3D:
 '''This section puts all the tips into a concatenated matrix, along with a vector 
 that indicates the boundaries of each trial in the order of the file list'''
 
-d_combined = glob.glob('rat*combined*.mat')
-all_tip = np.empty((0,7))
-breaks = np.array([0])
-for file in d_combined:
-    data = sio.loadmat(file)
-    tip = data['tip']
-    all_tip = np.vstack((all_tip,tip))
-    breaks = np.hstack((breaks,all_tip.shape[0]))
+# d_combined = glob.glob('rat*combined*.mat')
+# all_tip = np.empty((0,7))
+# breaks = np.array([0])
+# for file in d_combined:
+#     data = sio.loadmat(file)
+#     tip = data['tip']
+#     all_tip = np.vstack((all_tip,tip))
+#     breaks = np.hstack((breaks,all_tip.shape[0]))
 
-    save_dict = {'all_tip':all_tip,'breaks':breaks,'d_combined':d_combined}
-    sio.savemat('all_tip.mat',save_dict)
+#     save_dict = {'all_tip':all_tip,'breaks':breaks,'d_combined':d_combined}
+#     sio.savemat('all_tip.mat',save_dict)
 
 
 
