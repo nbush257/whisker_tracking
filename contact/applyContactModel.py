@@ -16,9 +16,13 @@ def applyModel(mdl,data_fname):
 	sio.savemat(data_fname,data_struct)
 
 if __name__ == '__main__':
-	model_name = sys.argv[1]
+	model_name = sys.argv[1] # model is the first argument
 	mdl = load_model(model_name)
-	path = sys.argv[2]
-	for file in glob.glob(path+'/*combined*.mat'):
+	path = sys.argv[2] # path where the combined datas live
+	if len(sys.argv) == 4:
+		ext = sys.argv[3] # if there is a third argument, it should be the filename string specification (e.g., *combined.mat)
+	else:
+		ext = '*combined*.mat'
+	for file in glob.glob(path + '/' + ext):
 		print'Working on file {}\n'.format(file)
 		applyModel(mdl,file)

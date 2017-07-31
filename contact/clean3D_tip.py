@@ -9,12 +9,10 @@ from scipy.signal import medfilt
 import matplotlib.pyplot as plt
 import numpy as np
 import statsmodels.api as sm
+import sys
 
 INTERP_WINDOW= 100# in samples
 INTERP_METHOD='pchip' #
-dir = r"L:\Users\guru\Documents\hartmann_lab\data\VG3D\tracked_3D\all"
-chdir(dir)
-d = glob('*3D.mat')
 
 def cleanTip(filename,outname):
     dat = sio.loadmat(filename)
@@ -58,9 +56,13 @@ def cleanTip(filename,outname):
     save_dict = {'tip': tip_out}
     sio.savemat(outname,save_dict)
         
+if __name__ == '__main__':
+    path = sys.argv[1] # first argument is the path which you want to work on
+    chdir(path)
+    d = glob(sys.argv[2]) # second argument is the string specification for the files that you want to grab
     
-for file in d:
-    print('Working on file {}\n'.format(file))
-    outname = file[:-4] + '_tip.mat'
-    if not isfile(outname):
-        cleanTip(file,outname)
+    for file in d:
+        print('Working on file {}\n'.format(file))
+        outname = file[:-4] + '_tip.mat'
+        if not isfile(outname):
+            cleanTip(file,outname)
