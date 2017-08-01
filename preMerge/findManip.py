@@ -283,9 +283,10 @@ def frameSeek(fid, idx, Y0=[], Y1=[],notTracked=[],Th=[],D=[]):
 
 def getMask(image, mask=None):
     if mask is not None:
-        image = mark_boundaries(image, mask)
         if len(image.shape) == 3:
             image = image[:, :, 0]
+            # image = mark_boundaries(image, mask)
+
 
     rows, cols = image.shape
     plt.imshow(image, cmap='gray')
@@ -912,8 +913,8 @@ def editTracking(fname):
         Th = fOld['Th'][0]
         Y0 = fOld['Y0'][0]
         Y1 = fOld['Y1'][0]
-        b = fOld['b'][0]
-        mask = fOld['mask'][0]
+        # b = fOld['b'][0]
+        # mask = fOld['mask'][0]
 
 
 
@@ -926,12 +927,16 @@ def editTracking(fname):
                 print 'loaded data in. Index is at Frame %i\n' % idx
     else:
         raise ValueError('No manipulator file found to edit.')
-
-        
+    
     idx = frameSeek(fid, 0, Y0, Y1,notTracked,Th=Th,D=D)
-    y0 = Y0[idx]
-    y1 = Y1[idx]
-    d = D[idx]
+    image = fid.get_frame(idx)
+    if len(image.shape) == 3:
+        image = image[:,:,0]
+    mask = getMask(image)
+    b = getBckgd(image)
+   
+
+    y0, y1, th, d, stopTrack = manualTrack(image, b, idx=idx)
 
     
     while idx < nFrames:
@@ -954,6 +959,7 @@ def editTracking(fname):
             listen_to_keyboard = False
             image = fid.get_frame(idx)
             mask = getMask(image, mask)
+            b = getBckgd(image)
             key_pressed = ''
         elif key_pressed == 'c':
             b = getBckgd(image)
@@ -961,10 +967,14 @@ def editTracking(fname):
         
         manTrack = False
 
-        
         image = fid.get_frame(idx)
         if len(image.shape) == 3:
             image = image[:,:,0]
+
+        image[~mask] = 255
+        imROI,BW = getBW(y0, y1, image)
+        T = imROI < (b - contrast)
+        y0, y1, th, d = manipExtract(T, th)
 
         if np.isnan(y0) or (len(d) == 0):
             listen_to_keyboard = False
@@ -976,14 +986,6 @@ def editTracking(fname):
             print '\nLarge distance detected, Retrack'
             manTrack = True
             y0, y1, th, d, stopTrack = manualTrack(image, b, idx=idx)
-
-
-        image[~mask] = 255
-        imROI,BW = getBW(y0, y1, image)
-        T = imROI < (b - contrast)
-        # T = dil_skel(T,2)
-        y0, y1, th, d = manipExtract(T, th)
-
 
         while stopTrack:
             idx = frameSeek(fid, idx, Y0, Y1,notTracked=notTracked,Th=Th,D=D)
@@ -1000,6 +1002,8 @@ def editTracking(fname):
                 image = image[:,:,0]
             manTrack = True
             y0, y1, th, d, stopTrack = manualTrack(image, b, idx=idx)
+        
+
         d0 = d
         D[idx] = d
         Y0[idx] = y0
