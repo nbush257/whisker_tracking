@@ -19,6 +19,7 @@ else
     win=5000;
 end
 stops = starts + win-1;
+tracking = true;
 
 %% init outputs
 last_tracked=starts;
@@ -53,7 +54,12 @@ set(mTextBox,'String',s_legend);
 
 %% Start UI tracking
 try
-    while stops<=length(label_in) % Loop over windows
+    while tracking==true % Loop over windows
+        if stops>length(label_in)
+            tracking=false;
+            stops = length(label_in);
+        end
+        
         last_tracked = starts-1;
         x = 0;
         % Loop UI over contact intervals
@@ -135,9 +141,12 @@ try
         % advance window
         starts =stops+1;
         stops = starts+win-1;
-
+        
     end
+    last_tracked = stops;
 catch
     warning('caught an error, returning...')
+    close all
     return
 end
+close all
