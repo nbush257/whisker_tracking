@@ -67,7 +67,7 @@ try
             cla
             x = [];
             but_press = [];
-            plot(X(starts:stops,:));
+            plot(X(starts:stops,1:4));hold on;plot(X(starts:stops,5:7),'-.');
             
             % use temp var booleans for shading
             tempC = label_out==1;
@@ -141,7 +141,7 @@ try
         % advance window
         starts =stops+1;
         stops = starts+win-1;
-        
+        save('temp.mat','label_out','last_tracked')
     end
     last_tracked = stops;
 catch
