@@ -30,7 +30,7 @@ wMeasureDir = dir([wPathName TagW '.measurements']);
 % if there are equal numbers of files
 
 lDir = [length(wTraceDir) length(wMeasureDir)];
-assert(lDir(1) == lDir(2))
+assert(lDir(1) == lDir(2),'Mesurement file is not the same size as the whiskers file')
 % Throw an error if the number of files are not consistent across
 % measurements and whiskers files or across manipulators and whiskers
 %% init global reference structures

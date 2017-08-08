@@ -34,7 +34,6 @@ function [wOut,coefs] = smooth3DWhisker(wIn,varargin)
 % the 3d struct back as a  column.
 gcp;
 %% Input handling
-
 numvargs = length(varargin);
 % set defaults
 optargs = {'spline', 4, 0.0};
@@ -85,27 +84,29 @@ parfor ii = 1:length(wIn)
                 zIn = zIn';
             end
             PP = splinefit(xIn(1:end-2),[yIn(1:end-2);zIn(1:end-2)],numNodes,.5,'r');
-%             coefs(ii,:) = PP.coefs(:);
+            %             coefs(ii,:) = PP.coefs(:);
             xx = min(wIn(ii).x):.5:(max(wIn(ii).x))+abs(extend*max(wIn(ii).x));
             pts = ppval(PP,xx);
+            step = median(diff(xx));
+            
             wOut(ii).x = xx;
             wOut(ii).y = pts(1,:);
             wOut(ii).z = pts(2,:);
             
             warning('on')
         otherwise
-                error('not a method')
-                
+            error('not a method')
+            
     end
     
     
     %% verbosity
-%     if mod(ii,round(length(wIn)/100)) == 0
-%         fprintf('.')
-%     end
-%     if mod(ii,round(length(wIn)/10)) == 0
-%         fprintf('\n')
-%     end
+    %     if mod(ii,round(length(wIn)/100)) == 0
+    %         fprintf('.')
+    %     end
+    %     if mod(ii,round(length(wIn)/10)) == 0
+    %         fprintf('\n')
+    %     end
     
 end % end parfor over frames
 

@@ -12,6 +12,7 @@ d = dir('*tracked.mat');
 
 for ii = 1:length(d)
     %% extract the name of the first avi in the trial
+    fprintf('Working on %s\n',d(ii).name)
     avi_name_front = [d(ii).name(1:end-11) '*Front*.avi'];
     avi_name_top = [d(ii).name(1:end-11) '*Top*.avi'];
     
@@ -47,8 +48,10 @@ for ii = 1:length(d)
         warning('Mask and BP already found in file %s',d(ii).name)
     end
     %% get the framesize
+    clear frame_size
     frame_size.top = size(It);
     frame_size.front = size(If);
+
     
     %% save the outputs
     

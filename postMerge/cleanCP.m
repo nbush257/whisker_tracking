@@ -1,5 +1,5 @@
-function CPout = cleanCP(CP)
-%% function CPout = cleanCP(CP)
+function CPout = cleanCP(CP,nan_gap)
+%% function CPout = cleanCP(CP,nan_gap)
 
 % =====================================================
 % Takes a 3D Contact Point Time series (Nx3) and performs:
@@ -13,18 +13,20 @@ function CPout = cleanCP(CP)
 % =====================================================
 % Nick Bush 12/18/2015
 %%
+kalman_flag=false;
 % Median filter
 CPf = medfilt1(CP,5);
 % calculate the measurement variance
 r = nanvar(CPf);
-% Interpolate over small NaN gaps
-for ii = 1:3
-    CPf(:,ii) =InterpolateOverNans(CPf(:,ii),10);
-end
 
 % delete outliers
 for ii = 1:3
     CPf(:,ii) = deleteoutliers(CPf(:,ii),.00001,1);
+end
+
+% Interpolate over small NaN gaps
+for ii = 1:3
+    CPf(:,ii) =InterpolateOverNans(CPf(:,ii),nan_gap);
 end
 
 % Can only apply kalman filter to data no interrupted by nans, so find out
@@ -41,6 +43,7 @@ cEnd = find(difc == -1) - 1;
 CPout = nan(size(CPf));
 
 % loop over all the contact periods
+if kalman_flag
 for ii = 1:length(cStart)
     % If the contact period is less than 3 bins long, skip it.
     if (cEnd(ii)-cStart(ii))<3
@@ -51,6 +54,10 @@ for ii = 1:length(cStart)
     [x,y,z] = applyKalman(CPf(cStart(ii):cEnd(ii),:),r);
     CPout(cStart(ii):cEnd(ii),:) = [x' y' z'];
 end
+else
+    CPout = CPf;
+end
+
 
 
 

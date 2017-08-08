@@ -18,13 +18,15 @@ function merge2E3D(tracked3D_fname,front_manip_fname,top_manip_fname)
 % ============================
 % NEB 2016_07_07
 %% init workspace 
+NAN_GAP = 50;
+
 load(tracked3D_fname);
 manip = reformatManip(front_manip_fname,top_manip_fname);
 
-assert(isstruct('tracked_3D','var'),'No 3D whisker found');
-assert(exist('C','var'),'No contact variable found');
-assert(iscell('calibInfo'),'No calibration info found');
-assert(exist('frame_size','var'),'No frame size found; please save information about frame when tracking 3D');
+assert(isstruct(tracked_3D),'No 3D whisker found');
+assert(exist('C','var')==1,'No contact variable found');
+assert(iscell(calibInfo),'No calibration info found');
+assert(exist('frame_size','var')==1,'No frame size found; please save information about frame when tracking 3D');
 
 assert(length(tracked_3D)==length(C),'Contact variable and 3D whisker do not have the same number of frames')
 assert(~any(isnan(C)),'Contact variable has NaNs, make sure it was computed correctly')
@@ -39,49 +41,54 @@ C = C(:);
 %% get output filename
 fname_out = [tracked3D_fname(1:regexp(tracked3D_fname,'_t\d\d_','end')) 'toE3D.mat'];
 
-fname_out_temp = [fname_out(1:end-4) '_temp.mat'];
+fname_temp = [fname_out(1:end-4) '_temp.mat'];
 
 
-end
+
 %% get manipulator from tracked mat files
-manip = reformatManip();
+manip = reformatManip(front_manip_fname,top_manip_fname);
 %% start parallel pool
 gcp
 
 % sort the whisker along the x axis
 disp('Sorting whisker...')
 t3d = sort3Dwhisker(tracked_3D);
+%% remove small whiskers that are too small and removes the last point
+[t3d,l] = clean3DWhisker(t3d,5);
 %%
 disp('Removing second point...')
 t3d = rmPt3DWhisker(t3d);
 
 %% smooth the whisker
 % disp('Smoothing 3D whisker...')
-t3d = smooth3DWhisker(t3d,'spline',5);
-save(fname_temp,'t3d','calibInfo')
+t3ds = smooth3DWhisker(t3d,'spline',5);
+save(fname_temp,'t3ds','calibInfo')
 
 %% Find the contact point and extend whisker where needed
-t3d = makeColumnVectorStruct(t3d);
-[CPraw,~,t3d] = get3DCP_hough(manip,t3d,calibInfo,C,frame_size);
-save(fname_temp,'t3d','CPraw','-append')
+t3ds = makeColumnVectorStruct(t3ds);
+[CPraw,~,t3ds] = get3DCP_hough(manip,t3ds,calibInfo,C,frame_size);
+save(fname_temp,'t3ds','CPraw','-append')
 
 %% smooth the contact point
-CP = cleanCP(CPraw);
+CP = cleanCP(CPraw,NAN_GAP);
 
 % In case the contact point is not on the whisker after smoothing, put it
 % back on the whisker.
 
-[~,CP] = CPonWhisker(CP,t3d);
+[~,CP] = CPonWhisker(CP,t3ds);
 
 % Prepare for E3D
-xw3d = {t3d.x};
-yw3d = {t3d.y};
-zw3d = {t3d.z};
+xw3d = {t3ds.x};
+yw3d = {t3ds.y};
+zw3d = {t3ds.z};
 
 % extract the basepoint
-BP = get3DBP(t3d);
+BP = get3DBP(t3ds);
+
+% get E3D flag
+getE3Dflag;
 %% Output
-save(fname,'*w3d','CP','BP','C')
+save(fname,'*w3d','CP','BP','C','E3D_flag')
 delete(fname_temp)
 
 

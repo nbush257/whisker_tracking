@@ -8,6 +8,8 @@ numvargs = length(varargin);
 optargs = {1,'on',50;};
 optargs(1:numvargs) = varargin;
 [start_deflection, on_off, winsize] = optargs{:};
+
+C(1:300) = 0; % contact before 300 frames is absurd
 %%
 
 close all
@@ -52,7 +54,8 @@ try
         title('Previous Contact')
         
     end
-catch
+catch except
+    disp(except)
     fprintf(repmat('=',20,1))
     fprintf('\nFunction errored out. Returning C variable\n')
     start_deflection = ii;

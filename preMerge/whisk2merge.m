@@ -1,5 +1,5 @@
-function [tws,fws] = whisk2merge(tw,fw,frame_size,mask_struct,outfilename)
-%% function [tws,fws] = whisk2merge_v2(tw,fw,tVidName,fVidName,mask_struct,outfilename)
+function [fws,tws] = whisk2merge(fw,tw,frame_size,mask_struct,outfilename)
+%% function [tws,fws] = whisk2merge_v2(fw,tw,tVidName,fVidName,mask_struct,outfilename)
 % takes relevant whisker and measurement file information to prepare the
 % data for merging.
 % ===========================================================
@@ -27,13 +27,13 @@ gcp;
 fprintf('Trimming top basepoint...')
 tws = applyMaskToWhisker(tw,mask_struct.top);
 [~,tws] = extendBP(tws,mask_struct.BP_t);
-clear tW
+clear tw
 fprintf('done.\n')
 
 fprintf('Trimming Front basepoint...')
 fws = applyMaskToWhisker(fw,mask_struct.front);
 [~,fws] = extendBP(fws,mask_struct.BP_f);
-clear fW
+clear fw
 fprintf('done.\n')
 
 close all
