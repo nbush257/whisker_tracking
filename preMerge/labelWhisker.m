@@ -1,36 +1,74 @@
-function wOut = labelWhisker(w,BP_in,x_limit,y_limit)
+function wOut = labelWhisker(w,BP_in,x_limit,y_limit,varargin)
 %% function labelWhisker(w,BP)
 % tries to find a consistent whisker
+if length(varargin)==1
+    offset = varargin{1};
+else
+    offset = 0;
+end
+
 x_limit = sort(x_limit);
 y_limit = sort(y_limit);
 BP = BP_in;
-for ii = 0:max([w.time])
-    if mod(ii,1000)==0
-        fprintf('Frame %i of %i\n',ii,max([w.time]))
+l = zeros(size(w));
+
+BP = nan(length(w),2);
+for ii = 1:length(w)
+    if ~isempty(w(ii).x)
+        l(ii) = length(w(ii).x);
+        BP(ii,:) = [w(ii).x(1) w(ii).y(1)];
     end
-    w_sub = w([w.time]==ii);
+end
+% remove all whiskers that are outside of BP bounds or are too small.
+rm = l<30 | BP(:,1)<x_limit(1) | BP(:,1)>x_limit(2) | BP(:,2)<y_limit(1) | BP(:,2)>y_limit(2);
+w = w(~rm);
+max_time = max([w.time]);
+BP = BP_in;
+for ii = 0:max_time
+    idx = 1;
+    
+    % end case
+    if length(w)==1 & w.time==max_time
+        wOut(ii+1) = w;
+        continue
+    end
+    
+    while w(idx(end)).time==ii
+        idx = [idx idx(end)+1];
+        if idx(end)>length(w)
+            break
+        end
+    end
+    idx(end) = [];
+    
+    if isempty(idx)
+        BP = BP_in;
+        wOut(ii+1).time = ii;
+        wOut(ii+1).x = [];
+        wOut(ii+1).y = [];
+        wOut(ii+1).id = -1;
+        wOut(ii+1).thick = [];
+        wOut(ii+1).scores = -1;
+        continue
+    end
+    
+    w_sub = w(idx);
+    w(1:idx(end))=[];
+    
+    if length(w_sub)==1
+        BP = [w_sub.x(1) w_sub.y(1)];
+        wOut(ii+1) = w_sub;
+        continue
+    end
     BP_sub = inf(length(w_sub),2);
     rm  =[];
     for jj = 1:length(w_sub)
-        
         % if for some reason the whisker is empty, remove
         if isempty(w_sub(jj).x)
             rm = [rm jj];
             continue
         end
-        % remove short whiskers from consideration
-        if length(w_sub(jj).x)<30
-            rm = [rm jj];
-            continue
-        end
-        if w_sub(jj).x(1)<x_limit(1) || w_sub(jj).x(1)>x_limit(2)
-            rm = [rm jj];
-        end
-        
-        if w_sub(jj).y(1)<y_limit(1) || w_sub(jj).y(1)>y_limit(2)
-            rm = [rm jj];
-        end
-        
+
         BP_sub(jj,:) = [w_sub(jj).x(1) w_sub(jj).y(1)];
     end
     BP_sub(rm,:)=[];
@@ -56,6 +94,9 @@ for ii = 0:max([w.time])
         BP = BP_sub(id,:);
         wOut(ii+1) = w_sub(id);
     end
+end
+for ii = 1:length(wOut)
+    wOut(ii).time = wOut(ii).time+offset;
 end
 
 

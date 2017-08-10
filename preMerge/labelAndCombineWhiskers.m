@@ -9,8 +9,8 @@ d_top = dir([data_root_name{1} '_Top*.whiskers']);
 
 assert(length(d_front)==length(d_top),'Different number of files across views');
 
-If = read(fV,length(fV)/2);
-It = read(tV,length(tV)/2);
+I_f = read(fV,length(fV)/2);
+I_t = read(tV,length(tV)/2);
 
 [mask_f,BP_f] = getMaskAndBP(I_f);
 [mask_t,BP_t] = getMaskAndBP(I_t);
@@ -18,15 +18,16 @@ It = read(tV,length(tV)/2);
 imshow(I_f);
 title('click on X boundaries(2)')
 [x_lim_f,~] = ginput(2);
-title('click on X boundaries(2)')
+title('click on Y boundaries(2)')
 [~,y_lim_f] = ginput(2);
-
+close all
 imshow(I_t);
 title('click on X boundaries(2)')
 [x_lim_t,~] = ginput(2);
-title('click on X boundaries(2)')
+title('click on Y boundaries(2)')
 [~,y_lim_t] = ginput(2);
 
+close all
 
 %%
 clear fW
@@ -37,8 +38,9 @@ for ii = 1:length(d_front)
     end_frame = str2num(frame_lims{1}(9:end));
     disp(num2str(end_frame))
     w_masked = applyMaskToWhisker(w,mask_f);
-    fW(start_frame:end_frame) = labelWhisker(w_masked,BP_f,x_lim_f,y_lim_f);
+    fW(start_frame:end_frame) = labelWhisker(w_masked,BP_f,x_lim_f,y_lim_f,start_frame-1);
 end
+%%
 clear tW
 for ii = 1:length(d_top)
     w = LoadWhiskers(d_top(ii).name);
@@ -47,5 +49,18 @@ for ii = 1:length(d_top)
     end_frame = str2num(frame_lims{1}(9:end));
     disp(num2str(end_frame))
     w_masked = applyMaskToWhisker(w,mask_t);
-    tW(startFrame:endFrame) = labelWhisker(w_masked,BP_t,x_lim_t,y_lim_t);
+    tW(start_frame:end_frame) = labelWhisker(w_masked,BP_t,x_lim_t,y_lim_t,start_frame-1);
 end
+%%
+frame_size.top = size(I_t);
+frame_size.front = size(I_f);
+
+mask_struct.top = mask_t;
+mask_struct.front = mask_f;
+mask_struct.BP_f = BP_f;
+mask_struct.BP_t = BP_t;
+front_avi = front_vid_fname;
+top_avi = top_vid_fname;
+%%
+save([data_root_name{1} '_tracked.mat'],'*W','frame_size','*_avi','mask_struct')
+
