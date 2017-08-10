@@ -67,7 +67,7 @@ try
             cla
             x = [];
             but_press = [];
-            plot(X(starts:stops,1:4));hold on;plot(X(starts:stops,5:7),'-.');
+            plot(X(starts:stops,:))
             
             % use temp var booleans for shading
             tempC = label_out==1;
