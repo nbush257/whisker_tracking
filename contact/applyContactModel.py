@@ -6,7 +6,7 @@ import sys
 
 def applyModel(mdl,data_fname):
 	data = sio.loadmat(data_fname)
-	X = data['X']
+	X = data['X'][:,:4]
 	C = np.zeros(X.shape[0],dtype='bool')
 	window_size = mdl.layers[0].input_shape[1]/2
 	XX = make_tensor(X,window_size)
