@@ -64,7 +64,7 @@ parfor ii = 1:length(tracked3D)
     if ~isnan(Y0_t(ii))
         useTop = 1;
         useFront = 0;
-        px = [0;frame_size(2)];
+        px = [0;frame_size.top(2)];
         py = [Y0_t(ii);Y1_t(ii)];
         [~,wskrTop] = BackProject3D(tracked3D(ii),calibInfo(1:4),calibInfo(5:8),calibInfo(9:10));
         [~,~,idx,~] = intersections(wskrTop(:,1),wskrTop(:,2),px,py);
@@ -76,7 +76,7 @@ parfor ii = 1:length(tracked3D)
         useTop = 0;
         useFront = 1;
         
-        px = [0;frame_size(2)];
+        px = [0;frame_size.front(2)];
         py = [Y0_f(ii);Y1_f(ii)];
         [wskrFront,~] = BackProject3D(tracked3D(ii),calibInfo(1:4),calibInfo(5:8),calibInfo(9:10));
         [~,~,idx,~] = intersections(wskrFront(:,1),wskrFront(:,2),px,py);

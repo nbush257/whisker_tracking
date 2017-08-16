@@ -21,7 +21,9 @@ function [tws,fws] = whisk2merge(tw,fw,frame_size,mask_struct,outfilename)
 lastFinishedStep = '';
 close all
 % start parallel pool if not running
-gcp;
+numw = str2num(getenv('PBS_NUM_PPN'));
+clust = parcluster();
+parpool(clust,numw);
 %% Trim to the basepoint
 
 fprintf('Trimming top basepoint...')
