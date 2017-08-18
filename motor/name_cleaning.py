@@ -4,26 +4,26 @@
 
 import os
 import re
-main_dir = r'D:\motor_experiment\video_data'
+main_dir = r'J:\motor_experiment\video_data'
 good_dir = os.path.join(main_dir,'_good')
 bad_dir = os.path.join(main_dir,'_bad')
 unfinished_dir = os.path.join(main_dir,'_unfinished')
 
-
 for root,dirs,files in os.walk(good_dir):
     for file in files:
-        whisker = re.search('[A-Z]{1,2}\d',file).group().upper()
+        ext = os.path.splitext(file)[1]
+        whisker = re.search('(?<![A-Z])[A-Z]{1,2}\d',file).group().upper().strip('_')
 
         # get trial type
         trial_type = re.search('(?i)collision|(?i)sinewave|(?i)ping',file).group().lower()
 
         # get direction if it exists
-        if trial_type == 'ping' or 'collision':
-            direction = re.search('(?i)neg|(?i)pos',file).group().lower()
+        if trial_type == 'ping' or trial_type=='collision':
+            direction = re.search('(?i)neg|(?i)pos',file).group()
             # get modifier
             token = '(?<={}).*(?={})'.format(direction, whisker)
             modifier = re.search(token, file).group().strip('_')
-
+            direction = direction.lower()
         else:
             direction = 'X'
 
@@ -49,7 +49,8 @@ for root,dirs,files in os.walk(good_dir):
 
         view = re.search('(?i)front|(?i)top',file).group().lower()
 
-        newname= '_'.join(['motor',trial_type,direction,whisker,'e'+modifier.zfill(2),trial_idx,view])
+        newname= '_'.join(['motor',trial_type,direction,whisker,'e'+modifier.zfill(2),trial_idx,view+ext])
+
         print file
         print newname
         print '\n'
