@@ -96,6 +96,8 @@ def extendBP(w,BP,direction='y'):
     lin_pct = 0.05 #
     for fid,frame in w.iteritems():
         assert len(frame)<=1,'Frame {} should only have one whisker. Have you run labelWhisker yet?'.format(fid)
+        if len(frame)==0:
+            continue
         if len(frame[0].x)==0:
             continue
 
@@ -176,6 +178,8 @@ def trimToLengthTop(w,l):
         trace.x = trace.x[idx]
         trace.y = trace.y[idx]
 
+def extendToLengthTop(w,l):
+    pass
 
 def rmShort(w,pct=0.95):
     l=getLength(w)
@@ -199,9 +203,9 @@ if False:#__name__=='__main__':
     w = Load_Whiskers(wFile)
     V = pims.Video(vFile)
     print 'Loaded!'
-else:
+elif False:
     ## ========================== ##
-    wFile = r'J:\motor_experiment\video_data\_unfinished\no_params_yet\POS2_RB1\new\motor_collision_POS2_RB1__t11_Top_proc.whiskers'
+    wFile = r'J:\motor_experiment\video_data\_unfinished\no_params_yet\POS2_RB1\new\motor_collision_POS2_RB1__t07_Top_proc.whiskers'
     wFileOut = os.path.splitext(wFile)[0]+'_mod'+os.path.splitext(wFile)[1]
     vFile = os.path.splitext(wFile)[0]+'.avi'
 
