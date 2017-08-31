@@ -79,6 +79,15 @@ def applyMaskToWhisker(w,mask):
             trace.y = trace.y[~rm_idx]
 
 
+def rmSmallTraces(w,l_thresh=100):
+    for fid, frame in w.iteritems():
+        for wid,trace in frame.iteritems():
+            if len(trace.x)==0:
+                continue
+            if len(trace.x)<l_thresh:
+                frame[wid]={}
+
+
 def plotW(w,V,mask):
     for ii in xrange(len(w)):
         I = V.get_frame(ii)
@@ -178,6 +187,7 @@ def trimToLengthTop(w,l):
         trace.x = trace.x[idx]
         trace.y = trace.y[idx]
 
+
 def extendToLengthTop(w,l):
     pass
 
@@ -205,7 +215,7 @@ if False:#__name__=='__main__':
     print 'Loaded!'
 elif False:
     ## ========================== ##
-    wFile = r'J:\motor_experiment\video_data\_unfinished\no_params_yet\POS2_RB1\new\motor_collision_POS2_RB1__t07_Top_proc.whiskers'
+    wFile = r'D:\motor_data_nadina\motor_collision_neg1_A0__t38_Top.whiskers'
     wFileOut = os.path.splitext(wFile)[0]+'_mod'+os.path.splitext(wFile)[1]
     vFile = os.path.splitext(wFile)[0]+'.avi'
 
