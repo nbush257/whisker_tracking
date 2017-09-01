@@ -21,7 +21,10 @@ def initDistanceMatrix(w):
             continue
         num_nodes[fid] = len(frame[0].x)
     max_nodes = np.max(num_nodes)
-    return np.zeros([len(num_nodes),max_nodes])
+    distance_matrix = np.empty([len(num_nodes),max_nodes])
+    distance_matrix[:] = np.nan
+    return distance_matrix
+
 
 
 def getMotionGradient(w):
