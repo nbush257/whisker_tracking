@@ -6,12 +6,14 @@ import pims
 from scipy.spatial import distance
 from scipy.interpolate import interp1d
 import re
+import glob
 sys.path.append(
     r'L:\Users\guru\Documents\hartmann_lab\proc\whisk\python')
 sys.path.append(
     r'L:\Users\guru\Documents\hartmann_lab\proc\whiskerTracking\preMerge')
 from trace_2 import Load_Whiskers, Save_Whiskers
 from findManip import getMask
+from statsmodels.nonparametric.smoothers_lowess import lowess
 
 # ============================================ #
 
@@ -75,7 +77,7 @@ def labelWhisker(w, BP_init, thresh=35, l_thresh=50):
 
         # loop through each trace in the frame and get the BP and length
         # if it exists
-        for wid, trace in w.iteritems():
+        for wid, trace in frame.iteritems():
             if len(trace.x) == 0:
                 # I want to test this to see if I can replace it with a continue
                 BP_frame[wid, :] = np.hstack((np.Inf, np.Inf))
@@ -232,7 +234,7 @@ def trimToLengthTop(w, w_lengths):
     for fid, frame in w.iteritems():
         assert len(frame) <= 1, 'Frame {} should only have one whisker. Have you run labelWhisker yet?'.format(fid)
         # skip if there are no traces in a frame
-        if len(frame[0].x) == 0:
+        if len(frame) == 0:
             continue
         trace = frame[0]
         # need to compute the cumulative sum to find the point at
@@ -273,17 +275,101 @@ def rmShort(w, pct=0.95):
             w[fid] = {}
 
 
-if False:  # __name__=='__main__':
-    wFile = sys.argv[1]
-    vFile = sys.argv[2]
+def smooth2D(w,direction,frac=0.15):
 
-    print('Loading...')
-    w = Load_Whiskers(wFile)
-    V = pims.Video(vFile)
-    print('Loaded!')
+    for fid,frame in w.iteritems():
+        if fid % 100 ==0:
+            print('Frame {:04d}'.format(fid))
+        assert len(frame) <= 1, 'Frame {} should only have one whisker. Have you run labelWhisker yet?'.format(fid)
+        # skip if there are no traces in a frame
+        if len(frame) == 0:
+            continue
+        trace = frame[0]
+        if direction=='y':
+            exog = trace.y
+            endog = trace.x
+        else:
+            exog = trace.x
+            endog = trace.y
+
+
+        ret = lowess(endog, exog,frac=frac,it=1,delta=0.001*exog.ptp()).astype('float32')
+        exog = ret[:,0]
+        endog = ret[:,1]
+        if np.any(np.isnan(ret)):
+            continue
+        elif direction=='y':
+            trace.y = exog
+            trace.x = endog
+        else:
+            trace.x = exog
+            trace.y = endog
+
+
+def save_no_overwrite(wFileOut,w):
+    if os.path.isfile(wFileOut):
+        uin = raw_input('File exists, Overwrite? (Y,n)').lower()
+        if len(uin) == 0 or uin == 'y':
+            Save_Whiskers(wFileOut, w)
+        else:
+            wFileOut = os.path.splitext(wFileOut)[0]+'temp'+os.path.splitext(wFileOut)[1]
+            Save_Whiskers(wFileOut, w)
+    else:
+        Save_Whiskers(wFileOut, w)
+
+
+if  __name__=='__main__':
+    # input argument is path to process
+    w_path = sys.argv[1]
+
+    # get the mask
+    mask_filename = glob.glob(os.path.join(w_path,'*.npz'))[0]
+    mask_data = np.load(mask_filename)
+
+    # get the directory of whisker files
+    w_dir = glob.glob(os.path.join(w_path,'*.whiskers'))
+
+    for wFile in w_dir:
+        # get view and sort direction
+        view = re.search('(?i)front|(?i)top', wFile).group().lower()
+        if view == 'top':
+            direction = 'y'
+            mask = mask_data['mask_top']
+            BP = mask_data['BP_top']
+        elif view == 'front':
+            direction = 'x'
+            mask = mask_data['mask_front']
+            BP = mask_data['BP_front']
+        else:
+            raise ValueError('View does not appear to be front or top')
+
+        # Load the whiskers
+        print('Loading {}'.format(wFile))
+        w = Load_Whiskers(wFile)
+        print('Loaded!')
+
+        # get output filename
+        wFileOut = os.path.splitext(wFile)[0] + '_labelled' + os.path.splitext(wFile)[1]
+
+        # perform preprocessing
+        sortWhisker(w, direction)
+        applyMaskToWhisker(w, mask)
+        labelWhisker(w, BP, thresh=50, l_thresh=200)
+        extendBP(w, BP)
+        smooth2D(w,direction,frac=0.15)
+        if view == 'top':
+            w_lengths = getLength(w)
+            trimToLengthTop(w, w_lengths)
+
+        # save to a new whiskers file
+        save_no_overwrite(wFileOut,w)
+
+
+
 elif False:
     # ========================== #
-    wFile = r'J:\motor_experiment\video_data\_unfinished\no_params_yet\POS2_RB1\new\motor_collision_POS2_RB1__t07_Top_proc.whiskers'
+    trial_num = 25
+    wFile = r'J:\motor_experiment\video_data\nick_TODO\heal_contact\POS2_RB1\motor_collision_POS2_RB1__t{}_Top_proc.whiskers'.format(trial_num)
     wFileOut = os.path.splitext(wFile)[0] + '_mod' + os.path.splitext(wFile)[1]
     vFile = os.path.splitext(wFile)[0] + '.avi'
 
@@ -312,19 +398,22 @@ elif False:
 
     applyMaskToWhisker(w, mask)
     labelWhisker(w, BP, thresh=60, l_thresh=100)
-    extendBP(w, BP, direction)
+    extendBP(w, BP)
 
     if view == 'top':
         w_lengths = getLength(w)
         trimToLengthTop(w, w_lengths)
 
-    rmShort(w)
+        # rm short might need some work if it is to work on the front view. Maybe check for length deviations in neighboring frames?
+        # rmShort(w,pct=0.80)
+
 
     if os.path.isfile(wFileOut):
         uin = raw_input('File exists, Overwrite? (Y,n)').lower()
         if len(uin) == 0 or uin == 'y':
             Save_Whiskers(wFileOut, w)
         else:
-            Save_Whiskers('temp_' + wFileOut, w)
+            wFileOut = os.path.splitext(wFileOut)[0]+'temp'+os.path.splitext(wFileOut)[1]
+            Save_Whiskers(wFileOut, w)
     else:
         Save_Whiskers(wFileOut, w)

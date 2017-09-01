@@ -10,13 +10,12 @@ import sys
 import optparse
 
 def clean_names(file):
-
+    print(file)
     modifier = ''
     direction = ''
     trial_type = ''
     whisker = ''
     trial_idx = ''
-
     ext = os.path.splitext(file)[1]
     file.replace('_proc','')
 
@@ -95,27 +94,33 @@ def add_file_to_db(filename):
 
 def main():
     parser = optparse.OptionParser()
-    parser.add_option('-m', action='store', dest='main_dir', default='')
-    parser.add_option('-d', action='store', dest='sub_dir', default='')
-    parser.add_option('--cleaning', action='store', dest='clean_flag', default=False)
+
+    # parser.add_option('-m', action='store', dest='main_dir', default='')
+    # parser.add_option('-d', action='store', dest='sub_dir', default='')
+    parser.add_option("--cleaning", action='store', dest='clean_flag', default=False)
     parser.add_option('--database', action='store', dest='db_flag', default=False)
-    if main_dir == '' or sub_dir == '':
-        raise ValueError('no directories given')
+    options, args = parser.parse_args()
+    assert(len(args)==2),'need a main directory and a sub directory'
+    print(options)
+    main_dir=args[0]
+    sub_dir = args[1]
+    assert(os.path.isdir(main_dir)),'1st argument is not a directory'
 
     cur_dir = os.path.join(main_dir, sub_dir)
+    assert(os.path.isdir(cur_dir)),'search path is not a directory'
 
     for root, dirs, files in os.walk(cur_dir):
         for file in files:
 
             # clean name
-            if clean_flag:
-                newname = clean_names(cur_dir)
+            if options.clean_flag:
+                newname = clean_names(file)
                 if not os.path.isfile(os.path.join(cur_dir, newname)):
                     shutil.move(os.path.join(cur_dir, file), os.path.join(cur_dir, newname))
                 else:
                     print('COLLISION!')
             # add to DB
-            if db_flag:
+            if options.db_flag:
                 init_data_table(main_dir)
                 add_file_to_db(file)
 
