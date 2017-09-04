@@ -8,11 +8,11 @@ from scipy.interpolate import interp1d
 import re
 import glob
 sys.path.append(
-    r'L:\Users\guru\Documents\hartmann_lab\proc\whisk\python')
+    r'C:\Users\nbush257\Documents\hartmann_lab\proc\whisk\python')
 sys.path.append(
-    r'L:\Users\guru\Documents\hartmann_lab\proc\whiskerTracking\preMerge')
+    r'C:\Users\nbush257\Documents\hartmann_lab\proc\whiskerTracking\preMerge')
 from trace_2 import Load_Whiskers, Save_Whiskers
-from findManip import getMask
+# from findManip import getMask
 from statsmodels.nonparametric.smoothers_lowess import lowess
 
 # ============================================ #
@@ -83,7 +83,7 @@ def labelWhisker(w, BP_init, thresh=35, l_thresh=50):
                 BP_frame[wid, :] = np.hstack((np.Inf, np.Inf))
             else:
                 BP_frame[wid, :] = np.hstack((trace.x[0], trace.y[0]))
-                trace_lengths[wid] = compute_arclength(trace)
+                trace_lengths[wid] = compute_arclength(trace)[0]
 
         # calculate distance between target BP and each BP in the frame.
         # Find the minimum distance
@@ -197,12 +197,13 @@ def extendBP(w, BP, lin_pct=0.05):
 
 def compute_arclength(trace):
     '''
-    takes a trace and computes its arclength
+    takes a trace and returns its arclength and the cumulative sum along the arclength
     '''
     x_d = np.diff(trace.x)
     y_d = np.diff(trace.y)
     ds = np.sqrt(x_d ** 2 + y_d ** 2)
-    return np.sum(ds)
+    s_cum = np.cumsum(np.hstack((np.array([0]), ds)))
+    return np.sum(ds),s_cum
 
 
 def getLength(w):
@@ -217,7 +218,7 @@ def getLength(w):
         assert len(frame) <= 1, 'Frame {} should only have one whisker. Have you run labelWhisker yet?'.format(fid)
         if len(frame) == 0:
             continue
-        w_lengths[fid] = compute_arclength(frame[0])
+        w_lengths[fid] = compute_arclength(frame[0])[0]
     return w_lengths
 
 
@@ -239,10 +240,8 @@ def trimToLengthTop(w, w_lengths):
         trace = frame[0]
         # need to compute the cumulative sum to find the point at
         # which the whisker becomes too long
-        x_d = np.diff(trace.x)
-        y_d = np.diff(trace.y)
-        ds = np.sqrt(x_d ** 2 + y_d ** 2)
-        s = np.cumsum(np.hstack((np.array([0]), ds)))
+
+        s = compute_arclength(trace)[1]
         # get indices at which the length is less than the expected length
         idx = s < l_avg
 
@@ -269,7 +268,7 @@ def rmShort(w, pct=0.95):
         if len(frame[0].x) == 0:
             continue
         trace = frame[0]
-        l_trace = compute_arclength(trace)
+        l_trace = compute_arclength(trace)[0]
         # make frame empty if the trace is shorter than a percentage of the reference
         if l_trace < pct * l_ref:
             w[fid] = {}
@@ -320,8 +319,7 @@ def save_no_overwrite(wFileOut,w):
 
 if  __name__=='__main__':
     # input argument is path to process
-    w_path = sys.argv[1]
-
+    w_path = sys.argv[1]    
     # get the mask
     mask_filename = glob.glob(os.path.join(w_path,'*.npz'))[0]
     mask_data = np.load(mask_filename)
@@ -332,6 +330,7 @@ if  __name__=='__main__':
     for wFile in w_dir:
         # get view and sort direction
         if re.search('(front|top).whiskers',wFile)==None:
+            print('Lablled file found, skipping...')
             continue
         wFileOut = os.path.splitext(wFile)[0] + '_labelled' + os.path.splitext(wFile)[1]
         if os.path.isfile(wFileOut):
@@ -368,7 +367,7 @@ if  __name__=='__main__':
             trimToLengthTop(w, w_lengths)
 
         # save to a new whiskers file
-        try
+        try:
             Save_Whiskers(wFileOut, w)
         except:
             continue
