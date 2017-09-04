@@ -21,13 +21,14 @@ def initDistanceMatrix(w):
             continue
         num_nodes[fid] = len(frame[0].x)
     max_nodes = np.max(num_nodes)
-    distance_matrix = np.empty([len(num_nodes),max_nodes])
+    distance_matrix = np.empty([len(num_nodes),max_nodes,2])
     distance_matrix[:] = np.nan
     return distance_matrix
 
 
 
 def getMotionGradient(w):
+    dt=1
     last_x = w[0][0].x
     last_y = w[0][0].y
     last_pts = np.vstack((last_x,last_y)).T
@@ -41,6 +42,7 @@ def getMotionGradient(w):
 
         # check if frame is empty
         if len(frame)==0:
+            dt+=1
             continue
 
         x = frame[0].x
@@ -53,12 +55,16 @@ def getMotionGradient(w):
         last_x_trim = last_x[:min_num_pts]
         last_y_trim = last_y[:min_num_pts]
 
-        distance_matrix[fid,:min_num_pts] = np.sqrt((x_trim-last_x_trim)**2+(y_trim-last_y_trim)**2)
+        distance_matrix[fid,:min_num_pts] =np.array([(x_trim-last_x_trim),(y_trim-last_y_trim)]).T/dt
+        # distance_matrix[fid, :min_num_pts] = np.sqrt((x_trim-last_x_trim)**2 + (y_trim-last_y_trim)**2)
+        dt=1
     return distance_matrix
 
 
+def decomposeGradient(D):
 
-
+    mag = np.sqrt(D[:,:,0]**2+D[:,:,1]**2)
+    direction = np.arctan(D[:,:,0],D[:,:,1])
 
 
 

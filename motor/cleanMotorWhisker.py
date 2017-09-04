@@ -331,6 +331,12 @@ if  __name__=='__main__':
 
     for wFile in w_dir:
         # get view and sort direction
+        if re.search('(front|top).whiskers',wFile)==None:
+            continue
+        wFileOut = os.path.splitext(wFile)[0] + '_labelled' + os.path.splitext(wFile)[1]
+        if os.path.isfile(wFileOut):
+            continue
+
         view = re.search('(?i)front|(?i)top', wFile).group().lower()
         if view == 'top':
             direction = 'y'
@@ -349,7 +355,7 @@ if  __name__=='__main__':
         print('Loaded!')
 
         # get output filename
-        wFileOut = os.path.splitext(wFile)[0] + '_labelled' + os.path.splitext(wFile)[1]
+
 
         # perform preprocessing
         sortWhisker(w, direction)
@@ -362,7 +368,11 @@ if  __name__=='__main__':
             trimToLengthTop(w, w_lengths)
 
         # save to a new whiskers file
-        save_no_overwrite(wFileOut,w)
+        try
+            Save_Whiskers(wFileOut, w)
+        except:
+            continue
+
 
 
 
