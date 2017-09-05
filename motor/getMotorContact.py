@@ -16,7 +16,8 @@ from trace_2 import Load_Whiskers, Save_Whiskers
 
 def equidist(w,num_nodes=150,plot_tgl=False):
     for fid,frame in w.iteritems():
-        print('\rEquidist {:04d}'.format(fid)),
+        if fid%50==0:
+            print('\rEquidist {:04d}'.format(fid)),
         if len(frame)==0:
             continue
 
@@ -95,6 +96,8 @@ def getMotionGradient(w):
         distance_matrix[fid,:min_num_pts] =np.array([(x_trim-last_x_trim),(y_trim-last_y_trim)]).T/dt
         # distance_matrix[fid, :min_num_pts] = np.sqrt((x_trim-last_x_trim)**2 + (y_trim-last_y_trim)**2)
         dt=1
+        last_x = x
+        last_y = y
     return distance_matrix
 
 

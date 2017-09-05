@@ -4,6 +4,7 @@ import os
 import matplotlib.pyplot as plt
 import pims
 from scipy.spatial import distance
+import csv
 from scipy.interpolate import interp1d
 import re
 import glob
@@ -66,7 +67,7 @@ def labelWhisker(w, BP_init, thresh=35, l_thresh=50):
     for fid, frame in w.iteritems():
         # verbose
         if fid % 100 == 0:
-            print('Frame {:06d}'.format(fid))
+            print('\rLabel Frame {:04d}'.format(fid)),
         # init the BP matrix for this frame as inf
         # Need this initialization so that there is an array
         # entry that corresponds to each wid. 
@@ -278,7 +279,7 @@ def smooth2D(w,direction,frac=0.15):
 
     for fid,frame in w.iteritems():
         if fid % 100 ==0:
-            print('Frame {:04d}'.format(fid))
+            print('\rSmooth Frame {:04d}'.format(fid)),
         assert len(frame) <= 1, 'Frame {} should only have one whisker. Have you run labelWhisker yet?'.format(fid)
         # skip if there are no traces in a frame
         if len(frame) == 0:
@@ -319,6 +320,7 @@ def save_no_overwrite(wFileOut,w):
 
 if  __name__=='__main__':
     # input argument is path to process
+
     w_path = sys.argv[1]    
     # get the mask
     mask_filename = glob.glob(os.path.join(w_path,'*.npz'))[0]
@@ -326,6 +328,7 @@ if  __name__=='__main__':
 
     # get the directory of whisker files
     w_dir = glob.glob(os.path.join(w_path,'*.whiskers'))
+    err_file = os.path.join(w_path, 'ERRS.csv')
 
     for wFile in w_dir:
         # get view and sort direction
@@ -370,6 +373,10 @@ if  __name__=='__main__':
         try:
             Save_Whiskers(wFileOut, w)
         except:
+            print('WARNING FILE: {} did not save properly'.format(wFileOut))
+            with open(err_file,'ab') as csvfile:
+                csvwriter = csv.writer(csvfile)
+                csvwriter.writerow([wFileOut])
             continue
 
 
