@@ -8,10 +8,9 @@ import csv
 from scipy.interpolate import interp1d
 import re
 import glob
-sys.path.append(
-    r'C:\Users\nbush257\Documents\hartmann_lab\proc\whisk\python')
-sys.path.append(
-    r'C:\Users\nbush257\Documents\hartmann_lab\proc\whiskerTracking\preMerge')
+sys.path.append(r'L:\Users\guru\Documents\hartmann_lab\proc\whisk\python')
+
+sys.path.append(r'L:\Users\guru\Documents\hartmann_lab\proc\whiskerTracking\preMerge')
 from trace_2 import Load_Whiskers, Save_Whiskers
 # from findManip import getMask
 from statsmodels.nonparametric.smoothers_lowess import lowess

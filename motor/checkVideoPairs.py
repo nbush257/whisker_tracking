@@ -52,8 +52,39 @@ def checkPairs(w_path) :
         else:
             pass
 
+def removeFirstFrame(w):
+    w.pop(0)
+    for fid,frame in w.iteritems():
+        w[fid-1] = w.pop(fid)
+
+def removeLastFrame(w):
+    last_fid = max(w.keys())
+    w.pop(last_fid)
+
+def removeFrame(w,which_frame):
+    if which_frame=='first':
+        removeFirstFrame(w)
+    elif which_frame=='last':
+        removeLastFrame(w)
+    else:
+        raise ValueError('Improper frame deletion choice')
 
 if __name__=='__main__':
     #pass the path of the video files in as a command line argument
-    w_path = sys.argv[1]
-    checkPairs(w_path)
+    if len(sys.argv)==2:
+        w_path = sys.argv[1]
+        checkPairs(w_path)
+
+    elif len(sys.argv)==3:
+        filename = sys.argv[1]
+        which_frame = sys.argv[2]
+
+        w = Load_Whiskers(filename)
+        removeFrame(w,which_frame)
+        filename_out = os.path.splitext(filename)[0]+'[matched]'+os.path.splitext(filename)[1]
+        Save_Whiskers(filename_out,w)
+    else:
+        raise ValueError('Improper input argument number')
+
+
+
