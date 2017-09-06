@@ -191,10 +191,14 @@ def extendBP(w, BP, lin_pct=0.05):
             xx = np.arange(x[0], x[1], x_diff)
             yy = np.polyval(f, xx)
 
+        thick = np.ones(len(xx),dtype='float32')*frame[0].thick[0]
+        scores = np.ones(len(xx),dtype='float32')*frame[0].scores[0]
+
         # append to frame
         frame[0].x = np.concatenate((xx.astype('float32'), frame[0].x))
         frame[0].y = np.concatenate((yy.astype('float32'), frame[0].y))
-
+        frame[0].thick = np.concatenate((thick,frame[0].thick))
+        frame[0].scores = np.concatenate((scores,frame[0].scores))
 
 def compute_arclength(trace):
     '''
@@ -214,7 +218,7 @@ def getLength(w):
     with only one trace per frame.
     MAYBE CHANGE THIS SO IT CAN COMPUTE THEM ALL
     '''
-    w_lengths = np.zeros(len(w))
+    w_lengths = np.zeros(max(w.keys())+1)
     for fid, frame in w.iteritems():
         assert len(frame) <= 1, 'Frame {} should only have one whisker. Have you run labelWhisker yet?'.format(fid)
         if len(frame) == 0:
