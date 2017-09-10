@@ -1,4 +1,5 @@
-%make E3D flag
+% make E3D flag
+
 xl = cellfun(@length,xw3d)~=0;
 yl = cellfun(@length,yw3d)~=0;
 zl = cellfun(@length,zw3d)~=0;

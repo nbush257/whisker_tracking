@@ -1,5 +1,5 @@
 function CPout = cleanCP(CP,nan_gap,C)
-%% function CPout = cleanCP(CP,nan_gap)
+%% function CPout = cleanCP(CP,nan_gap,C)
 
 % =====================================================
 % Takes a 3D Contact Point Time series (Nx3) and performs:
@@ -16,6 +16,7 @@ function CPout = cleanCP(CP,nan_gap,C)
 kalman_flag=false;
 
 % calculate the measurement variance
+r = nanvar(CP);
 
 
 % Interpolate over small NaN gaps
@@ -31,7 +32,7 @@ cStart = find(difc == 1);  % mark where all contacts  START
 cEnd = find(difc == -1) - 1;% mark where all contacts end
 
 for ii = 1:length(cStart)
-    CPf(cStart(ii):cEnd(ii),:) = medfilt1(CPf(cStart(ii):cEnd(ii),:));
+    CPf(cStart(ii):cEnd(ii),:) = hampel(CPf(cStart(ii):cEnd(ii),:));
 end
 
 
@@ -63,7 +64,7 @@ CPout = nan(size(CPf));
 
 % loop over all the contact periods
 if kalman_flag
-r = nanvar(CPf);
+
 for ii = 1:length(cStart)
     % If the contact period is less than 3 bins long, skip it.
     if (cEnd(ii)-cStart(ii))<3

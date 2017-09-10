@@ -92,7 +92,7 @@ for i = firstFrame:stride:lastFrame
             Ifront = vFront.getframe();
             
         case '.avi'
-            Itop = read(vTop,i-1);
+            Itop = read(vTop,i);
             Ifront = read(vFront,i);
     end
     
