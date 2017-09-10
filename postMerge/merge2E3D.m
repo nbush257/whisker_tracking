@@ -61,16 +61,26 @@ t3d = rmPt3DWhisker(t3d);
 
 %% smooth the whisker
 % disp('Smoothing 3D whisker...')
-t3ds = smooth3DWhisker(t3d,'spline',5);
+t3ds = smooth3DWhisker(t3d,'linear');
 save(fname_temp,'t3ds','calibInfo')
 
 %% Find the contact point and extend whisker where needed
 t3ds = makeColumnVectorStruct(t3ds);
+%%
+parfor ii = 1:length(t3ds)
+    
+    if isempty(t3ds(ii).x)
+        continue
+    end
+    
+    [t3ds(ii).x,t3ds(ii).y,t3ds(ii).z]=equidist3D(t3ds(ii).x,t3ds(ii).y,t3ds(ii).z,250);
+end
+%%
 [CPraw,~,t3ds] = get3DCP_hough(manip,t3ds,calibInfo,C,frame_size);
 save(fname_temp,'t3ds','CPraw','-append')
 
 %% smooth the contact point
-CP = cleanCP(CPraw,NAN_GAP);
+CP = cleanCP(CPraw,NAN_GAP,C);
 
 % In case the contact point is not on the whisker after smoothing, put it
 % back on the whisker.
@@ -88,7 +98,7 @@ BP = get3DBP(t3ds);
 % get E3D flag
 getE3Dflag;
 %% Output
-save(fname,'*w3d','CP','BP','C','E3D_flag')
+save(fname_out,'*w3d','CP','BP','C','E3D_flag')
 delete(fname_temp)
 
 

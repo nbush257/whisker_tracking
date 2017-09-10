@@ -16,7 +16,7 @@ function CPout = cleanCP(CP,nan_gap,C)
 kalman_flag=false;
 
 % calculate the measurement variance
-r = nanvar(CPf);
+r = nanvar(CP);
 
 % Interpolate over small NaN gaps
 for ii = 1:3
@@ -31,7 +31,7 @@ cStart = find(difc == 1);  % mark where all contacts  START
 cEnd = find(difc == -1) - 1;% mark where all contacts end
 
 for ii = 1:length(cStart)
-    CPf(cStart(ii):cEnd(ii),:) = medfilt1(CPf(cStart(ii):cEnd(ii),:));
+    CPf(cStart(ii):cEnd(ii),:) = hampel(CPf(cStart(ii):cEnd(ii),:));
 end
 
 
