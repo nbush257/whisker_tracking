@@ -1,11 +1,11 @@
 #!/bin/bash
 #MSUB -A p30144
 #MSUB -q normal
-#MSUB -l walltime=0:12:00
+#MSUB -l walltime=06:00:00
 #MSUB -M nbush257@gmail.com
 #MSUB -m a
 #MSUB -N merge2E3D
-#MSUB -l nodes=1:ppn=16
+#MSUB -l nodes=1:ppn=12
 
 
 # load modules you need to use
