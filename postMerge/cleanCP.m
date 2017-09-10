@@ -16,7 +16,7 @@ function CPout = cleanCP(CP,nan_gap,C)
 kalman_flag=false;
 
 % calculate the measurement variance
-r = nanvar(CPf);
+
 
 % Interpolate over small NaN gaps
 for ii = 1:3
@@ -63,6 +63,7 @@ CPout = nan(size(CPf));
 
 % loop over all the contact periods
 if kalman_flag
+r = nanvar(CPf);
 for ii = 1:length(cStart)
     % If the contact period is less than 3 bins long, skip it.
     if (cEnd(ii)-cStart(ii))<3
