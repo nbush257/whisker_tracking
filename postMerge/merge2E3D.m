@@ -73,7 +73,7 @@ t3d = makeColumnVectorStruct(t3d);
 save(fname_out_temp,'t3d','CPraw','-append')
 
 %% smooth the contact point
-CP = cleanCP(CPraw,NAN_GAP);
+CP = cleanCP(CPraw,NAN_GAP,C);
 
 % In case the contact point is not on the whisker after smoothing, put it
 % back on the whisker.
