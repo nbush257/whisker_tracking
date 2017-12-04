@@ -21,7 +21,6 @@ function merge2E3D(tracked3D_fname,front_manip_fname,top_manip_fname)
 NAN_GAP = 50;
 
 load(tracked3D_fname);
-manip = reformatManip(front_manip_fname,top_manip_fname);
 
 assert(isstruct(tracked_3D),'No 3D whisker found');
 assert(exist('C','var')==1,'No contact variable found');
@@ -76,11 +75,14 @@ parfor ii = 1:length(t3ds)
     [t3ds(ii).x,t3ds(ii).y,t3ds(ii).z]=equidist3D(t3ds(ii).x,t3ds(ii).y,t3ds(ii).z,250);
 end
 %%
-[CPraw,~,t3ds] = get3DCP_hough(manip,t3ds,calibInfo,C,frame_size);
+C_pad = LOCAL_pad_contact(C,5);
+[CPraw,~,t3ds_temp] = get3DCP_hough(manip,t3ds,calibInfo,C_pad,frame_size);
+t3ds(C) = t3ds_temp(C);
+clear t3ds_temp
 save(fname_temp,'t3ds','CPraw','-append')
 
 %% smooth the contact point
-CP = cleanCP(CPraw,NAN_GAP,C);
+CP = cleanCP(CPraw,NAN_GAP,C_pad);
 
 % In case the contact point is not on the whisker after smoothing, put it
 % back on the whisker.
@@ -98,7 +100,18 @@ BP = get3DBP(t3ds);
 % get E3D flag
 getE3Dflag;
 %% Output
-save(fname_out,'*w3d','CP','BP','C','E3D_flag')
+save(fname_out,'*w3d','CP','BP','C','E3D_flag','calid_info','manip')
 delete(fname_temp)
 
+function LOCAL_pad_contact(C,pad)
+C_pad = false(size(C));
+starts = find(diff([0;C])==1);
+stops = find(diff([0;C])==-1);
+
+starts = starts-pad;
+stops = stops+pad;
+
+for ii=1:length(starts)
+    C_pad(starts(ii):stops(ii))=1;
+end
 

@@ -1,5 +1,5 @@
 function CPout = cleanCP(CP,nan_gap,C)
-%% function CPout = cleanCP(CP,nan_gap)
+%% function CPout = cleanCP(CP,nan_gap,C)
 
 % =====================================================
 % Takes a 3D Contact Point Time series (Nx3) and performs:
