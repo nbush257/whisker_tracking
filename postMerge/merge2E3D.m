@@ -19,6 +19,7 @@ function merge2E3D(tracked3D_fname,front_manip_fname,top_manip_fname)
 % NEB 2016_07_07
 %% init workspace 
 NAN_GAP = 50;
+EQUIDIST_NODES = 250;
 
 load(tracked3D_fname);
 
@@ -72,7 +73,7 @@ parfor ii = 1:length(t3ds)
         continue
     end
     
-    [t3ds(ii).x,t3ds(ii).y,t3ds(ii).z]=equidist3D(t3ds(ii).x,t3ds(ii).y,t3ds(ii).z,250);
+    [t3ds(ii).x,t3ds(ii).y,t3ds(ii).z]=equidist3D(t3ds(ii).x,t3ds(ii).y,t3ds(ii).z,EQUIDIST_NODES);
 end
 %%
 C_pad = LOCAL_pad_contact(C,5);
