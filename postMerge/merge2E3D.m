@@ -19,7 +19,8 @@ function merge2E3D(tracked3D_fname,fname_out)
 % NEB 2016_07_07
 %% init workspace 
 NAN_GAP = 50;
-EQUIST_NODES = 200;
+EQUIDIST_NODES = 250;
+PAD = 5;
 
 load(tracked3D_fname); 
 disp(tracked3D_fname);
@@ -65,19 +66,20 @@ parfor ii = 1:length(t3ds)
     if isempty(t3ds(ii).x)
         continue
     end
-    [t3ds(ii).x,t3ds(ii).y,t3ds(ii).z]=equidist3D(t3ds(ii).x,t3ds(ii).y,t3ds(ii).z,EQUIST_NODES);
+    
+    [t3ds(ii).x,t3ds(ii).y,t3ds(ii).z]=equidist3D(t3ds(ii).x,t3ds(ii).y,t3ds(ii).z,EQUIDIST_NODES);
 end
 %%
-save(fname_out_temp,'t3ds')
-%% Find Contact
-[CPraw,~,t3ds] = get3DCP_hough(manip,t3ds,calibInfo,C,frame_size);
-save(fname_out_temp,'t3ds','CPraw')
+C_pad = LOCAL_pad_contact(C,PAD);
+[CPraw,~,t3ds_temp] = get3DCP_hough(manip,t3ds,calibInfo,C_pad,frame_size);
+t3ds(C) = t3ds_temp(C);
+clear t3ds_temp
 if all(isnan(CPraw(:)))
     error('CP is all nans. This data is Garbage')
 end
 
 %% smooth the contact point
-CP = cleanCP(CPraw,NAN_GAP,C);
+CP = cleanCP(CPraw,NAN_GAP,C_pad);
 
 % In case the contact point is not on the whisker after smoothing, put it
 % back on the whisker.
@@ -92,13 +94,24 @@ zw3d = {t3ds.z};
 % extract the basepoint
 BP = get3DBP(t3ds);
 
+% get E3D flag
 getE3Dflag;
 %% Output
-
-save(fname_out,'*w3d','CP','BP','C','E3D_flag')
+save(fname_out,'*w3d','CP','BP','C','E3D_flag','calib_info','manip')
 fprintf('Saved to %s\n',fname_out)
 delete(fname_out_temp)
 
 
 
+function LOCAL_pad_contact(C,pad)
+C_pad = false(size(C));
+starts = find(diff([0;C])==1);
+stops = find(diff([0;C])==-1);
+
+starts = starts-pad;
+stops = stops+pad;
+
+for ii=1:length(starts)
+    C_pad(starts(ii):stops(ii))=1;
+end
 
