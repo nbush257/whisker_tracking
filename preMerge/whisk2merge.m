@@ -1,5 +1,5 @@
-function [tws,fws] = whisk2merge(tw,fw,frame_size,mask_struct,outfilename)
-%% function [tws,fws] = whisk2merge_v2(tw,fw,tVidName,fVidName,mask_struct,outfilename)
+function [fws,tws] = whisk2merge(fw,tw,frame_size,mask_struct,outfilename)
+%% function [tws,fws] = whisk2merge_v2(fw,tw,tVidName,fVidName,mask_struct,outfilename)
 % takes relevant whisker and measurement file information to prepare the
 % data for merging.
 % ===========================================================
@@ -21,7 +21,9 @@ function [tws,fws] = whisk2merge(tw,fw,frame_size,mask_struct,outfilename)
 lastFinishedStep = '';
 close all
 % start parallel pool if not running
-gcp;
+numw = str2num(getenv('PBS_NUM_PPN'));
+clust = parcluster();
+parpool(clust,numw);
 %% Trim to the basepoint
 
 fprintf('Trimming top basepoint...')

@@ -1,6 +1,6 @@
 #!/bin/bash
-#MSUB -A p30054
-#MSUB -q short
+#MSUB -A p30144
+#MSUB -q normal
 #MSUB -l walltime=4:00:00
 #MSUB -M nbush257@gmail.com
 #MSUB -m a

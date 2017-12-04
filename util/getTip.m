@@ -67,12 +67,12 @@ if nargin==2 % 2-2D case
     
 elseif nargin==1 % 3D case
     t3d = varargin{1};
-    tip = nan(length(t3d,3));
+    tip = nan(length(t3d),3);
     
     % loop over every frame
     for ii = 1:length(t3d)
         % skip any nan whiskers
-        if isempty(t3d(ii).x)
+        if isempty(t3d(ii).x) || length(t3d(ii).x)<=2
             continue
         end
         tip(ii,:) = [t3d(ii).x(end) t3d(ii).y(end) t3d(ii).z(end)];
