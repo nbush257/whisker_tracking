@@ -19,7 +19,7 @@ function merge2E3D(tracked3D_fname,fname_out)
 % NEB 2016_07_07
 %% init workspace 
 NAN_GAP = 50;
-EQUIDIST_NODES = 250;
+EQUIDIST_NODES = 200;
 PAD = 5;
 
 load(tracked3D_fname); 
@@ -61,6 +61,7 @@ t3ds = smooth3DWhisker(t3d,'linear');
 
 %% Find the contact point and extend whisker where needed
 t3ds = makeColumnVectorStruct(t3ds);
+disp('Equidisting the whisker...')
 %% Interpolate whisker
 parfor ii = 1:length(t3ds)    
     if isempty(t3ds(ii).x)
@@ -70,6 +71,7 @@ parfor ii = 1:length(t3ds)
     [t3ds(ii).x,t3ds(ii).y,t3ds(ii).z]=equidist3D(t3ds(ii).x,t3ds(ii).y,t3ds(ii).z,EQUIDIST_NODES);
 end
 %%
+disp('Caluclating contact point...')
 C_pad = LOCAL_pad_contact(C,PAD);
 [CPraw,~,t3ds_temp] = get3DCP_hough(manip,t3ds,calibInfo,C_pad,frame_size);
 t3ds(C) = t3ds_temp(C);
@@ -77,7 +79,7 @@ clear t3ds_temp
 if all(isnan(CPraw(:)))
     error('CP is all nans. This data is Garbage')
 end
-
+disp('Cleaning up contact point...')
 %% smooth the contact point
 CP = cleanCP(CPraw,NAN_GAP,C_pad);
 
@@ -97,13 +99,13 @@ BP = get3DBP(t3ds);
 % get E3D flag
 getE3Dflag;
 %% Output
-save(fname_out,'*w3d','CP','BP','C','E3D_flag','calib_info','manip')
+save(fname_out,'*w3d','CP','BP','C','E3D_flag','manip')
 fprintf('Saved to %s\n',fname_out)
 delete(fname_out_temp)
 
 
 
-function LOCAL_pad_contact(C,pad)
+function C_pad = LOCAL_pad_contact(C,pad)
 C_pad = false(size(C));
 starts = find(diff([0;C])==1);
 stops = find(diff([0;C])==-1);
