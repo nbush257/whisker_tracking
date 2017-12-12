@@ -158,7 +158,7 @@ parfor ii = 1:length(tracked3D)
         if ~isnan(ridx)
             CP(ii,:) = [tracked3D(ii).x(ridx) tracked3D(ii).y(ridx) tracked3D(ii).z(ridx)];
         else
-            fprintf('NaN CP idx at frame %i',ii)
+            fprintf('NaN CP idx at frame %i\n',ii)
             continue
         end
         

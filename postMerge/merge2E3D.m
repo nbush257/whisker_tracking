@@ -18,8 +18,8 @@ function merge2E3D(tracked3D_fname,fname_out)
 % ============================
 % NEB 2016_07_07
 %% init workspace 
-NAN_GAP = 50;
-EQUIDIST_NODES = 200;
+NAN_GAP = 5;
+EQUIDIST_NODES = 300;
 PAD = 5;
 
 load(tracked3D_fname); 
@@ -49,7 +49,7 @@ C = C(:);
 
 %% start parallel pool
 parpool('local',20)
-
+% parpool('multi-node-quest-160core',160)
 %% sort the whisker along the x axis
 disp('Sorting whisker...')
 t3d = sort3Dwhisker(tracked_3D);
@@ -63,9 +63,13 @@ t3ds = smooth3DWhisker(t3d,'linear');
 t3ds = makeColumnVectorStruct(t3ds);
 disp('Equidisting the whisker...')
 %% Interpolate whisker
+num_frames = length(t3ds);
 parfor ii = 1:length(t3ds)    
     if isempty(t3ds(ii).x)
         continue
+    end
+    if mod(ii,1000)==0
+        fprintf('Equidist %i of %i\n',ii,num_frames)
     end
     
     [t3ds(ii).x,t3ds(ii).y,t3ds(ii).z]=equidist3D(t3ds(ii).x,t3ds(ii).y,t3ds(ii).z,EQUIDIST_NODES);
@@ -99,7 +103,7 @@ BP = get3DBP(t3ds);
 % get E3D flag
 getE3Dflag;
 %% Output
-save(fname_out,'*w3d','CP','BP','C','E3D_flag','manip')
+save(fname_out,'*w3d','CP','BP','C','E3D_flag','manip','calibInfo')
 fprintf('Saved to %s\n',fname_out)
 delete(fname_out_temp)
 
@@ -107,11 +111,15 @@ delete(fname_out_temp)
 
 function C_pad = LOCAL_pad_contact(C,pad)
 C_pad = false(size(C));
-starts = find(diff([0;C])==1);
-stops = find(diff([0;C])==-1);
+starts = find(diff([0;C;0])==1);
+stops = find(diff([0;C;0])==-1);
 
 starts = starts-pad;
 stops = stops+pad;
+
+%boundary conditions
+stops(end) = min([length(C),stops(end)]);
+starts(1) = max([1,starts(1)]);
 
 for ii=1:length(starts)
     C_pad(starts(ii):stops(ii))=1;

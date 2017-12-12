@@ -46,8 +46,11 @@ for ii = 1:3
     CPf(:,ii) = InterpolateOverNans(CPf(:,ii),nan_gap);
 
 end
-
-
+nan_idx = all(isnan(CPf),2);
+for ii = 1:3
+CPf(:,ii) = smooth(CPf(:,ii),7,'sgolay');
+end
+CPf(nan_idx,:)=nan;
 % Can only apply kalman filter to data no interrupted by nans, so find out
 % where there contact periods start. Theoretically you could use the C
 % logical but sometimes there are NaNs in there.
