@@ -49,12 +49,11 @@ C = C(:);
 
 %% start parallel pool
 parpool('local',20)
-% parpool('multi-node-quest-160core',160)
 %% sort the whisker along the x axis
 disp('Sorting whisker...')
 t3d = sort3Dwhisker(tracked_3D);
 %% remove small whiskers that are too small and removes the last point
-[t3d,l] = clean3DWhisker(t3d,5);
+[t3d,l] = clean3Dwhisker(t3d,5);
 
 %% smooth the whisker
 t3ds = smooth3DWhisker(t3d,'linear');
@@ -81,7 +80,12 @@ C_pad = LOCAL_pad_contact(C,PAD);
 t3ds(C) = t3ds_temp(C);
 clear t3ds_temp
 if all(isnan(CPraw(:)))
-    error('CP is all nans. This data is Garbage')
+    warning('CP is all nans. This data is Garbage')
+    allnans=1;
+    save(fname_out,'allnans')
+    return
+else
+    allnans=0;
 end
 disp('Cleaning up contact point...')
 %% smooth the contact point
@@ -122,6 +126,7 @@ stops(end) = min([length(C),stops(end)]);
 starts(1) = max([1,starts(1)]);
 
 for ii=1:length(starts)
+    
     C_pad(starts(ii):stops(ii))=1;
 end
 
