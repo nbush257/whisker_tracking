@@ -18,8 +18,8 @@ function merge2E3D(tracked3D_fname,fname_out)
 % ============================
 % NEB 2016_07_07
 %% init workspace 
-NAN_GAP = 50;
-EQUIDIST_NODES = 200;
+NAN_GAP = 5;
+EQUIDIST_NODES = 300;
 PAD = 5;
 
 load(tracked3D_fname); 
@@ -54,7 +54,7 @@ parpool('local',20)
 disp('Sorting whisker...')
 t3d = sort3Dwhisker(tracked_3D);
 %% remove small whiskers that are too small and removes the last point
-[t3d,l] = clean3DWhisker(t3d,5);
+[t3d,l] = clean3Dwhisker(t3d,5);
 
 %% smooth the whisker
 t3ds = smooth3DWhisker(t3d,'linear');
@@ -107,11 +107,15 @@ delete(fname_out_temp)
 
 function C_pad = LOCAL_pad_contact(C,pad)
 C_pad = false(size(C));
-starts = find(diff([0;C])==1);
-stops = find(diff([0;C])==-1);
+starts = find(diff([0;C;0])==1);
+stops = find(diff([0;C;0])==-1);
 
 starts = starts-pad;
 stops = stops+pad;
+
+%boundary conditions
+stops(end) = min([length(C),stops(end)]);
+starts(1) = max([1,starts(1)]);
 
 for ii=1:length(starts)
     C_pad(starts(ii):stops(ii))=1;
