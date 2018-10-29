@@ -87,7 +87,8 @@ def equidist_imagej_csv(csv_file,pts_per_whisker=10,thresh=15,new_num_pts=10):
     dat.loc[idx,'X']=np.nan
     dat.loc[idx,'Y']=np.nan
     dat_out = pd.DataFrame()
-    num_whiskers = len(dat)/pts_per_whisker/dat.Slice.max()
+    num_slices = len(dat.Slice.unique())
+    num_whiskers = len(dat)/pts_per_whisker/num_slices
 
     wid = np.array([np.ones(pts_per_whisker)*ii for ii in range(num_whiskers)]).ravel()
     wid = np.tile(wid,len(dat.Slice.unique())).astype('int')
