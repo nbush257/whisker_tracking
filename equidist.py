@@ -134,6 +134,7 @@ def plot_equidist(p):
     This function plots and saves all images with the equidist points plotted
     """
     im_list = glob.glob(os.path.join(p,'*.png'))
+    im_list.sort()
     dat = pd.read_csv(os.path.join(p,'Results_equidist.csv'))
     for ii,im in enumerate(im_list,1):
         outname = os.path.splitext(im)[0]+'labelled.png'
