@@ -30,6 +30,11 @@ optargs = {'linear',0};
 optargs(1:numvargs) = varargin;
 [method,extend] = optargs{:};
 
+if strcmp(method,'splinefit')
+    warning('Splinefit will tend to mis-track the basepoint. Proceed at own risk')
+end
+
+
 % Minimum number of nodes that the whisker has. Cannot smooth with less
 % than a certain number. Removes all tracked points from this frame
 lenThresh = 10; 
@@ -48,8 +53,11 @@ parfor ii = 1:length(wStruct)
     
     switch method
         case 'linear'
-            smoothed(ii).x = wStruct(ii).x(1):wStruct(ii).x(end);
-            smoothed(ii).y = smooth(wStruct(ii).x,wStruct(ii).y,'lowess',15);
+            
+            smoothed(ii).x = wStruct(ii).x;
+            smoothed(ii).y = single(smooth(wStruct(ii).x,wStruct(ii).y,'lowess',15));
+            smoothed(ii).x = smoothed(ii).x(:);
+            smoothed(ii).y = smoothed(ii).y(:);           
         case 'splinefit'
             PP(ii) = splinefit(double(wStruct(ii).x),double(wStruct(ii).y),6,'r');
             xx = min(wStruct(ii).x):.5:(max(wStruct(ii).x))+abs(extend*max(wStruct(ii).x));

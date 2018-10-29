@@ -38,6 +38,11 @@ CPidx = nan(length(tracked3D),1);
 l_thresh = 10; % fewest number of points allowed in the whisker for CP calculation
 num_nodes = 1; % nodes used in splinefit
 ext_pct = .05; % length of the whisker that we want to extend beyond the CP.
+%% 
+if plot_TGL
+    f1 = figure(1);
+    f2 = figure(2);
+end
 %% loop over every frame
 parfor ii = 1:length(tracked3D)
     % Prevent intersections from being annoying
@@ -110,29 +115,36 @@ parfor ii = 1:length(tracked3D)
         % are here to remind you what to plot
 
         if plot_TGL && mod(ii,plot_stride)==0
-            close all
             [wskrFront,wskrTop] = BackProject3D(tracked3D(ii),calibInfo(1:4),calibInfo(5:8),calibInfo(9:10));
             [wskrFrontext,wskrToptext] = BackProject3D(tempTracked,calibInfo(1:4),calibInfo(5:8),calibInfo(9:10));
+%             figure(f1)
+            cla
             plot(px,py,'r')
-            ho
+            hold on
             if ~isnan(Y0_t(ii))
                 plotv(wskrTop,'.');
                 plotv(wskrTopext,'go');
+                set(gca,'Xlim',[0 frame_size.top(2)])
+                set(gca,'Ylim',[0 frame_size.top(1)])
                 
             else
                 plotv(wskrFront,'.');
                 plotv(wskrFrontext,'go');
+                
+                set(gca,'Xlim',[0 frame_size.front(2)])
+                set(gca,'Ylim',[0 frame_size.front(1)])
             end
-            figure
+            drawnow
+            
+%             figure(f2)
+            cla
             plot3(tracked3D(ii).x,tracked3D(ii).y,tracked3D(ii).z,'.')
             ho
             plot3(tempTracked.x,tempTracked.y,tempTracked.z,'go')
             title(['Frame: ' num2str(ii)])
             axis equal
             grid on
-            pause
-            close all
-            pause(.01)
+            drawnow
         end
         tracked3D(ii).x = tempTracked.x;
         tracked3D(ii).y = tempTracked.y;

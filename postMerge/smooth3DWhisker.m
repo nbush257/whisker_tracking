@@ -32,7 +32,6 @@ function [wOut,coefs] = smooth3DWhisker(wIn,varargin)
 % NB 2016_04_27
 % Issue with row or column vectors. need to rewrite some other code to get
 % the 3d struct back as a  column.
-gcp;
 %% Input handling
 numvargs = length(varargin);
 % set defaults
@@ -47,6 +46,9 @@ if strcmp(mode,'spline');fprintf('\t Num Nodes: %i\n',numNodes);end
 pause(.1)
 %% Loop over frames
 parfor ii = 1:length(wIn)
+    if mod(ii,1000)==0
+        fprintf('Frame %i of %i\n',ii,length(wIn))
+    end
     
     xIn = wIn(ii).x;
     yIn = wIn(ii).y;

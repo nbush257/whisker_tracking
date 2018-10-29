@@ -17,11 +17,13 @@ function [fws,tws] = whisk2merge(fw,tw,frame_size,mask_struct,outfilename)
 %       fws - a smoothed version of the front whisker struct
 % ==========================================================
 % NEB 2016 Commented and refactoring 2016_07_06
-%% 
+%%
 lastFinishedStep = '';
 close all
 % start parallel pool if not running
-gcp;
+numw = str2num(getenv('PBS_NUM_PPN'));
+clust = parcluster();
+parpool(clust,numw);
 %% Trim to the basepoint
 
 fprintf('Trimming top basepoint...')
@@ -55,6 +57,22 @@ tic
 fws = smooth2Dwhisker(fws);
 toc
 lastFinishedStep = 'whisker_smooth';
-fprintf('Saving last step...\n')
+pwd
+fprintf('Saving last step %s ...\n',outfilename)
+%% QC
+assert(logical(exist('tws')),'tws does not exist on %s',outfilename);
+assert(logical(exist('fws')),'fws does not exist on %s',outfilename);
+assert(logical(exist('frame_size')),'frame_size does not exist on %s',outfilename);
+
+
+t_fields = fieldnames(tws);
+assert(length(t_fields)==6, 'incomplete tws structure on %s',outfilename);
+
+f_fields = fieldnames(fws);
+assert(length(f_fields)==6, 'incomplete fws structure on %s',outfilename);
+
+assert(length(fws)==length(tws),'fws and tws are not the same size on %s',outfilename);
+
+%%
 save(outfilename,'-v7.3','tws','fws','lastFinishedStep','frame_size');
 fprintf('whisk2merge complete!\n')
