@@ -22,6 +22,8 @@ def check_monotonic(x,y):
 
 def equidist(x,y,n_pts):
     xsup,ysup = interp(x,y,1000)
+    if len(xsup)!=1000:
+        return(x,y)
     d = np.sqrt(np.diff(xsup)**2+np.diff(ysup)**2)
     s = np.cumsum(d)
     target_ds = s[-1]/(n_pts-1)
