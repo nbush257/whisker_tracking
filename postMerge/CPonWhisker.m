@@ -19,7 +19,6 @@ for ii = 1:length(w)
     if isempty(w(ii).x) || length(w(ii).x)<10
         continue
     end
-    
     d = (CP(ii,1)-w(ii).x).^2+(CP(ii,2)-w(ii).y).^2+(CP(ii,3)-w(ii).z).^2; %calculate the squared distance because we don't actually care how far, just the min.
     [~,idx(ii)] = min(d);
     idx(ii) = round(idx(ii));

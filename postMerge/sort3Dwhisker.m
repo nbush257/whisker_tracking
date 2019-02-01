@@ -4,7 +4,7 @@ function w = sort3Dwhisker(w)
 % vectors.
 % NEB
 %%
-parfor ii = 1:length(w)
+for ii = 1:length(w)
     if isempty(w(ii).x)
         continue
     end

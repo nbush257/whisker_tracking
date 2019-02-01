@@ -7,12 +7,10 @@ from sklearn.preprocessing import RobustScaler
 import pandas as pd
 import matplotlib.pyplot as plt
 import numpy as np
+import sys
 
 INTERP_WINDOW= 100# in samples
 INTERP_METHOD='pchip' #
-dir = r"C:\Users\guru\Desktop\tip_data"
-chdir(dir)
-d = glob('*tip.mat')
 
 def cleanTip(file,outname):
     dat = sio.loadmat(file)
@@ -46,11 +44,15 @@ def cleanTip(file,outname):
     save_dict={'tip_clean':tip}
     sio.savemat(outname,save_dict)
 
-for file in d:
-    plt.close('all')
-    outname = file[:-4] + '_clean.mat'
-    if not isfile(outname):
-        cleanTip(file,outname)
+if __name__ == '__main__':
+    path = sys.argv[1] # first argument is the path which you want to work on
+    chdir(path)
+    d = glob(sys.argv[2]) # second argument is the string specification for the files that you want to grab
+    for file in d:
+        plt.close('all')
+        outname = file[:-4] + '_clean.mat'
+        if not isfile(outname):
+            cleanTip(file,outname)
 
 
 
